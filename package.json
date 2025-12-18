@@ -6,7 +6,7 @@
     "vscode": "^1.74.0"
   },
   "displayName": "LiteClient",
-  "description": "Fast, lightweight REST API client with native VS Code UX. No account, no bloat, local-first.",
+  "description": "Fast, lightweight REST API client with native VS Code UX. No account, no bloat, no telemetry.",
   "categories": [
     "Other"
   ],

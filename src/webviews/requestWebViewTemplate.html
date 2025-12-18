@@ -80,12 +80,11 @@
 
     #layout-toggle {
       background: transparent;
-      border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+      border: 1px solid transparent;
       color: var(--vscode-foreground);
       padding: 4px;
-      border-radius: 2px;
+      border-radius: var(--lc-radius-sm);
       cursor: pointer;
-      font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -105,10 +104,10 @@
 
     #header-save {
       background: transparent;
-      border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+      border: 1px solid transparent;
       color: var(--vscode-foreground);
       padding: 4px 8px;
-      border-radius: 2px;
+      border-radius: var(--lc-radius-sm);
       cursor: pointer;
       font-size: 12px;
       display: flex;
@@ -127,7 +126,7 @@
     }
 
     #environment-select {
-      background: var(--vscode-input-background);
+      background: transparent;
       color: var(--vscode-input-foreground);
       border: 1px solid var(--vscode-input-border, transparent);
       padding: 4px 8px;
@@ -147,9 +146,9 @@
 
     select#method {
       width: 110px;
-      background: var(--vscode-input-background);
+      background: transparent;
       color: var(--vscode-input-foreground);
-      border: var(--lc-border);
+      border: 1px solid var(--vscode-input-border, transparent);
       padding: 0 var(--lc-space-sm);
       border-radius: var(--lc-radius-sm);
       font-size: inherit;
@@ -160,9 +159,9 @@
 
     input#url {
       flex: 1;
-      background: var(--vscode-input-background);
+      background: transparent;
       color: var(--vscode-input-foreground);
-      border: var(--lc-border);
+      border: 1px solid var(--vscode-input-border, transparent);
       padding: 0 calc(var(--lc-space-sm) + 2px);
       /* Slightly more than --lc-space-sm for visual balance */
       border-radius: var(--lc-radius-sm);
@@ -310,7 +309,7 @@
     }
 
     .tab {
-      padding: calc(var(--lc-space-sm) + 2px) var(--lc-space-md);
+      padding: calc(var(--lc-space-sm) + 2px) var(--lc-space-lg);
       /* Increased padding for better click targets */
       cursor: pointer;
       background: transparent;
@@ -335,30 +334,7 @@
       opacity: 1;
     }
 
-    .layout-toggle-btn {
-      background: transparent;
-      border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
-      color: var(--vscode-button-foreground);
-      padding: 4px;
-      border-radius: 2px;
-      cursor: pointer;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-    }
 
-    .layout-toggle-btn:hover {
-      background: var(--vscode-toolbar-hoverBackground, var(--vscode-list-hoverBackground));
-    }
-
-    .layout-toggle-btn svg {
-      width: 16px;
-      height: 16px;
-      fill: var(--vscode-foreground);
-    }
 
 
 
@@ -366,40 +342,7 @@
       background: var(--vscode-button-hoverBackground);
     }
 
-    .tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 1px solid var(--vscode-panel-border);
-      margin-top: 8px;
-      padding: 0 12px;
-      /* Add horizontal padding so tabs aren't touching edges */
-    }
 
-    .tab {
-      padding: 10px 16px;
-      /* Increased padding for better click targets */
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      color: var(--vscode-tab-inactiveForeground);
-      border-bottom: 2px solid transparent;
-      font-size: 13px;
-      font-weight: 400;
-      opacity: 0.75;
-    }
-
-    .tab:hover {
-      background: transparent;
-      opacity: 1;
-    }
-
-    .tab.active {
-      color: var(--vscode-tab-activeForeground);
-      background: transparent;
-      border-bottom: 2px solid var(--vscode-tab-activeBorder);
-      font-weight: 500;
-      opacity: 1;
-    }
 
     .tab-body-header {
       display: flex;
@@ -550,7 +493,6 @@
       align-items: center;
       padding: var(--lc-space-sm) var(--lc-space-md);
       background: var(--vscode-editor-background);
-      border-top: var(--lc-border);
       margin-top: var(--lc-space-sm);
     }
 
@@ -616,7 +558,7 @@
 
     .params-table input {
       width: 100%;
-      background: var(--vscode-input-background);
+      background: transparent;
       color: var(--vscode-input-foreground);
       border: none;
       padding: var(--lc-space-sm);
@@ -626,7 +568,7 @@
     }
 
     .params-table input:focus {
-      outline: 1px solid var(--vscode-focusBorder);
+      outline: none;
     }
 
     .param-key {
@@ -916,21 +858,21 @@
         <div class="request-path">MyCollection / Request Name</div>
       </div>
       <div class="metadata-right">
+        <select id="environment-select">
+          <option>No Environment</option>
+        </select>
+        <button id="header-save" title="Save Request"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M2 2C1.44772 2 1.44772 2.44772 1 3V13C1 13.5523 1.44772 14 2 14H14C14.5523 14 15 13.5523 15 13V5.5C15 5 14.7761 4.77614 14.5 4.5H8.5C8.22386 4.5 8 4.27614 8 4V2C8 1.72386 7.77614 1.5 7.5 1.5H2C1.44772 1.5 1 1.94772 1 2.5Z"
+              stroke="currentColor" stroke-width="1.3" />
+          </svg></button>
         <button id="layout-toggle" title="Switch to two pane view">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="2" y="2" width="12" height="5" fill="none" stroke="currentColor" stroke-width="1.2" />
             <rect x="2" y="9" width="12" height="5" fill="none" stroke="currentColor" stroke-width="1.2" />
           </svg>
         </button>
-        <button id="header-save" title="Save Request"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"
-            xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;">
-            <path
-              d="M2 2C1.44772 2 1.44772 2.44772 1 3V13C1 13.5523 1.44772 14 2 14H14C14.5523 14 15 13.5523 15 13V5.5C15 5 14.7761 4.77614 14.5 4.5H8.5C8.22386 4.5 8 4.27614 8 4V2C8 1.72386 7.77614 1.5 7.5 1.5H2C1.44772 1.5 1 1.94772 1 2.5Z"
-              stroke="currentColor" stroke-width="1.3" />
-          </svg>Save</button>
-        <select id="environment-select">
-          <option>No Environment</option>
-        </select>
       </div>
     </div>
     <div class="request-header" role="toolbar" aria-label="Request configuration">
