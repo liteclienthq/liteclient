@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build Output
+out/
+dist/
+
+# Test Output
+.vscode-test/
+
+# Environment Variables
+.env
+.env.local
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
+# OS files
+.DS_Store
+Thumbs.db

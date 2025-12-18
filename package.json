@@ -1,0 +1,297 @@
+{
+  "name": "liteclient",
+  "version": "0.1.0",
+  "publisher": "liteclienthq",
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "displayName": "LiteClient",
+  "description": "Fast, lightweight REST API client with native VS Code UX. No account, no bloat, local-first.",
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "rest",
+    "http",
+    "client",
+    "api",
+    "postman",
+    "thunder-client",
+    "request",
+    "testing"
+  ],
+  "icon": "media/logo.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liteclienthq/liteclient-issues.git"
+  },
+  "homepage": "https://liteclient.com",
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "customEditors": [
+      {
+        "viewType": "liteclient.requestEditor",
+        "displayName": "LiteClient Request",
+        "selector": [
+          {
+            "filenamePattern": "*.lcreq"
+          }
+        ],
+        "priority": "default"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "liteclient-sidebar",
+          "title": "LiteClient",
+          "icon": "media/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "liteclient-sidebar": [
+        {
+          "id": "requests",
+          "name": "Requests",
+          "icon": "media/history.svg",
+          "contextualTitle": "LiteClient: Requests"
+        },
+        {
+          "id": "collections",
+          "name": "Collections",
+          "icon": "media/bucket.svg",
+          "contextualTitle": "LiteClient: Collections"
+        },
+        {
+          "id": "environments",
+          "name": "Environments",
+          "icon": "media/variable.svg",
+          "contextualTitle": "LiteClient: Environments"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "requests",
+        "contents": "No requests yet.\n[New Request](command:liteclient.newRequest)"
+      },
+      {
+        "view": "collections",
+        "contents": "No collections yet.\n[New Collection](command:liteclient.newCollection)"
+      },
+      {
+        "view": "environments",
+        "contents": "No environments yet.\n[New Environment](command:liteclient.newEnvironment)"
+      }
+    ],
+    "commands": [
+      {
+        "command": "liteclient.newRequest",
+        "title": "New Request",
+        "icon": "$(new-file)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.newCollection",
+        "title": "New Collection",
+        "icon": "$(new-folder)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.newEnvironment",
+        "title": "New Environment",
+        "icon": "$(new-folder)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.addCollection",
+        "title": "Add Collection",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.renameCollection",
+        "title": "Rename Collection",
+        "icon": "$(edit)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.deleteCollection",
+        "title": "Delete Collection",
+        "icon": "$(trash)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.addRequestToCollection",
+        "title": "Add Request to Collection",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.renameCollectionRequest",
+        "title": "Rename",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.deleteRequestFromCollection",
+        "title": "Delete Request from Collection",
+        "icon": "$(trash)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.addEnvironment",
+        "title": "Add Environment",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.renameEnvironment",
+        "title": "Rename Environment",
+        "icon": "$(edit)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.deleteEnvironment",
+        "title": "Delete Environment",
+        "icon": "$(trash)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.addVariableToEnvironment",
+        "title": "Add Variable",
+        "icon": "$(add)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.editVariable",
+        "title": "Edit Variable",
+        "icon": "$(edit)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.deleteVariable",
+        "title": "Delete Variable",
+        "icon": "$(trash)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.openHistoryRequest",
+        "title": "Open History Request",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.deleteHistoryItem",
+        "title": "Delete",
+        "icon": "$(trash)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.clearHistory",
+        "title": "Clear History",
+        "icon": "$(trash)",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.renameHistoryRequest",
+        "title": "Rename",
+        "category": "LiteClient"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "liteclient.newRequest",
+          "when": "view == requests",
+          "group": "navigation"
+        },
+        {
+          "command": "liteclient.newCollection",
+          "when": "view == collections",
+          "group": "navigation"
+        },
+        {
+          "command": "liteclient.newEnvironment",
+          "when": "view == environments",
+          "group": "navigation"
+        },
+        {
+          "command": "liteclient.clearHistory",
+          "when": "view == requests"
+        }
+      ],
+      "view/item/context": [
+        {
+          "when": "view == collections && viewItem == collection",
+          "command": "liteclient.deleteCollection"
+        },
+        {
+          "when": "view == collections && viewItem == collection",
+          "command": "liteclient.renameCollection",
+          "group": "1_modification"
+        },
+        {
+          "when": "view == collections && viewItem == collectionRequest",
+          "command": "liteclient.renameCollectionRequest",
+          "group": "1_modification"
+        },
+        {
+          "when": "view == collections && viewItem == collectionRequest",
+          "command": "liteclient.deleteRequestFromCollection"
+        },
+        {
+          "when": "view == environments && viewItem == environment",
+          "command": "liteclient.deleteEnvironment"
+        },
+        {
+          "when": "view == environments && viewItem == environment",
+          "command": "liteclient.renameEnvironment",
+          "group": "1_modification"
+        },
+        {
+          "when": "view == environments && viewItem == environment",
+          "command": "liteclient.addVariableToEnvironment",
+          "group": "1_modification"
+        },
+        {
+          "when": "view == requests && viewItem == historyItem",
+          "command": "liteclient.deleteHistoryItem",
+          "group": "inline"
+        },
+        {
+          "when": "view == requests && viewItem == historyItem",
+          "command": "liteclient.deleteHistoryItem"
+        },
+        {
+          "when": "view == requests && viewItem == historyItem",
+          "command": "liteclient.renameHistoryRequest"
+        },
+        {
+          "when": "view == environments && viewItem == variable",
+          "command": "liteclient.deleteVariable"
+        },
+        {
+          "when": "view == environments && viewItem == variable",
+          "command": "liteclient.editVariable",
+          "group": "1_modification"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.106.1",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "22.x",
+    "typescript-eslint": "^8.46.3",
+    "eslint": "^9.39.1",
+    "typescript": "^5.9.3",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2"
+  }
+}
