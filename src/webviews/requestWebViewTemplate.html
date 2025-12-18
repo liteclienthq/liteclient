@@ -1711,12 +1711,9 @@
     }
 
     // Send request functionality
-    console.log('Setting up send button handler...');
     const sendButton = document.getElementById('send');
-    console.log('Send button element:', sendButton);
     if (sendButton) {
       sendButton.onclick = () => {
-        console.log('Send button clicked!');
         const method = document.getElementById('method').value;
         const url = document.getElementById('url').value; // URL already includes params
         const bodyType = document.getElementById('body-type').value;
@@ -1734,7 +1731,6 @@
             headers[keyInput.value.trim()] = valueInput.value.trim();
           }
         });
-        console.log('Collected headers:', headers);
 
         // Collect auth config
         const authType = document.getElementById('auth-type').value;
@@ -1756,7 +1752,6 @@
             addTo: document.getElementById('apikey-location').value
           };
         }
-        console.log('Collected auth:', auth);
 
         // Show loading overlay
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -1780,16 +1775,6 @@
         if (responseTime) responseTime.style.display = 'none';
         if (responseSize) responseSize.style.display = 'none';
 
-        console.log('Sending message to extension:', {
-          type: 'send-request',
-          method,
-          url: url,
-          headers,
-          body: bodyType !== 'none' ? body : null,
-          bodyType,
-          auth
-        });
-
         // Get the current request name from the saved state
         const currentRequestName = savedRequestData.name || '';
 
@@ -1804,9 +1789,6 @@
           auth
         });
       };
-      console.log('Send button event listener attached');
-    } else {
-      console.error('Send button not found!');
     }
 
 

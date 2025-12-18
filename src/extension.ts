@@ -17,9 +17,7 @@ function getShortenedTitle(title: string): string {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('Congratulations, your extension "liteclient" is now active!');
-
-	// Initialize services
+	// Initialize services and storage
 	const storage = new StorageService(context);
 	const settingsService = new SettingsService(context);
 
