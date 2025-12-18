@@ -38,10 +38,31 @@ export function activate(context: vscode.ExtensionContext) {
 	const requestPanels = new Map<string, vscode.WebviewPanel>();
 
 	// Helper function to set up message handling for a request panel
+	// Broadcast helpers - defined inside activate to access services and panels
+	const broadcastEnvironmentList = async () => {
+		const environments = await environmentService.load();
+		const selectedEnvironmentId = await settingsService.getSelectedEnvironmentId();
+
+		for (const panel of requestPanels.values()) {
+			panel.webview.postMessage({
+				type: 'environments-list',
+				environments,
+				selectedEnvironmentId
+			});
+		}
+	};
+
+	const broadcastCollectionsList = async () => {
+		const collections = await collectionService.load();
+		for (const panel of requestPanels.values()) {
+			panel.webview.postMessage({
+				type: 'collections-list',
+				collections
+			});
+		}
+	};
+
 	function setupRequestMessageHandler(panel: vscode.WebviewPanel) {
-		// Make sure we don't add duplicate listeners
-		// Since VS Code panel.webview.onDidReceiveMessage can only have one listener,
-		// the previous listener will be replaced automatically
 
 		panel.webview.onDidReceiveMessage(async (message) => {
 			if (message.type === 'send-request') {
@@ -160,7 +181,10 @@ export function activate(context: vscode.ExtensionContext) {
 					// This is a new request - show collection picker
 					const collections = await collectionService.load();
 					if (collections.length === 0) {
-						vscode.window.showInformationMessage('No collections available. Create a collection first.');
+						const selection = await vscode.window.showInformationMessage('No collections available. Create a collection first?', 'Create Collection');
+						if (selection === 'Create Collection') {
+							vscode.commands.executeCommand('liteclient.newCollection');
+						}
 						return;
 					}
 
@@ -378,6 +402,10 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		);
 
+		// Register this panel so it receives broadcasts
+		const panelId = `new-request-${Date.now()}`;
+		requestPanels.set(panelId, panel);
+
 		// Set up message handling for this panel
 		setupRequestMessageHandler(panel);
 
@@ -394,7 +422,9 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		});
 
-		panel.onDidDispose(() => { }, null, context.subscriptions);
+		panel.onDidDispose(() => {
+			requestPanels.delete(panelId);
+		}, null, context.subscriptions);
 	});
 
 	const newCollection = vscode.commands.registerCommand('liteclient.newCollection', async () => {
@@ -406,6 +436,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (collectionName) {
 			await collectionService.addCollection(collectionName);
 			collectionsProvider.refresh();
+			await broadcastCollectionsList(); // Notify open panels
 			vscode.window.showInformationMessage(`Collection "${collectionName}" created!`);
 		}
 	});
@@ -419,6 +450,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (environmentName) {
 			await environmentService.addEnvironment(environmentName);
 			environmentsProvider.refresh();
+			await broadcastEnvironmentList(); // Notify open panels
 			vscode.window.showInformationMessage(`Environment "${environmentName}" created!`);
 		}
 	});
@@ -429,6 +461,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (name) {
 			await collectionService.addCollection(name);
 			collectionsProvider.refresh();
+			await broadcastCollectionsList();
 		}
 	});
 
@@ -441,6 +474,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (newName) {
 			await collectionService.renameCollection(collection.id, newName);
 			collectionsProvider.refresh();
+			await broadcastCollectionsList();
 		}
 	});
 
@@ -454,6 +488,8 @@ export function activate(context: vscode.ExtensionContext) {
 		if (result === "Yes") {
 			await collectionService.deleteCollection(collection.id);
 			collectionsProvider.refresh();
+			await broadcastCollectionsList();
+			vscode.window.showInformationMessage(`Collection "${collection.name}" deleted`);
 		}
 	});
 
@@ -512,6 +548,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const updatedEnv = { ...env, name: newName };
 			await environmentService.updateEnvironment(updatedEnv);
 			environmentsProvider.refresh();
+			await broadcastEnvironmentList();
 		}
 	});
 

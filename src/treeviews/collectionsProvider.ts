@@ -20,7 +20,7 @@ export class CollectionsProvider implements vscode.TreeDataProvider<CollectionNo
   private _onDidChangeTreeData = new vscode.EventEmitter<void>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  constructor(private collectionService: CollectionService) {}
+  constructor(private collectionService: CollectionService) { }
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
@@ -28,10 +28,10 @@ export class CollectionsProvider implements vscode.TreeDataProvider<CollectionNo
 
   getTreeItem(element: CollectionNode | RequestNode): vscode.TreeItem {
     if (element instanceof CollectionNode) {
-      element.iconPath = new vscode.ThemeIcon('folder');
+      element.iconPath = new vscode.ThemeIcon('symbol-folder');
       element.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
     } else if (element instanceof RequestNode) {
-      element.iconPath = new vscode.ThemeIcon('file');
+      element.iconPath = new vscode.ThemeIcon('symbol-file');
       element.collapsibleState = vscode.TreeItemCollapsibleState.None;
       element.command = {
         command: "liteclient.openCollectionRequest",
@@ -52,7 +52,7 @@ export class CollectionsProvider implements vscode.TreeDataProvider<CollectionNo
       const collection = element.collection;
       return collection.requests.map(request => new RequestNode(request));
     }
-    
+
     // For request items, return no children
     return [];
   }

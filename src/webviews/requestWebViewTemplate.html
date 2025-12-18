@@ -202,8 +202,8 @@
     /* Single Pane Layout (default) - with fixed initial split and horizontal divider */
     .layout-single-pane .request-content-root {
       display: grid;
-      grid-template-rows: 45% 5px 55%;
-      /* request pane, divider, response pane - initial split */
+      grid-template-rows: 1fr 5px 1fr;
+      /* request pane, divider, response pane - distribute remaining space */
       width: 100%;
       box-sizing: border-box;
     }
@@ -535,6 +535,13 @@
       flex: 1;
       display: flex;
       flex-direction: column;
+      position: relative;
+      /* Needed for loading overlay */
+      min-height: 0;
+      /* Crucial for scrolling inside flex items */
+      height: 100%;
+      /* Ensure it takes full height */
+      overflow: hidden;
     }
 
     .response-header {
@@ -1087,7 +1094,7 @@
             </button>
           </div>
         </div>
-        <div style="position: relative; flex: 1; display: flex; flex-direction: column;">
+        <div class="response-container">
           <div class="loading-overlay" id="loading-overlay" style="display: none;">
             <div class="spinner"></div>
             <span class="loading-text">Sending request...</span>
@@ -2238,8 +2245,8 @@
           if (savedSplitVertical) {
             requestContentRoot.style.gridTemplateRows = savedSplitVertical;
           } else {
-            // Use the initial split: 45% request pane, 5px divider, 55% response pane
-            requestContentRoot.style.gridTemplateRows = '45% 5px 55%';
+            // Use the initial split: equal distribution with divider
+            requestContentRoot.style.gridTemplateRows = '1fr 5px 1fr';
           }
         }
       }
