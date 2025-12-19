@@ -1,3 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+  <!-- Thin circle container -->
+  <circle cx="8" cy="8" r="7.2" fill="none" stroke="currentColor" stroke-width="1.2"/>
+  <!-- Refined Triple-Flare Torch -->
+  <rect x="7.2" y="9.5" width="1.6" height="4.5" rx="0.3"/>
+  <path d="M5.5 6.5l0.5 3h4l0.5-3h-5z"/>
+  <path d="M8 1.5L9.5 6h-3L8 1.5zM4 3l2.5 3h-1.5L4 3zM12 3l-2.5 3h1.5L12 3z"/>
 </svg>
