@@ -851,7 +851,7 @@
   </style>
 </head>
 
-<body class="layout-single-pane">
+<body class="layout-two-pane">
   <div class="app-container">
     <div class="metadata-header">
       <div class="metadata-left">
@@ -867,9 +867,10 @@
               d="M2 2C1.44772 2 1.44772 2.44772 1 3V13C1 13.5523 1.44772 14 2 14H14C14.5523 14 15 13.5523 15 13V5.5C15 5 14.7761 4.77614 14.5 4.5H8.5C8.22386 4.5 8 4.27614 8 4V2C8 1.72386 7.77614 1.5 7.5 1.5H2C1.44772 1.5 1 1.94772 1 2.5Z"
               stroke="currentColor" stroke-width="1.3" />
           </svg></button>
-        <button id="layout-toggle" title="Switch to two pane view">
+        <button id="layout-toggle" title="Switch to single pane view">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="2" y="2" width="12" height="5" fill="none" stroke="currentColor" stroke-width="1.2" />
+            <rect x="2" y="2" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.2" />
+            <rect x="9" y="2" width="5" height="5" fill="none" stroke="currentColor" stroke-width="1.2" />
             <rect x="2" y="9" width="12" height="5" fill="none" stroke="currentColor" stroke-width="1.2" />
           </svg>
         </button>
@@ -2129,7 +2130,7 @@
     // Restore layout from state on load
     window.addEventListener('load', function () {
       const state = vscode.getState();
-      const savedLayoutMode = state?.layoutMode || 'single-pane'; // Default to single-pane now
+      const savedLayoutMode = state?.layoutMode || 'two-pane'; // Default to two-pane now
       const requestContentRoot = document.querySelector('.request-content-root');
 
       // Remove any existing layout classes and set the saved one

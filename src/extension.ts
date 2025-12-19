@@ -414,7 +414,7 @@ export function activate(context: vscode.ExtensionContext) {
 			type: "load-request",
 			payload: {
 				method: "GET",
-				url: "https://jsonplaceholder.typicode.com/todos/1",
+				url: "https://liteclient.com/hello",
 				headers: {},
 				body: ""
 			}
