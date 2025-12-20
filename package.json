@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "publisher": "liteclienthq",
   "engines": {
-    "vscode": "^1.106.1"
+    "vscode": "^1.90.0"
   },
   "displayName": "LiteClient",
   "description": "Fast, lightweight REST API client with native VS Code UX. No account, no bloat, no telemetry.",
@@ -285,7 +285,7 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.106.1",
+    "@types/vscode": "^1.90.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "typescript-eslint": "^8.46.3",
