@@ -1,66 +1,49 @@
 # LiteClient
 
-**The lightweight, native REST API client for Visual Studio Code.**
+**The fastest, most focused REST API client for Visual Studio Code.**
 
-LiteClient is a fast, no-nonsense API testing tool built specifically for the VS Code ecosystem. It provides the core functionality of Postman or Thunder Client without the bloat, forced cloud accounts, or telemetry.
+LiteClient is a native extension built for developers who want a high-performance HTTP client without the bloat, forced cloud accounts, or telemetry of modern alternatives. It's not a web browser in a frame—it's a part of your IDE.
 
-## Core Features
+---
 
-- ⚡ **Lightweight & Fast**: Instant startup and low memory footprint.
-- 🎨 **Native UX**: Designed to look and feel like a part of VS Code, not a web app in a frame.
-- 📁 **Collections**: Organize your requests into logical folders and save them for later.
-- 🌍 **Environments**: Manage variables (`{{host}}`, `{{token}}`) across different environments seamlessly.
-- 🛠️ **Full Method Support**: GET, POST, PUT, PATCH, DELETE, HEAD, and OPTIONS.
-- 🧱 **Flexible Editor**: Intuitive editors for Query Params, Headers, and Body (JSON, Text, Form Data).
-- 🌓 **Layout Flexibility**: Choose between single-pane or two-pane views to match your workflow.
-- 🔒 **Privacy First**: No account required. No telemetry. All data stays on your machine.
-- 🔑 **Authentication**: Built-in support for Bearer Token, Basic Auth, and API Key.
-
-## Getting Started
-
-### Creating Your First Request
-1. Click the **LiteClient** icon in the Activity Bar.
-2. In the **Requests** view, click the **+ (New Request)** button.
-3. Enter your URL and click **Send**.
-
-### Using Environments
-1. Go to the **Environments** view and click **+**.
-2. Add variables like `baseUrl` or `apiKey`.
-3. Use them in your requests with double curly braces: `{{baseUrl}}/users`.
-
-### Saving to Collections
-Once you have a request configured:
-1. Click the **Save** button.
-2. Select an existing collection or create a new one.
+![LiteClient Hero Screenshot](https://liteclient.com/media/screenshot.png)
 
 ---
 
 ## Why LiteClient?
 
-Most API clients have become bloated with social features, forced cloud syncing, and AI marketing. LiteClient returns to the basics:
+In an era of bloated developer tools, LiteClient returns to the essentials:
 
-- **Speed**: We don't load a browser-within-a-browser.
-- **Privacy**: We don't track your requests or your usage.
-- **Integration**: We use VS Code's native treeviews and themes for a seamless experience.
+- � **Zero Startup Time**: Restores your workspace instantly.
+- 🔒 **Total Privacy**: No cloud syncing, no accounts, and absolutely zero telemetry.
+- 🎨 **Pure Native UX**: Uses VS Code's native buttons, trees, and themes. No "Custom UI" friction.
+- � **Everything you need, nothing you don't**: Collections, Environments, and History—without the noise.
 
-## Privacy & Security
+## Core Features
 
-We take your data seriously:
-- **No Telemetry**: We do not collect any data about how you use the extension.
-- **No Third-Party Tracking**: Your requests are your own.
-- **Local Storage**: All collections, history, and environments are stored locally in your VS Code global storage.
+- ⚡ **High Performance**: Native implementation for minimal memory and CPU usage.
+- 📁 **Collections**: Hierarchical organization for your API requests.
+- 🌍 **Environment Variables**: Seamlessly switch between `local`, `staging`, and `production`.
+- 🌓 **Layout Flexibility**: Smart two-panel or single-pane views.
+- 🔑 **Auth Support**: Bearer Token, Basic Auth, and API Keys ready to go.
+- 🧱 **Rich Request Building**: Full support for Query Params, Headers, and JSON/Form-data bodies.
 
-## Roadmap
+## Quick Start
 
-- [ ] Import from Postman / Thunder Client
-- [ ] View Response Headers tab
-- [ ] Multi-part form data support
+1.  Open the **LiteClient** view from the Activity Bar.
+2.  Click **New Request** in the sidebar.
+3.  Enter your URL (e.g., `https://liteclient.com/hello`).
+4.  Hit **Send**.
 
-## Links
+## Privacy First
 
-- **GitHub Issues**: [liteclienthq/liteclient-issues](https://github.com/liteclienthq/liteclient-issues)
-- **Marketplace**: [LiteClient on VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
+Your API keys and sensitive requests are *your* business. LiteClient stores all data locally in your VS Code global storage. No data ever leaves your machine unless you're the one sending the request.
 
 ---
+
+## Support & Feedback
+
+- **Report a Bug**: [GitHub Issues](https://github.com/liteclienthq/liteclient-issues/issues)
+- **Website**: [liteclient.com](https://liteclient.com)
 
 **Enjoy a faster way to test APIs.**

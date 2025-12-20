@@ -8,6 +8,8 @@
   "displayName": "LiteClient",
   "description": "Fast, lightweight REST API client with native VS Code UX. No account, no bloat, no telemetry.",
   "categories": [
+    "Testing",
+    "Programming Languages",
     "Other"
   ],
   "keywords": [
@@ -21,9 +23,8 @@
     "testing"
   ],
   "icon": "media/logo.png",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/liteclienthq/liteclient-issues.git"
+  "bugs": {
+    "url": "https://github.com/liteclienthq/liteclient-issues/issues"
   },
   "homepage": "https://liteclient.com",
   "activationEvents": [],
