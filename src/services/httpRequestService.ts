@@ -19,6 +19,7 @@ export interface RequestPayload {
 export interface ResponseData {
   body: string;
   status: string;
+  headers: Record<string, string>;
   isError?: boolean;
   errorType?: 'network' | 'timeout' | 'invalid_url' | 'unknown';
 }
@@ -37,6 +38,7 @@ export class HttpRequestService {
         return {
           body: `Invalid URL: "${substitutedPayload.url}"\n\nPlease enter a valid URL starting with http:// or https://`,
           status: 'Invalid URL',
+          headers: {},
           isError: true,
           errorType: 'invalid_url'
         };
@@ -47,6 +49,7 @@ export class HttpRequestService {
         return {
           body: `Unsupported protocol: "${parsedUrl.protocol}"\n\nOnly http:// and https:// protocols are supported.`,
           status: 'Invalid Protocol',
+          headers: {},
           isError: true,
           errorType: 'invalid_url'
         };
@@ -89,9 +92,15 @@ export class HttpRequestService {
       const response = await fetch(parsedUrl.toString(), options);
       const text = await response.text();
 
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+
       return {
         body: text,
         status: `${response.status} ${response.statusText}`,
+        headers: responseHeaders,
         isError: response.status >= 400
       };
     } catch (error) {
@@ -107,6 +116,7 @@ export class HttpRequestService {
         return {
           body: `Network Error\n\nCould not connect to the server. Please check:\n• The URL is correct\n• The server is running\n• Your internet connection is active\n\nDetails: ${errorMessage}`,
           status: 'Network Error',
+          headers: {},
           isError: true,
           errorType: 'network'
         };
@@ -117,6 +127,7 @@ export class HttpRequestService {
         return {
           body: `Request Timeout\n\nThe server took too long to respond.\n\nDetails: ${errorMessage}`,
           status: 'Timeout',
+          headers: {},
           isError: true,
           errorType: 'timeout'
         };
@@ -126,6 +137,7 @@ export class HttpRequestService {
       return {
         body: `Request Failed\n\nAn unexpected error occurred.\n\nDetails: ${errorMessage}`,
         status: 'Error',
+        headers: {},
         isError: true,
         errorType: 'unknown'
       };

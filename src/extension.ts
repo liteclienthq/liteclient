@@ -95,6 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
 					type: 'response',
 					body: response.body,
 					status: response.status,
+					headers: response.headers,
 					isError: response.isError
 				});
 			}
@@ -262,7 +263,8 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.ViewColumn.One,
 				{
 					enableScripts: true,
-					retainContextWhenHidden: true
+					retainContextWhenHidden: true,
+					enableFindWidget: true
 				}
 			);
 
@@ -396,7 +398,8 @@ export function activate(context: vscode.ExtensionContext) {
 			vscode.ViewColumn.One,
 			{
 				enableScripts: true,
-				retainContextWhenHidden: true
+				retainContextWhenHidden: true,
+				enableFindWidget: true
 			}
 		);
 
@@ -740,7 +743,8 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.ViewColumn.One,
 				{
 					enableScripts: true,
-					retainContextWhenHidden: true
+					retainContextWhenHidden: true,
+					enableFindWidget: true
 				}
 			);
 
@@ -824,6 +828,7 @@ export function activate(context: vscode.ExtensionContext) {
 						type: 'response',
 						body: response.body,
 						status: response.status,
+						headers: response.headers,
 						isError: response.isError
 					});
 				}

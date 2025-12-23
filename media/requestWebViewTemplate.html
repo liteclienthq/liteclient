@@ -479,21 +479,224 @@
       display: flex;
       flex-direction: column;
       position: relative;
-      /* Needed for loading overlay */
       min-height: 0;
-      /* Crucial for scrolling inside flex items */
       height: 100%;
-      /* Ensure it takes full height */
       overflow: hidden;
+      background: var(--vscode-editor-background);
+    }
+
+    .response-tabs {
+      display: flex;
+      border-bottom: var(--lc-border);
+      background: var(--vscode-editor-background);
+      padding: 0 var(--lc-space-md);
+      flex-shrink: 0;
+    }
+
+    .response-tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--vscode-tab-inactiveForeground);
+      border-bottom: 2px solid transparent;
+      opacity: 0.8;
+    }
+
+    .response-tab:hover {
+      opacity: 1;
+    }
+
+    .response-tab.active {
+      color: var(--vscode-tab-activeForeground);
+      border-bottom-color: var(--vscode-tab-activeBorder);
+      font-weight: 500;
+      opacity: 1;
+    }
+
+    .response-content-area {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .response-tab-panel {
+      display: none;
+      flex: 1;
+      overflow: auto;
+      height: 100%;
+    }
+
+    .response-tab-panel.active {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--vscode-editor-background);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .response-actions-floating {
+      position: absolute;
+      top: 8px;
+      right: 20px;
+      z-index: 10;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .response-tab-panel:hover .response-actions-floating {
+      opacity: 1;
+    }
+
+    .floating-action-btn {
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: 1px solid var(--vscode-button-border, transparent);
+      padding: 4px 8px;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .floating-action-btn:hover {
+      background: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    .floating-action-btn svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* Editor-like view styles */
+    .editor-container {
+      display: flex;
+      font-family: var(--vscode-editor-font-family);
+      font-size: var(--vscode-editor-font-size);
+      line-height: 1.5;
+      background: var(--vscode-editor-background);
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .line-numbers {
+      padding: 0 6px 0 4px;
+      text-align: right;
+      color: var(--vscode-editorLineNumber-foreground);
+      background: var(--vscode-editor-background);
+      user-select: none;
+      flex-shrink: 0;
+      min-width: 25px;
+    }
+
+
+    .code-content {
+      flex: 1;
+      padding-left: 8px;
+      white-space: pre;
+      color: var(--vscode-editor-foreground);
+      outline: none;
+      user-select: text;
+      cursor: text;
+      caret-color: var(--vscode-editorCursor-foreground, #AEAFAD);
+    }
+
+    .code-content:focus {
+      outline: none;
+    }
+
+    /* JSON Syntax Highlighting */
+    .json-key {
+      color: var(--vscode-symbolIcon-propertyForeground, #9cdcfe);
+    }
+
+    .json-string {
+      color: var(--vscode-debugTokenExpression-string, #ce9178);
+    }
+
+    .json-number {
+      color: var(--vscode-debugTokenExpression-number, #b5cea8);
+    }
+
+    .json-bool {
+      color: var(--vscode-debugTokenExpression-boolean, #569cd6);
+    }
+
+    .json-null {
+      color: var(--vscode-debugTokenExpression-boolean, #569cd6);
+    }
+
+    /* Headers tab table */
+    .response-headers-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .response-headers-table tr {
+      border-bottom: var(--lc-border);
+    }
+
+    .response-headers-table td {
+      padding: 8px 12px;
+      vertical-align: top;
+    }
+
+    .header-name {
+      font-weight: 600;
+      color: var(--vscode-symbolIcon-propertyForeground);
+      width: 200px;
+    }
+
+    .header-value-display {
+      word-break: break-all;
+      color: var(--vscode-foreground);
     }
 
     .response-header {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-start;
       align-items: center;
       padding: var(--lc-space-sm) var(--lc-space-md);
       background: var(--vscode-editor-background);
-      margin-top: var(--lc-space-sm);
+      flex-shrink: 0;
+    }
+
+    .response-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .status-label,
+    .size-label,
+    .time-label {
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .meta-separator {
+      color: var(--vscode-descriptionForeground);
+      opacity: 0.5;
+      margin: 0 4px;
     }
 
     h3 {
@@ -515,6 +718,11 @@
 
     .status-line.status-error {
       color: var(--vscode-errorForeground, #f48771);
+    }
+
+    .response-size,
+    .response-time {
+      color: var(--vscode-terminal-ansiGreen, #89d185);
     }
 
     #response {
@@ -672,22 +880,6 @@
       color: var(--vscode-descriptionForeground);
     }
 
-    /* Response meta info */
-    .response-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex: 1;
-    }
-
-    .response-time,
-    .response-size {
-      font-size: 11px;
-      color: var(--vscode-descriptionForeground);
-      padding: 2px 6px;
-      background: var(--vscode-badge-background);
-      border-radius: 3px;
-    }
 
     /* Response action buttons */
     .response-actions {
@@ -1008,41 +1200,52 @@
       <div class="layout-divider"></div>
 
       <div class="response-pane">
-        <div class="response-header">
-          <div class="response-meta">
-            <h3>Response</h3>
-            <span class="status-line" id="status-line">No request sent yet</span>
-            <span class="response-time" id="response-time" style="display: none;"></span>
-            <span class="response-size" id="response-size" style="display: none;"></span>
-          </div>
-          <div class="response-actions">
-            <button class="response-action-btn" id="copy-response" title="Copy Response" disabled>
-              <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M4 4V1.5C4 1.22386 4.22386 1 4.5 1H14.5C14.7761 1 15 1.22386 15 1.5V11.5C15 11.7761 14.7761 12 14.5 12H12"
-                  stroke="currentColor" stroke-width="1.2" />
-                <rect x="1" y="4" width="11" height="11" rx="0.5" stroke="currentColor" stroke-width="1.2" />
-              </svg>
-              Copy
-            </button>
-            <button class="response-action-btn" id="format-json" title="Format JSON" disabled>
-              <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 2L1 8L4 14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
-                  stroke-linejoin="round" />
-                <path d="M12 2L15 8L12 14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
-                  stroke-linejoin="round" />
-                <path d="M10 3L6 13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-              </svg>
-              Format
-            </button>
-          </div>
-        </div>
         <div class="response-container">
-          <div class="loading-overlay" id="loading-overlay" style="display: none;">
-            <div class="spinner"></div>
-            <span class="loading-text">Sending request...</span>
+          <div class="response-header">
+            <div class="response-meta">
+              <span class="status-label">Status:</span> <span id="status-line" class="status-line">-</span>
+              <span class="meta-separator">|</span>
+              <span class="size-label">Size:</span> <span id="response-size" class="response-size">-</span>
+              <span class="meta-separator">|</span>
+              <span class="time-label">Time:</span> <span id="response-time" class="response-time">-</span>
+            </div>
           </div>
-          <pre id="response">Send a request to see the response here...</pre>
+
+          <div class="response-tabs">
+            <div class="response-tab active" data-tab="response-body">Response</div>
+            <div class="response-tab" data-tab="response-headers">Headers</div>
+          </div>
+
+          <div class="response-content-area">
+            <!-- Response Tab -->
+            <div id="response-body" class="response-tab-panel active">
+              <div class="response-actions-floating">
+                <button id="copy-response" class="floating-action-btn" title="Copy response to clipboard" disabled>
+                  <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="5" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.2" />
+                    <path d="M3.5 11V4.5C3.5 3.39543 4.39543 2.5 5.5 2.5H10" stroke="currentColor" stroke-width="1.2"
+                      stroke-linecap="round" />
+                  </svg>
+                  Copy
+                </button>
+              </div>
+              <div class="editor-container">
+                <div id="line-numbers" class="line-numbers"></div>
+                <div id="response" class="code-content" contenteditable="true" spellcheck="false" tabindex="0"></div>
+              </div>
+              <div id="loading-overlay" class="loading-overlay" style="display: none;">
+                <div class="spinner"></div>
+                <div class="loading-text">Sending request...</div>
+              </div>
+            </div>
+
+            <!-- Headers Tab -->
+            <div id="response-headers" class="response-tab-panel">
+              <table class="response-headers-table">
+                <tbody id="response-headers-list"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     </div> <!-- End request-content-root -->
@@ -1712,11 +1915,11 @@
           statusLine.className = 'status-line';
         }
 
-        // Hide response meta until we get a response
+        // Reset response meta to placeholders
         const responseTime = document.getElementById('response-time');
         const responseSize = document.getElementById('response-size');
-        if (responseTime) responseTime.style.display = 'none';
-        if (responseSize) responseSize.style.display = 'none';
+        if (responseTime) responseTime.textContent = '-';
+        if (responseSize) responseSize.textContent = '-';
 
         // Get the current request name from the saved state
         const currentRequestName = savedRequestData.name || '';
@@ -1829,59 +2032,129 @@
       });
     };
 
+    // Response tab switching logic
+    document.querySelectorAll('.response-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.getAttribute('data-tab');
+
+        // Update active tab button
+        document.querySelectorAll('.response-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Update active tab panel
+        document.querySelectorAll('.response-tab-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+      });
+    });
+
+    // Function to update line numbers for a code container
+    function updateLineNumbers(content, lineNumbersId) {
+      const lineNumbersElement = document.getElementById(lineNumbersId);
+      if (!lineNumbersElement) return;
+
+      const lines = content.split('\n');
+      const lineNumbersHtml = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+      lineNumbersElement.innerHTML = lineNumbersHtml;
+    }
+
+    // Function to render response headers
+    function renderResponseHeaders(headers) {
+      const headersList = document.getElementById('response-headers-list');
+      if (!headersList) return;
+
+      headersList.innerHTML = '';
+
+      if (!headers || Object.keys(headers).length === 0) {
+        headersList.innerHTML = '<tr><td colspan="2" style="text-align: center; opacity: 0.5; padding: 20px;">No headers available</td></tr>';
+        return;
+      }
+
+      // Sort headers alphabetically
+      const sortedKeys = Object.keys(headers).sort();
+
+      sortedKeys.forEach(key => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="header-name">${key}</td>
+          <td class="header-value-display">${headers[key]}</td>
+        `;
+        headersList.appendChild(row);
+      });
+    }
+
+    // Syntax highlighting for JSON
+    function highlightJson(json) {
+      return json
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+        .replace(/: "([^"\\]*(\\.[^"\\]*)*)"/g, ': <span class="json-string">"$1"</span>')
+        .replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>')
+        .replace(/: (true|false)/g, ': <span class="json-bool">$1</span>')
+        .replace(/: (null)/g, ': <span class="json-null">$1</span>');
+    }
+
+    const responseEl = document.getElementById('response');
+
     // Handle response from extension
     window.addEventListener('message', (event) => {
-      const { type, body, status } = event.data;
+      const { type, body, status, headers, isError } = event.data;
       if (type === 'response') {
-        // Hide loading overlay
         const loadingOverlay = document.getElementById('loading-overlay');
-        if (loadingOverlay) {
-          loadingOverlay.style.display = 'none';
-        }
+        if (loadingOverlay) loadingOverlay.style.display = 'none';
 
-        // Calculate response time
-        const responseTime = document.getElementById('response-time');
-        if (responseTime && window.requestStartTime) {
+        if (window.requestStartTime) {
           const duration = Date.now() - window.requestStartTime;
-          responseTime.textContent = `${duration}ms`;
-          responseTime.style.display = 'inline';
-        }
-
-        // Calculate response size
-        const responseSize = document.getElementById('response-size');
-        if (responseSize && body) {
-          const bytes = new Blob([body]).size;
-          let sizeText;
-          if (bytes < 1024) {
-            sizeText = `${bytes} B`;
-          } else if (bytes < 1024 * 1024) {
-            sizeText = `${(bytes / 1024).toFixed(1)} KB`;
-          } else {
-            sizeText = `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+          const responseTime = document.getElementById('response-time');
+          if (responseTime) {
+            responseTime.textContent = `${duration} ms`;
           }
-          responseSize.textContent = sizeText;
-          responseSize.style.display = 'inline';
         }
 
-        // Store raw response for copy/format functions
+        if (body) {
+          const bytes = new Blob([body]).size;
+          const responseSize = document.getElementById('response-size');
+          if (responseSize) {
+            let sizeText = bytes < 1024 ? `${bytes} B` : (bytes < 1048576 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1048576).toFixed(2)} MB`);
+            responseSize.textContent = sizeText;
+          }
+        }
+
         window.rawResponse = body;
-
-        // Enable action buttons
         const copyBtn = document.getElementById('copy-response');
-        const formatBtn = document.getElementById('format-json');
         if (copyBtn) copyBtn.disabled = false;
-        if (formatBtn) formatBtn.disabled = false;
 
-        // Get response element
         const responseEl = document.getElementById('response');
 
-        // Check if this is an error response
-        const isError = event.data.isError;
+        // Body Tab - Auto-Format if JSON
+        let displayContent = body || '';
+        let isJson = false;
 
-        // Display response
-        responseEl.textContent = body;
+        if (body) {
+          try {
+            const parsed = JSON.parse(body);
+            const formatted = JSON.stringify(parsed, null, 2);
+            displayContent = highlightJson(formatted);
+            isJson = true;
+          } catch (e) {
+            // Not JSON, use plain text
+            displayContent = body;
+          }
+        }
 
-        // Handle error state styling
+        if (isJson) {
+          responseEl.innerHTML = displayContent;
+        } else {
+          responseEl.textContent = displayContent;
+        }
+
+        const rawForLineNumbers = isJson ? JSON.stringify(JSON.parse(body), null, 2) : (body || '');
+        updateLineNumbers(rawForLineNumbers, 'line-numbers');
+
+        // Headers Tab
+        renderResponseHeaders(headers);
+
         if (isError) {
           responseEl.classList.add('error-state');
         } else {
@@ -1889,18 +2162,15 @@
         }
 
         const statusLineElement = document.getElementById('status-line');
-        statusLineElement.textContent = status ? `${status}` : 'Request completed';
-
-        // Add status class based on status code or error state
-        statusLineElement.className = 'status-line'; // Reset classes
-        if (isError) {
-          statusLineElement.classList.add('status-error');
-        } else if (status) {
-          const statusCode = parseInt(status);
-          if (statusCode >= 200 && statusCode < 300) {
-            statusLineElement.classList.add('status-success');
-          } else if (statusCode >= 400) {
+        if (statusLineElement) {
+          statusLineElement.textContent = status || 'Request completed';
+          statusLineElement.className = 'status-line';
+          if (isError) {
             statusLineElement.classList.add('status-error');
+          } else if (status) {
+            const code = parseInt(status);
+            if (code >= 200 && code < 300) statusLineElement.classList.add('status-success');
+            else if (code >= 400) statusLineElement.classList.add('status-error');
           }
         }
       }
@@ -2021,44 +2291,9 @@
       }
     });
 
-    // Format JSON button handler
-    document.getElementById('format-json').addEventListener('click', function () {
-      const responseEl = document.getElementById('response');
-      const rawResponse = window.rawResponse || responseEl.textContent;
 
-      try {
-        // Try to parse as JSON
-        const parsed = JSON.parse(rawResponse);
-        const formatted = JSON.stringify(parsed, null, 2);
 
-        // Apply syntax highlighting
-        const highlighted = formatted
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
-          .replace(/: "([^"\\]*(\\.[^"\\]*)*)"/g, ': <span class="json-string">"$1"</span>')
-          .replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>')
-          .replace(/: (true|false)/g, ': <span class="json-bool">$1</span>')
-          .replace(/: (null)/g, ': <span class="json-null">$1</span>');
-
-        responseEl.innerHTML = highlighted;
-
-        // Update button to show it's formatted
-        const originalText = this.innerHTML;
-        this.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 8L6 12L14 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Formatted!';
-        setTimeout(() => {
-          this.innerHTML = originalText;
-        }, 1500);
-      } catch (err) {
-        // Not valid JSON, show error feedback
-        const originalText = this.innerHTML;
-        this.innerHTML = 'Not JSON';
-        setTimeout(() => {
-          this.innerHTML = originalText;
-        }, 1500);
-      }
-    });
+    // (Format JSON button removed - auto-formatting is now standard)
 
     // Layout Toggle Functionality
     const layoutToggleBtn = document.getElementById('layout-toggle');
@@ -2273,6 +2508,16 @@
 
     // The divider restore is handled in the main layout restore function above
 
+    // Make response area read-only but focusable
+    if (responseEl) {
+      responseEl.addEventListener('keydown', (e) => {
+        // Allow Copy, SelectAll, and navigation keys
+        if (e.metaKey || e.ctrlKey || e.key.startsWith('Arrow') || e.key === 'PageUp' || e.key === 'PageDown' || e.key === 'Home' || e.key === 'End') {
+          return;
+        }
+        e.preventDefault();
+      });
+    }
   </script>
 </body>
 

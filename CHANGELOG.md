@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-12-24
+
+### Added
+- **Enhanced Response View**: Introduced a tabbed interface with "Response" and "Headers" tabs.
+- **Auto-Formatting**: JSON responses are now automatically formatted and syntax-highlighted.
+- **Editor Experience**: Response area features line numbers and is selectable for easy copying.
+- **Response Headers**: Dedicated tab to view all response headers in a structured table.
+- **Professional Status Bar**: Status, Size, and Time are always visible with placeholders.
+
+### Removed
+- Removed the manual "Format" button as formatting is now automatic.
+
 ## [0.1.0] - 2025-12-19
 
 ### Added
