@@ -20,28 +20,58 @@ export interface ResponseData {
   body: string;
   status: string;
   headers: Record<string, string>;
+  time?: number;
   isError?: boolean;
-  errorType?: 'network' | 'timeout' | 'invalid_url' | 'unknown';
+  errorType?: 'network' | 'timeout' | 'invalid_url' | 'unknown' | 'unresolved_variables';
 }
+
 
 export class HttpRequestService {
   static async sendRequest(payload: RequestPayload, environmentVariables: Record<string, string> = {}): Promise<ResponseData> {
     try {
+      // Debug: Log environment variables for debugging
+      console.log('HTTP Request - Environment Variables:', environmentVariables);
+      console.log('HTTP Request - Original URL:', payload.url);
+
       // Perform variable substitution on the request payload
       const substitutedPayload = substituteVariablesInRequest(payload, environmentVariables);
+
+      // Debug: Log substituted URL for debugging
+      console.log('HTTP Request - Substituted URL:', substitutedPayload.url);
 
       // Validate URL before making request
       let parsedUrl: URL;
       try {
         parsedUrl = new URL(substitutedPayload.url);
       } catch {
-        return {
-          body: `Invalid URL: "${substitutedPayload.url}"\n\nPlease enter a valid URL starting with http:// or https://`,
-          status: 'Invalid URL',
-          headers: {},
-          isError: true,
-          errorType: 'invalid_url'
-        };
+        // Check if this is due to unresolved variables
+        const hasUnresolvedVars = substitutedPayload.url.includes('{{') && substitutedPayload.url.includes('}}');
+
+        if (hasUnresolvedVars) {
+          return {
+            body: `Invalid URL: "${substitutedPayload.url}"
+
+This URL contains unresolved environment variables (e.g., {{port}}).
+This usually means the environment is not selected or the variable is not defined.
+
+Please check:
+1. You have selected an environment in the request panel or sidebar
+2. The environment contains all required variables
+3. The variable names are spelled correctly`,
+            status: 'Invalid URL',
+            headers: {},
+            isError: true,
+            errorType: 'unresolved_variables' as const
+          };
+        } else {
+          return {
+            body: `Invalid URL: "${substitutedPayload.url}"\n\nPlease enter a valid URL starting with http:// or https://`,
+            status: 'Invalid URL',
+            headers: {},
+            isError: true,
+            errorType: 'invalid_url' as const
+          };
+        }
       }
 
       // Check for supported protocols
@@ -63,7 +93,7 @@ export class HttpRequestService {
         if (auth.type === 'bearer' && auth.bearer?.token) {
           headers['Authorization'] = `Bearer ${auth.bearer.token}`;
         } else if (auth.type === 'basic' && auth.basic) {
-          const credentials = Buffer.from(`${auth.basic.username}:${auth.basic.password}`).toString('base64');
+          const credentials = btoa(`${auth.basic.username}:${auth.basic.password}`);
           headers['Authorization'] = `Basic ${credentials}`;
         } else if (auth.type === 'apikey' && auth.apikey?.key && auth.apikey?.value) {
           if (auth.apikey.addTo === 'header') {
@@ -89,8 +119,11 @@ export class HttpRequestService {
         options.body = substitutedPayload.body;
       }
 
+      const startTime = Date.now();
       const response = await fetch(parsedUrl.toString(), options);
       const text = await response.text();
+      const endTime = Date.now();
+      const duration = endTime - startTime;
 
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((value, key) => {
@@ -101,8 +134,10 @@ export class HttpRequestService {
         body: text,
         status: `${response.status} ${response.statusText}`,
         headers: responseHeaders,
+        time: duration,
         isError: response.status >= 400
       };
+
     } catch (error) {
       // Provide user-friendly error messages based on error type
       const errorMessage = error instanceof Error ? error.message : String(error);

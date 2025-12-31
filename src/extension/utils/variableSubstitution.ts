@@ -18,7 +18,7 @@ export function substituteVariables(input: string, variables: Record<string, str
   // Regular expression to match {{variableName}} patterns
   // Matches: {{ followed by variable name (alphanumeric, underscore, hyphen), followed by }}
   const regex = /\{\{([a-zA-Z0-9_-]+)\}\}/g;
-  
+
   // Replace all matches with corresponding variable values
   return input.replace(regex, (match, variableName) => {
     if (variables && typeof variables[variableName] !== 'undefined') {
@@ -48,14 +48,14 @@ export function substituteVariablesInRequest(request: any, variables: Record<str
   // Substitute in headers (both keys and values)
   if (substitutedRequest.headers) {
     const newHeaders: Record<string, string> = {};
-    
+
     for (const [key, value] of Object.entries(substitutedRequest.headers)) {
       // Substitute variable in both key and value
       const substitutedKey = substituteVariables(String(key), variables);
       const substitutedValue = substituteVariables(String(value), variables);
       newHeaders[substitutedKey] = substitutedValue;
     }
-    
+
     substitutedRequest.headers = newHeaders;
   }
 
@@ -64,5 +64,22 @@ export function substituteVariablesInRequest(request: any, variables: Record<str
     substitutedRequest.body = substituteVariables(substitutedRequest.body, variables);
   }
 
+  // Substitute in auth
+  if (substitutedRequest.auth) {
+    const auth = substitutedRequest.auth;
+    if (auth.basic) {
+      if (auth.basic.username) {auth.basic.username = substituteVariables(auth.basic.username, variables);}
+      if (auth.basic.password) {auth.basic.password = substituteVariables(auth.basic.password, variables);}
+    }
+    if (auth.bearer && auth.bearer.token) {
+      auth.bearer.token = substituteVariables(auth.bearer.token, variables);
+    }
+    if (auth.apikey) {
+      if (auth.apikey.key) {auth.apikey.key = substituteVariables(auth.apikey.key, variables);}
+      if (auth.apikey.value) {auth.apikey.value = substituteVariables(auth.apikey.value, variables);}
+    }
+  }
+
   return substitutedRequest;
+
 }

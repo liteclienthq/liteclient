@@ -1,6 +1,6 @@
 {
   "name": "liteclient",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "liteclienthq",
   "engines": {
     "vscode": "^1.90.0"
@@ -28,7 +28,7 @@
   },
   "homepage": "https://liteclient.com",
   "activationEvents": [],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "customEditors": [
       {
@@ -54,39 +54,13 @@
     "views": {
       "liteclient-sidebar": [
         {
-          "id": "requests",
-          "name": "Requests",
-          "icon": "media/history.svg",
-          "contextualTitle": "LiteClient: Requests"
-        },
-        {
-          "id": "collections",
-          "name": "Collections",
-          "icon": "media/bucket.svg",
-          "contextualTitle": "LiteClient: Collections"
-        },
-        {
-          "id": "environments",
-          "name": "Environments",
-          "icon": "media/variable.svg",
-          "contextualTitle": "LiteClient: Environments"
+          "type": "webview",
+          "id": "liteclient-sidebar-view",
+          "name": "LiteClient",
+          "icon": "media/logo.svg"
         }
       ]
     },
-    "viewsWelcome": [
-      {
-        "view": "requests",
-        "contents": "No requests yet.\n[New Request](command:liteclient.newRequest)"
-      },
-      {
-        "view": "collections",
-        "contents": "No collections yet.\n[New Collection](command:liteclient.newCollection)"
-      },
-      {
-        "view": "environments",
-        "contents": "No environments yet.\n[New Environment](command:liteclient.newEnvironment)"
-      }
-    ],
     "commands": [
       {
         "command": "liteclient.newRequest",
@@ -278,21 +252,29 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js --production",
+    "watch": "node esbuild.js --watch",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "check": "npm run check:extension && npm run check:webview",
+    "check:extension": "tsc -p ./ --noEmit",
+    "check:webview": "tsc -p src/webview/tsconfig.json --noEmit",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.90.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "typescript-eslint": "^8.46.3",
+    "@types/vscode": "^1.90.0",
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.27.2",
     "eslint": "^9.39.1",
     "typescript": "^5.9.3",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2"
+    "typescript-eslint": "^8.46.3"
+  },
+  "dependencies": {
+    "lit": "^3.3.2"
   }
 }
