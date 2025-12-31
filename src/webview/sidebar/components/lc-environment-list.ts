@@ -47,19 +47,8 @@ export class LcEnvironmentList extends LcBaseElement {
       outline: 1px solid var(--vscode-list-hoverOutline);
     }
 
-    .env-header.selected {
-      background: var(--vscode-list-activeSelectionBackground);
-      color: var(--vscode-list-activeSelectionForeground);
-      border: 1px solid var(--vscode-list-activeSelectionBackground);
-    }
-
     .env-header:focus-visible {
       outline: 1px solid var(--vscode-focusBorder);
-      outline-offset: -1px;
-    }
-
-    .env-header.selected:focus-visible {
-      outline: 1px solid var(--vscode-list-focusOutline);
       outline-offset: -1px;
     }
 
@@ -96,6 +85,10 @@ export class LcEnvironmentList extends LcBaseElement {
       flex-shrink: 0;
       opacity: 0.6;
       transition: transform 0.15s ease;
+    }
+
+    .env-expander.open {
+      transform: rotate(90deg);
     }
 
     .env-expander:hover {
@@ -337,16 +330,16 @@ export class LcEnvironmentList extends LcBaseElement {
       gap: 4px;
       transition: all 0.15s ease;
     }
-    
+
     .add-variable:hover {
       background: var(--vscode-button-hoverBackground);
       transform: translateY(-1px);
     }
-    
+
     .add-variable:active {
       transform: translateY(0);
     }
-    
+
     .add-variable-icon {
       font-size: 12px;
     }
@@ -411,7 +404,7 @@ export class LcEnvironmentList extends LcBaseElement {
     .menu-item.danger {
       color: var(--vscode-errorForeground);
     }
-    
+
     .menu-item.danger:hover {
       background: var(--vscode-inputValidation-errorBackground);
       color: var(--vscode-errorForeground);
@@ -430,8 +423,12 @@ export class LcEnvironmentList extends LcBaseElement {
   @state() private editingVar: { envId: string; varName: string; varValue: string } | null = null;
 
   private environmentActions: SidebarItemAction[] = [
+    { id: 'add-variable', label: 'Add Variable' },
     { id: 'rename', label: 'Rename' },
-    { id: 'delete', label: 'Delete', danger: true },
+    { id: 'delete', label: 'Delete', danger: true }
+  ];
+
+  private globalsActions: SidebarItemAction[] = [
     { id: 'add-variable', label: 'Add Variable' }
   ];
 
@@ -548,7 +545,11 @@ export class LcEnvironmentList extends LcBaseElement {
 
   private handleMenuAction(e: Event, actionId: string, envId: string, varName?: string) {
     e.stopPropagation();
-    this.menuOpenId = null;
+
+    // Close the menu after action is triggered
+    setTimeout(() => {
+      this.menuOpenId = null;
+    }, 0);
 
     // Dispatch events based on action
     if (varName) {
@@ -672,7 +673,7 @@ export class LcEnvironmentList extends LcBaseElement {
     super.connectedCallback();
     // Add event listener to close context menu when clicking outside
     document.addEventListener('click', this.handleDocumentClick);
-    
+
     // Initialize selected ID from the property
     if (this.selectedEnvironmentId) {
       this.selectedId = this.selectedEnvironmentId;
@@ -681,7 +682,7 @@ export class LcEnvironmentList extends LcBaseElement {
 
   override willUpdate(changedProperties: Map<string, any>) {
     super.willUpdate(changedProperties);
-    
+
     // Sync selectedId when selectedEnvironmentId changes
     if (changedProperties.has('selectedEnvironmentId') && this.selectedEnvironmentId) {
       this.selectedId = this.selectedEnvironmentId;
@@ -702,10 +703,71 @@ export class LcEnvironmentList extends LcBaseElement {
   };
 
   override render() {
+    // Filter out globals from the environments array to avoid duplicates
+    const filteredEnvironments = this.environments.filter(env => env.id !== 'globals');
+
+    // Check if globals is open (using the openItems state)
+    const isGlobalsOpen = this.openItems.has('globals');
+
     return html`
       <div class="environment-list">
-        ${this.environments.length === 0 ? html`<div class="empty-state">No environments</div>` :
-        this.environments.map(env => {
+        <!-- Global Environment -->
+        <div class="environment-item" data-env-id="globals">
+          <div class="env-header ${this.selectedId === 'globals' ? 'selected' : ''}"
+               @click=${() => this.toggleEnvironment('globals')}
+               role="treeitem"
+               aria-expanded="${isGlobalsOpen}"
+               aria-level="1"
+               aria-selected="${this.selectedId === 'globals'}"
+               tabindex="${this.selectedId === 'globals' ? '0' : '-1'}">
+            <div class="env-content">
+              <span class="env-expander ${isGlobalsOpen ? 'open' : ''}" @click=${(e: Event) => { e.stopPropagation(); this.toggleEnvVariables('globals'); }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M6 3l5 5-5 5-1.5-1.5L9 8l-4.5-3.5L6 3z"/>
+                </svg>
+              </span>
+              <span class="env-label">Globals</span>
+            </div>
+            <div class="env-actions">
+              <button @click=${(e: Event) => this.handleMenu(e, 'globals')} title="More actions">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                </svg>
+              </button>
+            </div>
+            <div
+              class="context-menu ${this.menuOpenId === 'globals' ? 'open' : ''}"
+              style="top: ${this.menuTop}px; left: ${this.menuLeft}px;"
+            >
+              ${this.globalsActions.map(action => html`
+                <div
+                  class="menu-item ${action.danger ? 'danger' : ''}"
+                  @click=${(e: Event) => this.handleMenuAction(e, action.id, 'globals')}
+                >
+                  ${action.label}
+                </div>
+              `)}
+            </div>
+          </div>
+          <div class="env-variables ${isGlobalsOpen ? 'open' : ''}">
+            <div class="empty-state">
+              <div class="empty-state-icon">🌍</div>
+              <div>Global variables</div>
+              <div style="font-size: 10px; margin-top: 4px; opacity: 0.7;">
+                Global variables are available in all requests
+              </div>
+            </div>
+            <div class="add-variable-btn">
+              <button @click="${() => this.startAddingVariable('globals')}" class="add-variable">
+                <span class="add-variable-icon">+</span>
+                <span>Add Global Variable</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        ${filteredEnvironments.length === 0 ? html`<div class="empty-state">No environments</div>` :
+        filteredEnvironments.map(env => {
           // Filter Logic
           const search = this.filterText.toLowerCase();
           if (this.filterText) {
@@ -725,15 +787,12 @@ export class LcEnvironmentList extends LcBaseElement {
                    aria-selected="${isSelected}"
                    tabindex="${isSelected ? '0' : '-1'}">
                 <div class="env-content">
-                  <span class="env-expander">
-                    ${isOpen ? html`<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                      <path d="M9.5 3.5L6 7l-3.5-3.5L1 6l5 5 5-5-1.5-1.5z"/>
-                    </svg>` : html`<svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                      <path d="M3.5 9.5L7 6l3.5 3.5L9 11l-5-5-5 5 1.5-1.5z"/>
-                    </svg>`}
+                  <span class="env-expander ${isOpen ? 'open' : ''}" @click=${(e: Event) => { e.stopPropagation(); this.toggleEnvVariables(env.id); }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M6 3l5 5-5 5-1.5-1.5L9 8l-4.5-3.5L6 3z"/>
+                    </svg>
                   </span>
                   <span class="env-label">${env.name}</span>
-                  ${isSelected ? html`<span class="env-active-badge" title="Active Environment">✓</span>` : ''}
                 </div>
                 <div class="env-actions">
                   <button @click=${(e: Event) => this.handleMenu(e, env.id)} title="More actions">

@@ -13,12 +13,25 @@ export class EnvironmentService {
 
   async load(): Promise<Environment[]> {
     await this.storage.ensureExists(EnvironmentService.ENVIRONMENTS_FILE, []);
-    const environments = await this.storage.readJson<Environment[]>(EnvironmentService.ENVIRONMENTS_FILE);
-    return environments;
+    let environments = await this.storage.readJson<Environment[]>(EnvironmentService.ENVIRONMENTS_FILE);
+
+    // Filter out any existing globals environment to avoid duplicates
+    environments = environments.filter(env => env.id !== 'globals');
+
+    // Always add globals as the first environment
+    const globalsEnv: Environment = {
+      id: 'globals',
+      name: 'Globals',
+      variables: {}
+    };
+
+    return [globalsEnv, ...environments];
   }
 
   async save(envs: Environment[]): Promise<void> {
-    await this.storage.writeJson(EnvironmentService.ENVIRONMENTS_FILE, envs);
+    // Filter out globals before saving to file
+    const envsToSave = envs.filter(env => env.id !== 'globals');
+    await this.storage.writeJson(EnvironmentService.ENVIRONMENTS_FILE, envsToSave);
   }
 
   async addEnvironment(name: string): Promise<void> {
