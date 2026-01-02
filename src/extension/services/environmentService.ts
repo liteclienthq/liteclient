@@ -9,29 +9,29 @@ export interface Environment {
 export class EnvironmentService {
   private static readonly ENVIRONMENTS_FILE = 'environments.json';
 
-  constructor(private storage: StorageService) {}
+  constructor(private storage: StorageService) { }
 
   async load(): Promise<Environment[]> {
     await this.storage.ensureExists(EnvironmentService.ENVIRONMENTS_FILE, []);
-    let environments = await this.storage.readJson<Environment[]>(EnvironmentService.ENVIRONMENTS_FILE);
+    const environments = await this.storage.readJson<Environment[]>(EnvironmentService.ENVIRONMENTS_FILE);
 
-    // Filter out any existing globals environment to avoid duplicates
-    environments = environments.filter(env => env.id !== 'globals');
+    // Find existing globals or create default
+    let globals = environments.find(env => env.id === 'globals');
+    if (!globals) {
+      globals = {
+        id: 'globals',
+        name: 'Globals',
+        variables: {}
+      };
+    }
 
-    // Always add globals as the first environment
-    const globalsEnv: Environment = {
-      id: 'globals',
-      name: 'Globals',
-      variables: {}
-    };
-
-    return [globalsEnv, ...environments];
+    const others = environments.filter(env => env.id !== 'globals');
+    return [globals, ...others];
   }
 
   async save(envs: Environment[]): Promise<void> {
-    // Filter out globals before saving to file
-    const envsToSave = envs.filter(env => env.id !== 'globals');
-    await this.storage.writeJson(EnvironmentService.ENVIRONMENTS_FILE, envsToSave);
+    // Save all environments including globals to the same file
+    await this.storage.writeJson(EnvironmentService.ENVIRONMENTS_FILE, envs);
   }
 
   async addEnvironment(name: string): Promise<void> {

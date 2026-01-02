@@ -172,27 +172,13 @@ export class LcEnvSwitcher extends LcBaseElement {
     }
   }
 
-  private handleEnvAction(e: CustomEvent) {
-    // Forward the event to the parent component
-    this.dispatchEvent(new CustomEvent('env-action', {
-      detail: e.detail,
-      bubbles: true,
-      composed: true
-    }));
-  }
-
-
-
   override render() {
-    const selectedEnv = this.environments.find(e => e.id === this.selectedEnvironmentId);
-
     return html`
       <lc-environment-list
         .environments=${this.environments}
         .filterText=${this.filterText}
         .selectedEnvironmentId=${this.selectedEnvironmentId}
         @set-environment=${(e: CustomEvent) => this.handleEnvSelect(e.detail.environmentId)}
-        @env-action=${this.handleEnvAction}
       ></lc-environment-list>
     `;
   }

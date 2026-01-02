@@ -103,16 +103,24 @@ export class RequestPanelManager {
 
         console.log('Selected environmentId for request:', selectedEnvironmentId);
 
-        if (selectedEnvironmentId) {
+        // Load Globals first (always available as the base layer)
+        const globals = await this.environmentService.getEnvironmentById('globals');
+        if (globals) {
+            environmentVariables = { ...globals.variables };
+            console.log('Global variables loaded:', globals.variables);
+        }
+
+        // Merge custom environment variables if selected (overwrites globals)
+        if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
             const selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
             if (selectedEnvironment) {
-                environmentVariables = selectedEnvironment.variables;
-                console.log('Environment variables loaded:', selectedEnvironment.variables);
+                environmentVariables = { ...environmentVariables, ...selectedEnvironment.variables };
+                console.log('Combined environment variables:', environmentVariables);
             } else {
                 console.log('Environment not found for ID:', selectedEnvironmentId);
             }
-        } else {
-            console.log('No environment selected');
+        } else if (!selectedEnvironmentId) {
+            console.log('No custom environment selected, using Globals only');
         }
 
         const response = await HttpRequestService.sendRequest(message, environmentVariables);

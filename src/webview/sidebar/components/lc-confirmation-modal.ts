@@ -4,7 +4,7 @@ import { LcBaseElement } from '../../shared/base-element';
 
 @customElement('lc-confirmation-modal')
 export class LcConfirmationModal extends LcBaseElement {
-    static override styles = css`
+  static override styles = css`
     :host {
       position: fixed;
       top: 0;
@@ -14,11 +14,11 @@ export class LcConfirmationModal extends LcBaseElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 1000;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 10000;
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.2s;
+      transition: opacity 0.15s ease;
     }
 
     :host([open]) {
@@ -27,44 +27,45 @@ export class LcConfirmationModal extends LcBaseElement {
     }
 
     .modal {
-      background: var(--vscode-sideBar-background);
+      background: var(--vscode-editor-background);
       border: 1px solid var(--vscode-widget-border);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
       border-radius: 4px;
-      width: 80%;
-      max-width: 300px;
-      padding: 12px;
+      width: 90%;
+      max-width: 380px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      transform: translateY(10px);
-      transition: transform 0.2s;
+      gap: 16px;
+      transform: scale(0.95);
+      transition: transform 0.15s ease;
     }
 
     :host([open]) .modal {
-      transform: translateY(0);
+      transform: scale(1);
     }
 
     .message {
       font-size: 13px;
       color: var(--vscode-foreground);
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     .actions {
       display: flex;
       justify-content: flex-end;
-      gap: 8px;
+      gap: 10px;
     }
 
     button {
-      background: transparent;
-      border: 1px solid var(--vscode-button-secondaryHoverBackground);
+      background: var(--vscode-button-secondaryBackground);
       color: var(--vscode-button-secondaryForeground);
-      padding: 4px 12px;
+      border: 1px solid var(--vscode-button-secondaryBackground);
+      padding: 6px 14px;
       border-radius: 2px;
       cursor: pointer;
-      font-size: 11px;
+      font-size: 12px;
+      transition: all 0.1s;
     }
 
     button:hover {
@@ -74,7 +75,7 @@ export class LcConfirmationModal extends LcBaseElement {
     button.primary {
       background: var(--vscode-button-background);
       color: var(--vscode-button-foreground);
-      border-color: var(--vscode-button-background);
+      border: 1px solid var(--vscode-button-background);
     }
 
     button.primary:hover {
@@ -82,38 +83,41 @@ export class LcConfirmationModal extends LcBaseElement {
     }
     
     button.danger {
-      background: var(--vscode-button-background); /* often same, but could be specific error color */
-      background: #d62d2d; 
+      background: #e51400; /* VS Code error background */
+      color: #ffffff;
+      border-color: #e51400;
     }
     
     button.danger:hover {
-      background: #b52525;
+      background: #c71100;
     }
   `;
 
-    @property({ type: Boolean, reflect: true }) open = false;
-    @property() message = '';
-    @property() action = '';
+  @property({ type: Boolean, reflect: true }) open = false;
+  @property() message = '';
+  @property() action = '';
 
-    private handleCancel() {
-        this.dispatchEvent(new CustomEvent('cancel'));
-        this.open = false;
-    }
+  private handleCancel() {
+    this.dispatchEvent(new CustomEvent('cancel'));
+    this.open = false;
+  }
 
-    private handleConfirm() {
-        this.dispatchEvent(new CustomEvent('confirm', { detail: { action: this.action } }));
-        this.open = false;
-    }
+  private handleConfirm() {
+    this.dispatchEvent(new CustomEvent('confirm', { detail: { action: this.action } }));
+    this.open = false;
+  }
 
-    override render() {
-        return html`
+  override render() {
+    return html`
       <div class="modal">
         <div class="message">${this.message}</div>
         <div class="actions">
           <button @click=${this.handleCancel}>Cancel</button>
-          <button class="primary danger" @click=${this.handleConfirm}>Delete</button>
+          <button class="primary ${this.action.includes('delete') ? 'danger' : ''}" @click=${this.handleConfirm}>
+            ${this.action.includes('delete') ? 'Delete' : 'Confirm'}
+          </button>
         </div>
       </div>
     `;
-    }
+  }
 }

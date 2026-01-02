@@ -97,7 +97,8 @@ export class LcHistoryList extends LcBaseElement {
               .id=${item.id}
               .name=${item.name || item.url}
               .method=${item.method}
-              .details=${''}
+              .details=${item.name ? item.url : ''}
+              type="request"
               .actions=${this.historyActions}
 
               @select=${this.handleItemSelect}

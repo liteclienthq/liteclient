@@ -10,25 +10,35 @@ export class LcUrlBar extends LcBaseElement {
       display: block;
     }
 
-    .request-header {
+    .url-bar-container {
       display: flex;
       gap: 8px;
-      align-items: stretch;
+      align-items: center;
       padding: 8px 12px;
       border-bottom: 1px solid var(--vscode-panel-border);
       background: var(--vscode-editor-background);
+      height: 32px;
     }
 
+    .method-selector {
+      flex-shrink: 0;
+    }
+
+    .url-input {
+      flex: 1;
+      display: flex;
+      min-width: 0;
+    }
 
     select {
-      width: 110px;
-      background: transparent;
+      width: 100px;
+      background: var(--vscode-dropdown-background);
       color: var(--vscode-dropdown-foreground);
       border: 1px solid var(--vscode-dropdown-border);
       border-radius: 2px;
-      padding: 4px;
+      padding: 3px 6px;
       outline: none;
-      font-family: inherit;
+      font-size: 13px;
     }
 
     select:focus {
@@ -36,54 +46,39 @@ export class LcUrlBar extends LcBaseElement {
     }
 
     input {
-      flex: 1;
-      background: transparent;
+      width: 100%;
+      background: var(--vscode-input-background);
       color: var(--vscode-input-foreground);
       border: 1px solid var(--vscode-input-border);
       padding: 4px 8px;
       border-radius: 2px;
       outline: none;
-      font-family: inherit;
+      font-size: 13px;
     }
 
     input:focus {
       border-color: var(--vscode-focusBorder);
     }
 
-    button {
+    .send-btn {
       background: var(--vscode-button-background);
       color: var(--vscode-button-foreground);
       border: none;
-      padding: 4px 16px;
+      padding: 4px 14px;
       border-radius: 2px;
       cursor: pointer;
-      font-family: inherit;
-      font-weight: 500;
-      white-space: nowrap;
+      font-weight: normal;
+      font-size: 13px;
+      flex-shrink: 0;
     }
 
-    button:hover {
+    .send-btn:hover {
       background: var(--vscode-button-hoverBackground);
     }
 
-    button.secondary {
-      background: transparent;
-      color: var(--vscode-button-secondaryForeground);
-      border: 1px solid var(--vscode-button-secondaryBackground);
-    }
-
-    button.secondary:hover {
-      background: var(--vscode-button-secondaryHoverBackground);
-      color: var(--vscode-button-secondaryForeground);
-    }
-
-    button.send-btn {
-      width: 80px;
-    }
-
-    button.icon-button {
-      width: 28px;
-      height: 28px;
+    .icon-button {
+      width: 26px;
+      height: 26px;
       padding: 0;
       display: flex;
       align-items: center;
@@ -92,10 +87,11 @@ export class LcUrlBar extends LcBaseElement {
       color: var(--vscode-foreground);
       opacity: 0.8;
       border: none;
+      cursor: pointer;
+      flex-shrink: 0;
     }
 
-
-    button.icon-button:hover {
+    .icon-button:hover {
       background: var(--vscode-toolbar-hoverBackground);
       opacity: 1;
     }
@@ -148,8 +144,6 @@ export class LcUrlBar extends LcBaseElement {
       if (message.type === 'environments-list') {
         this.environments = message.environments;
         this.selectedEnvironmentId = message.selectedEnvironmentId;
-      } else if (message.type === 'set-environment') {
-        this.selectedEnvironmentId = message.environmentId;
       }
     });
   }
@@ -158,62 +152,45 @@ export class LcUrlBar extends LcBaseElement {
     postMessage({ type: 'get-environments' });
   }
 
-  private handleMethodChange(e: Event) {
-    const target = e.target as HTMLSelectElement;
-    this.method = target.value;
-    this.dispatchEvent(new CustomEvent('method-change', { detail: { method: this.method } }));
-  }
-
-  private handleUrlChange(e: Event) {
-    const target = e.target as HTMLInputElement;
-    this.url = target.value;
-    this.dispatchEvent(new CustomEvent('url-change', { detail: { url: this.url } }));
-  }
-
-  private handleEnvironmentChange(e: Event) {
-    const target = e.target as HTMLSelectElement;
-    const id = target.value || null;
+  private handleEnvChange(e: Event) {
+    const select = e.target as HTMLSelectElement;
     this.dispatchEvent(new CustomEvent('set-environment', {
-      detail: { environmentId: id },
+      detail: { environmentId: select.value || null },
       bubbles: true,
       composed: true
     }));
   }
 
-  private handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Enter') {
-      this.emitSend();
-    }
-  }
+  override render() {
+    const selectedEnv = this.environments.find(env => env.id === this.selectedEnvironmentId);
 
-  private emitSend() {
-    this.dispatchEvent(new CustomEvent('send-request'));
-  }
-
-  render() {
     return html`
-      <div class="request-header">
-        <select @change=${this.handleMethodChange} .value=${this.method}>
-          ${this.methods.map(m => html`<option value=${m} ?selected=${m === this.method}>${m}</option>`)}
-        </select>
-
-        <input
-          type="text"
-          .value=${this.url}
-          @input=${this.handleUrlChange}
-          @keydown=${this.handleKeydown}
-          placeholder="https://liteclient.com/hello"
-        >
-
-        <button class="send-btn" ?disabled=${this.loading} @click=${this.emitSend}>
-          ${this.loading ? 'Sending' : 'Send'}
+      <div class="url-bar-container">
+        <div class="method-selector">
+          <select @change=${(e: Event) => this.dispatchEvent(new CustomEvent('method-change', { detail: { method: (e.target as HTMLSelectElement).value } }))}>
+            ${['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS'].map(m => html`
+              <option value=${m} ?selected=${this.method === m}>${m}</option>
+            `)}
+          </select>
+        </div>
+        <div class="url-input">
+          <input 
+            type="text" 
+            .value=${this.url} 
+            @input=${(e: Event) => this.dispatchEvent(new CustomEvent('url-change', { detail: { url: (e.target as HTMLInputElement).value } }))}
+            @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') { this.dispatchEvent(new CustomEvent('send-request')); } }}
+            placeholder="Enter URL or paste text"
+          />
+        </div>
+        <button class="send-btn" @click=${() => this.dispatchEvent(new CustomEvent('send-request'))}>
+          Send
         </button>
 
-        <div class="env-selector">
-          <select @change=${this.handleEnvironmentChange} .value=${this.selectedEnvironmentId || ''}>
+        <div class="env-selector" title="Select environment">
+          <select @change=${this.handleEnvChange} .value=${this.selectedEnvironmentId || ''}>
             <option value="">No Environment</option>
-            ${this.environments.map(env => html`
-              <option value=${env.id} ?selected=${env.id === this.selectedEnvironmentId}>
+            ${this.environments.filter(env => env.id !== 'globals').map(env => html`
+              <option value=${env.id} ?selected=${this.selectedEnvironmentId === env.id}>
                 ${env.name}
               </option>
             `)}
