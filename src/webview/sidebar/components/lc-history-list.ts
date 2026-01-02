@@ -2,9 +2,7 @@ import { html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
 import './lc-sidebar-item';
-import './lc-section-header';
 import { SidebarItemAction } from './lc-sidebar-item';
-import { SectionAction } from './lc-section-header';
 
 
 export interface HistoryItem {
@@ -62,16 +60,7 @@ export class LcHistoryList extends LcBaseElement {
     }
   }
 
-  private handleSectionAction(e: CustomEvent) {
-    const { actionId } = e.detail;
-    if (actionId === 'clear-all') {
-      this.dispatchEvent(new CustomEvent('history-action', {
-        detail: { action: 'clear-all' },
-        bubbles: true,
-        composed: true
-      }));
-    }
-  }
+
 
   private handleItemAction(e: CustomEvent) {
     const { actionId, itemId } = e.detail;

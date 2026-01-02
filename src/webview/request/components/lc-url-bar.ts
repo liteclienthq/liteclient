@@ -127,18 +127,13 @@ export class LcUrlBar extends LcBaseElement {
   @property({ type: Array }) environments: Array<{ id: string; name: string }> = [];
   @property({ type: String }) selectedEnvironmentId: string | null = null;
 
-  private methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
-
   connectedCallback() {
     super.connectedCallback();
-    // Request environments when component is initialized
     this.requestEnvironments();
-    // Set up message listener for environment updates
     this.setupMessageListener();
   }
 
   private setupMessageListener() {
-    // Listen for environment list updates from the extension
     window.addEventListener('message', (event) => {
       const message = event.data;
       if (message.type === 'environments-list') {
@@ -162,8 +157,6 @@ export class LcUrlBar extends LcBaseElement {
   }
 
   override render() {
-    const selectedEnv = this.environments.find(env => env.id === this.selectedEnvironmentId);
-
     return html`
       <div class="url-bar-container">
         <div class="method-selector">

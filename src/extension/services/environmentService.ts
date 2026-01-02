@@ -15,14 +15,9 @@ export class EnvironmentService {
     await this.storage.ensureExists(EnvironmentService.ENVIRONMENTS_FILE, []);
     const environments = await this.storage.readJson<Environment[]>(EnvironmentService.ENVIRONMENTS_FILE);
 
-    // Find existing globals or create default
     let globals = environments.find(env => env.id === 'globals');
     if (!globals) {
-      globals = {
-        id: 'globals',
-        name: 'Globals',
-        variables: {}
-      };
+      globals = { id: 'globals', name: 'Globals', variables: {} };
     }
 
     const others = environments.filter(env => env.id !== 'globals');
@@ -30,7 +25,6 @@ export class EnvironmentService {
   }
 
   async save(envs: Environment[]): Promise<void> {
-    // Save all environments including globals to the same file
     await this.storage.writeJson(EnvironmentService.ENVIRONMENTS_FILE, envs);
   }
 

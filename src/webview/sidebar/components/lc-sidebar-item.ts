@@ -1,4 +1,4 @@
-import { html, css, TemplateResult } from 'lit';
+import { html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
 
@@ -225,7 +225,6 @@ export class LcSidebarItem extends LcBaseElement {
       }
 
       const closeMenu = (e: Event) => {
-        // Check if e.target is a valid Node before using contains
         const target = e.target;
         if (target && target instanceof Node && trigger.contains(target)) {
           return;
@@ -237,7 +236,6 @@ export class LcSidebarItem extends LcBaseElement {
       };
 
       setTimeout(() => {
-        // Use capture phase (true) to catch events before they're stopped
         document.addEventListener('click', closeMenu, true);
         window.addEventListener('blur', closeMenu);
       }, 0);

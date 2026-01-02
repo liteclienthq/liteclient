@@ -2,9 +2,6 @@ import { html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
 import './lc-environment-list';
-import './lc-section-header';
-import './lc-env-variables-editor';
-import { SectionAction } from './lc-section-header';
 
 export interface Environment {
   id: string;
@@ -109,22 +106,6 @@ export class LcEnvSwitcher extends LcBaseElement {
   @property() filterText = '';
   @property({ type: String }) selectedEnvironmentId: string | null = null;
 
-  @state() private isEditingVariables = false;
-
-
-  private varSectionActions(isEditing: boolean): SectionAction[] {
-
-    return [
-      {
-        id: isEditing ? 'save-vars' : 'edit-vars',
-        label: isEditing ? 'Save Variables' : 'Edit Variables',
-        icon: isEditing
-          ? '<path d="M12.924 1.625l1.451 1.451-8.57 8.57-4.183-4.183 1.45-1.451 2.733 2.733 7.119-7.12z"/>'
-          : '<path d="M13.23 1h-1.46L3.52 9.25l-.16.22L1 13.59 2.41 15l4.12-2.36.22-.16L15 4.23V2.77L13.23 1zM2.41 13.72l1.51-2.63 1.12 1.12-2.63 1.51zM7.1 11.4l-1.5-1.5 7.64-7.64L14.74 3.76 7.1 11.4z"/>'
-      }
-    ];
-  }
-
   private handleEnvSelect(id: string | null) {
     this.dispatchEvent(new CustomEvent('set-environment', {
       detail: { environmentId: id },
@@ -136,40 +117,6 @@ export class LcEnvSwitcher extends LcBaseElement {
   private handleEnvChange(e: Event) {
     const id = (e.target as HTMLSelectElement).value || null;
     this.handleEnvSelect(id);
-  }
-
-
-  private handleSectionAction(e: CustomEvent) {
-    const { actionId } = e.detail;
-    if (actionId === 'edit-vars') {
-      this.isEditingVariables = true;
-    } else if (actionId === 'save-vars') {
-      this.isEditingVariables = false;
-      this.saveVariables();
-    }
-  }
-
-
-
-  private pendingVariables: Record<string, string> | null = null;
-
-  private handleVariablesChange(e: CustomEvent) {
-    this.pendingVariables = e.detail.variables;
-  }
-
-  private saveVariables() {
-    if (this.pendingVariables && this.selectedEnvironmentId) {
-      this.dispatchEvent(new CustomEvent('env-action', {
-        detail: {
-          action: 'update-vars',
-          id: this.selectedEnvironmentId,
-          variables: this.pendingVariables
-        },
-        bubbles: true,
-        composed: true
-      }));
-      this.pendingVariables = null;
-    }
   }
 
   override render() {

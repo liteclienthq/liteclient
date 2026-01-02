@@ -45,14 +45,7 @@ export class LcEnvironmentList extends LcBaseElement {
       opacity: 0.6;
     }
 
-    /* Editing overlay if needed, but for now we'll stick to native VS Code inputs via extension */
-    .editing-form {
-      padding: 4px 12px;
-      background: var(--vscode-input-background);
-      border: 1px solid var(--vscode-focusBorder);
-      margin: 2px 8px;
-      border-radius: 2px;
-    }
+
   `;
 
   @property({ type: Array }) environments: Environment[] = [];
@@ -89,7 +82,7 @@ export class LcEnvironmentList extends LcBaseElement {
 
   private selectEnvironment(id: string) {
     this.selectedId = id;
-    this.toggleEnvVariables(id); // Only toggle expand/collapse (environment selection is via dropdown)
+    this.toggleEnvVariables(id);
   }
 
   private handleEnvAction(e: CustomEvent, envId: string) {

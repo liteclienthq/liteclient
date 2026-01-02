@@ -188,7 +188,6 @@ export class RequestPanelManager {
     }
 
     private async handleSaveRequest(panel: vscode.WebviewPanel, message: any, originalRequest: any, collectionId?: string) {
-        // Ported from extension.ts with minor cleanups
         if (collectionId) {
             // Update existing
             const updatedRequest: RequestItem = {

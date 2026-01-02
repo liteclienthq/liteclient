@@ -68,7 +68,7 @@ export class LcCollectionTree extends LcBaseElement {
   @property({ type: Array }) collections: Collection[] = [];
   @property() filterText = '';
 
-  @state() private openItems = new Set<string>(); // IDs of open collections/folders
+  @state() private openItems = new Set<string>();
   @state() private selectedId: string | null = null;
 
   private collectionActions: SidebarItemAction[] = [
@@ -107,14 +107,12 @@ export class LcCollectionTree extends LcBaseElement {
     switch (actionId) {
       case 'add-request':
         this.dispatchEvent(new CustomEvent('collection-action', {
-          // parentId should only be set if itemId exists (it's a folder), otherwise undefined to add at root
           detail: { action: 'add-collection-request', collectionId, parentId: itemId },
           bubbles: true, composed: true
         }));
         break;
       case 'add-folder':
         this.dispatchEvent(new CustomEvent('collection-action', {
-          // parentId should only be set if itemId exists (it's a folder), otherwise undefined to add at root
           detail: { action: 'add-collection-folder', collectionId, parentId: itemId },
           bubbles: true, composed: true
         }));

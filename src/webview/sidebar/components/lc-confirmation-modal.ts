@@ -83,7 +83,7 @@ export class LcConfirmationModal extends LcBaseElement {
     }
     
     button.danger {
-      background: #e51400; /* VS Code error background */
+      background: #e51400;
       color: #ffffff;
       border-color: #e51400;
     }
