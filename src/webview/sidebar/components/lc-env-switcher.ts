@@ -1,5 +1,5 @@
 import { html, css } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
 import './lc-environment-list';
 

@@ -29,15 +29,8 @@ export interface ResponseData {
 export class HttpRequestService {
   static async sendRequest(payload: RequestPayload, environmentVariables: Record<string, string> = {}): Promise<ResponseData> {
     try {
-      // Debug: Log environment variables for debugging
-      console.log('HTTP Request - Environment Variables:', environmentVariables);
-      console.log('HTTP Request - Original URL:', payload.url);
-
       // Perform variable substitution on the request payload
       const substitutedPayload = substituteVariablesInRequest(payload, environmentVariables);
-
-      // Debug: Log substituted URL for debugging
-      console.log('HTTP Request - Substituted URL:', substitutedPayload.url);
 
       // Validate URL before making request
       let parsedUrl: URL;

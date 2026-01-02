@@ -4,7 +4,7 @@
  */
 
 import { html, css } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { LcBaseElement } from '../../shared/base-element.js';
 

@@ -95,19 +95,13 @@ export class RequestPanelManager {
         const messageEnvironmentId = message.environmentId;
         const globalSelectedEnvironmentId = await this.settingsService.getSelectedEnvironmentId();
 
-        console.log('Received message with environmentId:', messageEnvironmentId);
-        console.log('Global selected environmentId:', globalSelectedEnvironmentId);
-
         // Prioritize the environment selected in the request panel over the global setting
         const selectedEnvironmentId = messageEnvironmentId !== undefined ? messageEnvironmentId : globalSelectedEnvironmentId;
-
-        console.log('Selected environmentId for request:', selectedEnvironmentId);
 
         // Load Globals first (always available as the base layer)
         const globals = await this.environmentService.getEnvironmentById('globals');
         if (globals) {
             environmentVariables = { ...globals.variables };
-            console.log('Global variables loaded:', globals.variables);
         }
 
         // Merge custom environment variables if selected (overwrites globals)
@@ -115,12 +109,11 @@ export class RequestPanelManager {
             const selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
             if (selectedEnvironment) {
                 environmentVariables = { ...environmentVariables, ...selectedEnvironment.variables };
-                console.log('Combined environment variables:', environmentVariables);
             } else {
-                console.log('Environment not found for ID:', selectedEnvironmentId);
+                // Environment not found for ID
             }
         } else if (!selectedEnvironmentId) {
-            console.log('No custom environment selected, using Globals only');
+            // No custom environment selected, using Globals only
         }
 
         const response = await HttpRequestService.sendRequest(message, environmentVariables);

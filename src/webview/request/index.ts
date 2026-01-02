@@ -3,7 +3,7 @@
  * Entry point for the request panel UI built with Lit
  */
 
-import { LitElement, html, css } from 'lit';
+import { html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../shared/base-element.js';
 import { onMessage, postMessage, type ExtensionMessage } from '../shared/messaging.js';
@@ -15,7 +15,7 @@ import './components/lc-response-view.js';
 import './components/lc-headers-table.js';
 import './components/lc-url-bar.js';
 import './components/lc-request-meta.js';
-import type { KeyValueItem } from './components/lc-key-value-editor.js';
+
 
 interface Tab {
   id: string;
@@ -292,9 +292,6 @@ export class LcRequestPanel extends LcBaseElement {
       // Use the local state for the selected environment ID
       const selectedEnvironmentId = this.selectedEnvironmentId;
 
-      // Log for debugging
-      console.log('Sending request with environmentId:', selectedEnvironmentId);
-
       postMessage({
         type: 'send-request',
         method: this.requestMethod,
@@ -538,5 +535,3 @@ document.body.style.margin = '0';
 document.body.style.padding = '0';
 document.body.style.overflow = 'hidden';
 document.body.innerHTML = '<lc-request-panel></lc-request-panel>';
-
-console.log('[LiteClient] Request panel initialized with Lit components');

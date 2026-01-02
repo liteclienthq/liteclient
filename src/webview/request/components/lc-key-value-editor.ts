@@ -165,7 +165,6 @@ export class LcKeyValueEditor extends LcBaseElement {
     this.dispatchEvent(new CustomEvent('change', { detail: { items: this.items } }));
   }
 
-  // Ensure there's always at least one empty row
   updated(changedProperties: Map<string, any>) {
     if (changedProperties.has('items')) {
       if (this.items.length === 0) {
@@ -181,7 +180,6 @@ export class LcKeyValueEditor extends LcBaseElement {
     }
   }
 
-  // NOTE: Initial load ensure an item exists
   connectedCallback() {
     super.connectedCallback();
     if (this.items.length === 0) {

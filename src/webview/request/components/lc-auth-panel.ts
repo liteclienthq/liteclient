@@ -1,5 +1,5 @@
 import { html, css } from 'lit';
-import { customElement, property, state } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
 
 export interface AuthConfig {
@@ -216,9 +216,6 @@ export class LcAuthPanel extends LcBaseElement {
             </div>
           </div>
         `;
-
-      default:
-        return html``;
     }
   }
 }
