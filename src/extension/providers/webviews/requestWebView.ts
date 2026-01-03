@@ -22,6 +22,7 @@ export class RequestWebView {
         <title>LiteClient Request</title>
       </head>
       <body>
+
         <lc-request-panel></lc-request-panel>
         <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 

@@ -12,6 +12,13 @@ export class LcHeadersTable extends LcBaseElement {
   @property({ type: Object }) headers: Record<string, string> = {};
 
   static styles = css`
+    :host {
+      display: block;
+      overflow: auto;
+      flex: 1;
+      height: 100%;
+    }
+
     .headers-table {
       width: 100%;
       border-collapse: collapse;

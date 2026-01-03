@@ -225,7 +225,7 @@ export function getVsCodeApi() {
         } else {
             console.warn('[LiteClient] acquireVsCodeApi not found, using mock');
             vscodeApi = {
-                postMessage: (msg: any) => console.log('Mock postMessage:', msg),
+                postMessage: () => {},
                 getState: () => undefined,
                 setState: (s: any) => s
             };

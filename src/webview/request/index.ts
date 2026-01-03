@@ -17,6 +17,8 @@ import './components/lc-url-bar.js';
 import './components/lc-request-meta.js';
 
 
+
+
 interface Tab {
   id: string;
   label: string;
@@ -59,7 +61,7 @@ export class LcRequestPanel extends LcBaseElement {
       flex: 0 0 var(--split-position, 50%);
       display: flex;
       flex-direction: column;
-      min-height: 200px;
+      min-height: 0;
       min-width: 200px;
       box-sizing: border-box;
     }
@@ -68,8 +70,8 @@ export class LcRequestPanel extends LcBaseElement {
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: 200px;
       min-width: 200px;
+      min-height: 0;
       box-sizing: border-box;
     }
 
@@ -466,8 +468,8 @@ export class LcRequestPanel extends LcBaseElement {
           @save-request=${this.handleSaveRequest}
           @layout-toggle=${() => this.layout = this.layout === 'vertical' ? 'horizontal' : 'vertical'}
           @set-environment=${(e: CustomEvent) => {
-            this.selectedEnvironmentId = e.detail.environmentId;
-          }}
+        this.selectedEnvironmentId = e.detail.environmentId;
+      }}
         ></lc-url-bar>
 
         <div class="main-container">

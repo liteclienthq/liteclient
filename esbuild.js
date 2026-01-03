@@ -45,6 +45,12 @@ const webviewConfig = {
   platform: 'browser',
   sourcemap: !production,
   minify: production,
+  loader: {
+    '.ttf': 'file'
+  },
+  define: {
+    global: 'globalThis'
+  },
   plugins: [watchPlugin],
 };
 
