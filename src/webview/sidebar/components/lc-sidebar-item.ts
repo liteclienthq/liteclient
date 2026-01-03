@@ -320,11 +320,13 @@ export class LcSidebarItem extends LcBaseElement {
       <div class="item ${this.active ? 'active' : ''} ${this.menuOpen ? 'menu-open' : ''}" @click=${this.handleClick} role="treeitem" aria-expanded=${this.expanded} aria-level=${this.depth + 1}>
         ${Array.from({ length: this.depth }).map(() => html`<div class="indent-guide"></div>`)}
         
-        <div class="chevron ${this.expanded ? 'expanded' : ''}" style="visibility: ${showChevron ? 'visible' : 'hidden'}" @click=${this.handleChevronClick}>
-          <svg viewBox="0 0 16 16" fill="currentColor">
-            <path d="M6 12.727L11 8 6 3.273V12.727z"/>
-          </svg>
-        </div>
+        ${showChevron ? html`
+          <div class="chevron ${this.expanded ? 'expanded' : ''}" @click=${this.handleChevronClick}>
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M6 12.727L11 8 6 3.273V12.727z"/>
+            </svg>
+          </div>
+        ` : ''}
 
         ${this.renderIcon()}
 
