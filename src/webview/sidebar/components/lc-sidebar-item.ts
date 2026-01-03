@@ -93,7 +93,7 @@ export class LcSidebarItem extends LcBaseElement {
       font-size: 9px;
       min-width: 28px;
       text-transform: uppercase;
-      text-align: center;
+      text-align: left;
       border-radius: 2px;
       padding: 1px 2px;
       margin-right: 6px;

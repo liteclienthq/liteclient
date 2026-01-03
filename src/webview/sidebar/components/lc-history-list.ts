@@ -84,9 +84,9 @@ export class LcHistoryList extends LcBaseElement {
           .map(item => html`
             <lc-sidebar-item
               .id=${item.id}
-              .name=${item.name || item.url}
+              .name=${item.url}
               .method=${item.method}
-              .details=${item.name ? item.url : ''}
+              .details=${''}
               type="request"
               .actions=${this.historyActions}
 
