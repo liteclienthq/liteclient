@@ -6,6 +6,7 @@
   [![Open VSX](https://img.shields.io/open-vsx/v/liteclienthq/liteclient?style=flat-square&color=orange)](https://open-vsx.org/extension/liteclienthq/liteclient)
   [![Installs](https://img.shields.io/visual-studio-marketplace/i/liteclienthq.liteclient?style=flat-square&color=blue)](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
   [![License](https://img.shields.io/github/license/liteclienthq/liteclient?style=flat-square&color=green)](https://github.com/liteclienthq/liteclient)
+  [![GitHub Stars](https://img.shields.io/github/stars/liteclienthq/liteclient?style=social)](https://github.com/liteclienthq/liteclient)
 
   <strong>The fastest, most focused REST API client for your code editor.</strong>
 </div>
