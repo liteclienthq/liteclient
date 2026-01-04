@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-04
+
+### Changed
+- **Architectural Overhaul**: Complete refactor of the core request engine for better performance and stability.
+- **Public Repository**: Project is now open source! Issues have been moved to the main repository.
+
+### Added
+- **New Logo**: Updated branding.
+- **Enhanced Type Safety**: Strict null checks and better type definitions across the extension and webview.
+- **Improved UI/UX**: Polished sidebar interactions and response view layout.
+
 ## [0.2.0] - 2025-12-24
 
 ### Added

@@ -1,8 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
-  <!-- Thin circle container -->
-  <circle cx="8" cy="8" r="7.2" fill="none" stroke="currentColor" stroke-width="1.2"/>
-  <!-- Refined Triple-Flare Torch -->
-  <rect x="7.2" y="9.5" width="1.6" height="4.5" rx="0.3"/>
-  <path d="M5.5 6.5l0.5 3h4l0.5-3h-5z"/>
-  <path d="M8 1.5L9.5 6h-3L8 1.5zM4 3l2.5 3h-1.5L4 3zM12 3l-2.5 3h1.5L12 3z"/>
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" id="LiteClient_Logo" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="300px" height="300px" viewBox="0 0 300 300" xml:space="preserve">
+  <style type="text/css">
+    .brand_bold{fill:#E11D48;}
+  </style>
+  <g>
+    <path class="brand_bold" d="M150,0C67.2,0,0,67.2,0,150s67.2,150,150,150s150-67.2,150-150S232.8,0,150,0z M150,280
+        c-71.8,0-130-58.2-130-130S78.2,20,150,20s130,58.2,130,130S221.8,280,150,280z"/>
+    <path class="brand_bold" d="M150,65l32,60l63,25l-63,25l-32,60l-32-60l-63-25l63-25L150,65z"/>
+  </g>
 </svg>

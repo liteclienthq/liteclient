@@ -2,6 +2,7 @@
   "name": "liteclient",
   "version": "0.3.0",
   "publisher": "liteclienthq",
+  "license": "MIT",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -24,7 +25,11 @@
   ],
   "icon": "media/logo.png",
   "bugs": {
-    "url": "https://github.com/liteclienthq/liteclient-issues/issues"
+    "url": "https://github.com/liteclienthq/liteclient/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liteclienthq/liteclient.git"
   },
   "homepage": "https://liteclient.com",
   "activationEvents": [],
