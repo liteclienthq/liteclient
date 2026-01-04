@@ -3,17 +3,18 @@
 <div align="center">
 
   [![Version](https://img.shields.io/visual-studio-marketplace/v/liteclienthq.liteclient?style=flat-square&color=E11D48)](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
+  [![Open VSX](https://img.shields.io/open-vsx/v/liteclienthq/liteclient?style=flat-square&color=orange)](https://open-vsx.org/extension/liteclienthq/liteclient)
   [![Installs](https://img.shields.io/visual-studio-marketplace/i/liteclienthq.liteclient?style=flat-square&color=blue)](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
   [![License](https://img.shields.io/github/license/liteclienthq/liteclient?style=flat-square&color=green)](https://github.com/liteclienthq/liteclient)
 
-  <strong>The fastest, most focused REST API client for Visual Studio Code.</strong>
+  <strong>The fastest, most focused REST API client for your code editor.</strong>
 </div>
 
 <br/>
 
 LiteClient is a native extension built for developers who want a high-performance HTTP client without the bloat, forced cloud accounts, or telemetry of modern alternatives. It integrates seamlessly into your IDE workspace.
 
-![LiteClient Hero Screenshot](https://liteclient.com/media/screenshot.png)
+![LiteClient Hero Screenshot](media/screenshot.png)
 
 ## Why LiteClient?
 
@@ -21,7 +22,7 @@ In an era of bloated developer tools, LiteClient returns to the essentials:
 
 - **Zero Startup Time**: Restores your workspace instantly.
 - **Total Privacy**: No cloud syncing, no accounts, and absolutely zero telemetry.
-- **Pure Native UX**: Uses VS Code's native buttons, trees, and themes. No "Custom UI" friction.
+- **Pure Native UX**: Uses your editor's native buttons, trees, and themes. No "Custom UI" friction.
 - **Focused Features**: Collections, Environments, and History—without the noise.
 
 ## Core Features
@@ -42,7 +43,7 @@ In an era of bloated developer tools, LiteClient returns to the essentials:
 
 ## Privacy & Security
 
-Your API keys and sensitive requests are your business. LiteClient stores all data locally in your VS Code global storage. No data ever leaves your machine unless you are the one sending the request.
+Your API keys and sensitive requests are your business. LiteClient stores all data locally in your editor's global storage. No data ever leaves your machine unless you are the one sending the request.
 
 ## Support & Feedback
 
