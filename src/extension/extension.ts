@@ -168,6 +168,62 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	const importCollectionCommand = vscode.commands.registerCommand('liteclient.importCollection', async () => {
+		// Open file picker
+		const fileUris = await vscode.window.showOpenDialog({
+			canSelectFiles: true,
+			canSelectFolders: false,
+			canSelectMany: false,
+			filters: {
+				'JSON': ['json']
+			},
+			openLabel: 'Import'
+		});
+
+		if (fileUris && fileUris.length > 0) {
+			try {
+				const fileData = await vscode.workspace.fs.readFile(fileUris[0]);
+				const content = Buffer.from(fileData).toString('utf8');
+				const data = JSON.parse(content);
+
+				// Delegate detection and wrapping to collectionService.importCollections
+				await collectionService.importCollections(data);
+
+				vscode.window.showInformationMessage(`Successfully imported collection(s)`);
+				sidebarProvider.refreshCollections();
+				requestPanelManager.broadcastCollections();
+
+			} catch (error: any) {
+				vscode.window.showErrorMessage(`Import failed: ${error.message}`);
+			}
+		}
+	});
+
+	const exportCollectionCommand = vscode.commands.registerCommand('liteclient.exportCollection', async (node: any) => {
+		const collection = node.collection;
+		if (!collection) { return; }
+
+		const fileUri = await vscode.window.showSaveDialog({
+			defaultUri: vscode.Uri.file(`${collection.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.postman_collection.json`),
+			filters: {
+				'Postman Collection': ['json']
+			},
+			saveLabel: 'Export'
+		});
+
+		if (fileUri) {
+			try {
+				const exportedContent = await collectionService.exportCollection(collection, 'postman-v2.1');
+				const content = Buffer.from(exportedContent, 'utf8');
+				await vscode.workspace.fs.writeFile(fileUri, content);
+				vscode.window.showInformationMessage(`Collection exported successfully`);
+			} catch (error: any) {
+				vscode.window.showErrorMessage(`Export failed: ${error.message}`);
+			}
+		}
+	});
+
+
 	const addRequestToCollectionCommand = vscode.commands.registerCommand('liteclient.addRequestToCollection', async (node: any) => {
 		const request: Omit<RequestItem, 'type'> = {
 			id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
@@ -375,6 +431,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		openHistoryRequestCommand, deleteHistoryItemCommand, clearHistoryCommand, renameHistoryRequestCommand,
 		openCollectionRequestCommand, newCollectionCommand, renameCollectionCommand, deleteCollectionCommand,
+		importCollectionCommand, exportCollectionCommand,
+		addRequestToCollectionCommand, deleteRequestFromCollectionCommand, renameCollectionRequestCommand,
 		addRequestToCollectionCommand, deleteRequestFromCollectionCommand, renameCollectionRequestCommand,
 		addFolderToCollectionCommand, deleteItemCommand, renameItemCommand,
 		newEnvironmentCommand, renameEnvironmentCommand, deleteEnvironmentCommand, setSelectedEnvironmentCommand,

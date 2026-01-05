@@ -93,7 +93,10 @@ export class LcSidebarPanel extends LcBaseElement {
       case 'history':
         return [{ id: 'clear-history', label: 'Clear History', danger: true }];
       case 'collections':
-        return [{ id: 'add-collection', label: 'New Collection' }];
+        return [
+          { id: 'add-collection', label: 'New Collection' },
+          { id: 'import-collection', label: 'Import Collection' }
+        ];
       case 'env':
         return [{ id: 'add-env', label: 'New Environment' }];
       default:
@@ -110,6 +113,9 @@ export class LcSidebarPanel extends LcBaseElement {
 
       case 'add-collection':
         postMessage({ type: 'add-collection' });
+        break;
+      case 'import-collection':
+        postMessage({ type: 'import-collection' });
         break;
       case 'add-env':
         postMessage({ type: 'env-action', action: 'add' });

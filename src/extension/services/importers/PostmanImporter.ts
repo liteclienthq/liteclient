@@ -1,0 +1,177 @@
+import { Importer } from './Importer';
+import { Collection, CollectionItem, RequestItem, RequestBody, FolderItem } from '../collectionService';
+import { AuthConfig } from '../httpRequestService';
+import { generateId } from '../../utils/idUtils';
+
+export class PostmanImporter implements Importer {
+    id = 'postman-v2.1';
+    name = 'Postman Collection v2.1';
+    description = 'Imports Postman Collection v2.1 format';
+
+    canImport(content: any): boolean {
+        try {
+            // Check for v2.1 schema signature
+            if (content?.info?.schema) {
+                return content.info.schema.includes('v2.1.0');
+            }
+            return false;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async import(content: any): Promise<Collection[]> {
+        const collection: Collection = {
+            id: this.generateId(),
+            name: content.info?.name || 'Imported Collection',
+            description: content.info?.description,
+            items: this.parseItems(content.item || [])
+        };
+        return [collection];
+    }
+
+    private parseItems(items: any[]): CollectionItem[] {
+        return items.map(item => {
+            // Checks based on Postman Collection v2.1 Schema
+            // A folder (item-group) has 'item' property (array of items)
+            // A request (item) has 'request' property
+            if (Array.isArray(item.item)) {
+                // It's a folder
+                const folder: FolderItem = {
+                    id: this.generateId(),
+                    name: item.name,
+                    description: item.description,
+                    type: 'folder',
+                    items: this.parseItems(item.item)
+                };
+                return folder;
+            } else if (item.request) {
+                // It's a request
+                return this.parseRequest(item);
+            } else {
+                // Unknown item type or invalid structure, skip or handle gracefully
+                // For now, return a placeholder folder to preserve hierarchy/structure if needed, or simply null (filtered out later if we supported that)
+                // But given strict typing, let's treat it as a folder without items if it has a name, or safe fallback
+                return {
+                    id: this.generateId(),
+                    name: item.name || 'Unknown Item',
+                    type: 'folder',
+                    items: []
+                };
+            }
+        });
+    }
+
+    private parseRequest(item: any): RequestItem {
+        const request = item.request;
+
+        let url = '';
+        let params: Record<string, string> = {};
+
+        // Handle URL (string or object)
+        if (typeof request.url === 'string') {
+            url = request.url;
+        } else if (request.url) {
+            url = request.url.raw || '';
+            // Parse query params if available in structured format
+            if (Array.isArray(request.url.query)) {
+                request.url.query.forEach((q: any) => {
+                    if (!q.disabled) {
+                        params[q.key] = q.value;
+                    }
+                });
+            }
+        }
+
+        // Handle Headers
+        const headers: Record<string, string> = {};
+        if (Array.isArray(request.header)) {
+            request.header.forEach((h: any) => {
+                if (!h.disabled) {
+                    headers[h.key] = h.value;
+                }
+            });
+        }
+
+        // Handle Body
+        let body: string | null = null;
+        let bodyStruct: RequestBody = { mode: 'none' };
+
+        if (request.body) {
+            const mode = request.body.mode;
+            bodyStruct.mode = mode;
+
+            if (mode === 'raw') {
+                body = request.body.raw;
+                bodyStruct.raw = request.body.raw;
+            } else if (mode === 'formdata') {
+                bodyStruct.formdata = request.body.formdata;
+                body = ''; // UI default fallback
+            } else if (mode === 'urlencoded') {
+                bodyStruct.urlencoded = request.body.urlencoded;
+                body = ''; // UI default fallback
+            }
+        }
+
+        return {
+            id: this.generateId(),
+            name: item.name,
+            description: item.request.description,
+            type: 'request',
+            method: request.method || 'GET',
+            url: url,
+            headers: headers,
+            params: Object.keys(params).length > 0 ? params : undefined,
+            body: body,
+            bodyStruct: bodyStruct,
+            auth: this.mapAuth(request.auth)
+        };
+    }
+
+    private mapAuth(postmanAuth: any): AuthConfig | undefined {
+        if (!postmanAuth || postmanAuth.type === 'noauth' || postmanAuth.type === 'inherit') {
+            return undefined;
+        }
+
+        const type = postmanAuth.type;
+        const attributes = postmanAuth[type];
+
+        if (!Array.isArray(attributes)) {
+            return undefined;
+        }
+
+        const getAttr = (key: string) => attributes.find((a: any) => a.key === key)?.value;
+
+        if (type === 'basic') {
+            return {
+                type: 'basic',
+                basic: {
+                    username: getAttr('username') || '',
+                    password: getAttr('password') || ''
+                }
+            };
+        } else if (type === 'bearer') {
+            return {
+                type: 'bearer',
+                bearer: {
+                    token: getAttr('token') || ''
+                }
+            };
+        } else if (type === 'apikey') {
+            return {
+                type: 'apikey',
+                apikey: {
+                    key: getAttr('key') || '',
+                    value: getAttr('value') || '',
+                    addTo: getAttr('in') === 'query' ? 'query' : 'header'
+                }
+            };
+        }
+
+        return undefined;
+    }
+
+    private generateId(): string {
+        return generateId();
+    }
+}

@@ -75,6 +75,7 @@ export class LcCollectionTree extends LcBaseElement {
     { id: 'add-folder', label: 'New Folder' },
     { id: 'add-request', label: 'New Request' },
     { id: 'rename', label: 'Rename' },
+    { id: 'export', label: 'Export' },
     { id: 'delete', label: 'Delete', danger: true }
   ];
 
@@ -118,6 +119,7 @@ export class LcCollectionTree extends LcBaseElement {
         }));
         break;
       case 'rename':
+      case 'export':
       case 'delete':
         if (itemId) {
           // Item action (Folder or Request)

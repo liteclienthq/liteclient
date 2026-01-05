@@ -48,6 +48,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 case 'add-collection':
                     vscode.commands.executeCommand('liteclient.newCollection');
                     break;
+                case 'import-collection':
+                    vscode.commands.executeCommand('liteclient.importCollection');
+                    break;
                 case 'open-request':
                     if (data.source === 'history') {
                         const history = await this._historyService.load();
@@ -90,6 +93,12 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                         const collection = collections.find(c => c.id === data.collectionId);
                         if (collection) {
                             vscode.commands.executeCommand('liteclient.renameCollection', { collection });
+                        }
+                    } else if (data.action === 'export') {
+                        const collections = await this._collectionService.load();
+                        const collection = collections.find(c => c.id === data.collectionId);
+                        if (collection) {
+                            vscode.commands.executeCommand('liteclient.exportCollection', { collection });
                         }
                     }
                     break;

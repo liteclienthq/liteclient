@@ -1,20 +1,35 @@
 import { StorageService } from '../storage/storageService';
 import { AuthConfig } from './httpRequestService';
+import { PostmanImporter } from './importers/PostmanImporter';
+import { PostmanExporter } from './exporters/PostmanExporter';
+import { generateId } from '../utils/idUtils';
+
+// Canonical Body Model
+export interface RequestBody {
+  mode: 'raw' | 'formdata' | 'urlencoded' | 'none';
+  raw?: string;
+  formdata?: { key: string; value: string; type: 'text' | 'file'; src?: string; disabled?: boolean }[];
+  urlencoded?: { key: string; value: string; disabled?: boolean }[];
+}
 
 export interface RequestItem {
   id: string;
   name: string;
+  description?: string; // New: Support for Postman description
   type: 'request';
   method: string;
   url: string;
   headers: Record<string, string>;
-  body: string | null;
+  params?: Record<string, string>; // New: Support for query params map
+  body: string | null;  // Kept for legacy UI compatibility (usually holds the raw string)
+  bodyStruct?: RequestBody; // New: Full structured body data
   auth?: AuthConfig;
 }
 
 export interface FolderItem {
   id: string;
   name: string;
+  description?: string; // New
   type: 'folder';
   items: CollectionItem[];
 }
@@ -24,6 +39,7 @@ export type CollectionItem = RequestItem | FolderItem;
 export interface Collection {
   id: string;
   name: string;
+  description?: string; // New
   items: CollectionItem[];
 }
 
@@ -206,6 +222,64 @@ export class CollectionService {
     }
   }
 
+  // --- Import / Export ---
+
+  async importCollections(content: any): Promise<void> {
+    const importers = [new PostmanImporter()];
+    let processedCollections: Collection[] = [];
+
+    // Try to find a matching importer
+    // For now, naive check, but robust architecture allows trying multiple
+    const importer = importers.find(i => i.canImport(content));
+
+    if (importer) {
+      console.log(`Using importer: ${importer.name}`);
+      processedCollections = await importer.import(content);
+    } else {
+      // Fallback: Assume it's our native/internal JSON format (canonical)
+      // We still map it through sanitize to ensure IDs are fresh
+      console.log('Using native import fallback');
+      const collectionsToImport = Array.isArray(content) ? content : [content];
+      processedCollections = collectionsToImport.map(c => this.sanitizeImportedCollection(c));
+    }
+
+    const currentCollections = await this.load();
+    const newCollections = [...currentCollections, ...processedCollections];
+    await this.save(newCollections);
+  }
+
+  async exportCollection(collection: Collection, format: string = 'postman-v2.1'): Promise<string> {
+    if (format === 'postman-v2.1') {
+      const exporter = new PostmanExporter();
+      return exporter.export(collection);
+    }
+
+    // Default / Fallback: Native JSON
+    return JSON.stringify(collection, null, 2);
+  }
+
+  private sanitizeImportedCollection(c: any): Collection {
+    const newId = this.generateId();
+    return {
+      id: newId,
+      name: c.name || 'Imported Collection',
+      description: c.description,
+      items: this.sanitizeImportedItems(c.items || [])
+    };
+  }
+
+  private sanitizeImportedItems(items: any[]): CollectionItem[] {
+    return items.map(item => {
+      const newItem: any = { ...item, id: this.generateId() };
+
+      if (item.type === 'folder') {
+        newItem.items = this.sanitizeImportedItems(item.items || []);
+      }
+
+      return newItem as CollectionItem;
+    });
+  }
+
   // --- Helper Methods ---
 
   async findRequestInCollections(requestId: string): Promise<{ collection: Collection, request: RequestItem } | undefined> {
@@ -295,6 +369,6 @@ export class CollectionService {
   }
 
   private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    return generateId();
   }
 }

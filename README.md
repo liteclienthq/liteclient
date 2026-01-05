@@ -35,7 +35,9 @@ In an era of bloated developer tools, LiteClient returns to the essentials:
 - **Environment Variables**: Seamlessly switch between `local`, `staging`, and `production`.
 - **Layout Flexibility**: Smart two-panel or single-pane views.
 - **Auth Support**: Bearer Token, Basic Auth, and API Keys ready to go.
+- **Postman Portability**: Import and export Postman Collection v2.1 files with full metadata preservation.
 - **Rich Request Building**: Full support for Query Params, Headers, and JSON/Form-data bodies.
+
 
 ## Quick Start
 

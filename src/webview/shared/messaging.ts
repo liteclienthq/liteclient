@@ -133,9 +133,11 @@ export interface HistoryActionMessage {
     id?: string;
 }
 
+export interface ImportCollectionMessage { type: 'import-collection' }
+
 export interface CollectionActionMessage {
     type: 'collection-action';
-    action: 'delete' | 'rename';
+    action: 'delete' | 'rename' | 'export';
     collectionId: string;
 }
 export interface AddCollectionRequestMessage {
@@ -193,6 +195,7 @@ export type WebviewMessage =
     | GetEnvironmentsMessage
     | NewRequestMessage
     | AddCollectionMessage
+    | ImportCollectionMessage
     | OpenRequestMessage
     | HistoryActionMessage
     | CollectionActionMessage
@@ -225,7 +228,7 @@ export function getVsCodeApi() {
         } else {
             console.warn('[LiteClient] acquireVsCodeApi not found, using mock');
             vscodeApi = {
-                postMessage: () => {},
+                postMessage: () => { },
                 getState: () => undefined,
                 setState: (s: any) => s
             };

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-01-06
+
+### Added
+- **Postman Support**: Full support for importing and exporting Postman Collection v2.1 format.
+- **Authentication Persistence**: Added mapping for Basic, Bearer, and API Key authentication during Postman import/export.
+- **Improved URL Parsing**: Better handling of ports and query parameters during collection portability.
+
+### Fixed
+- Fixed a bug where custom ports were lost during collection export.
+- Resolved "Missing name" errors when importing standard Postman collections.
+
+
 ## [0.3.0] - 2026-01-04
 
 ### Changed
