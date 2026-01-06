@@ -135,7 +135,7 @@ export class RequestPanelManager {
             method: message.method,
             url: message.url,
             headers: message.headers || {},
-            body: message.body || null,
+            body: message.body || { mode: 'none' },
             status: response.status
         });
 

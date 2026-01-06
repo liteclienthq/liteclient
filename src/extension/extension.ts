@@ -227,7 +227,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	const addRequestToCollectionCommand = vscode.commands.registerCommand('liteclient.addRequestToCollection', async (node: any) => {
 		const request: Omit<RequestItem, 'type'> = {
 			id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-			name: "New Request", method: "GET", url: "https://liteclient.com/hello", headers: {}, body: null
+			name: "New Request", method: "GET", url: "https://liteclient.com/hello", headers: {}, body: { mode: 'none' }
 		};
 		// Handle both node structure and direct generic object
 		const collectionId = node.collection?.id || node.collectionId;
@@ -425,7 +425,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	// --- General Commands ---
 
 	const newRequestCommand = vscode.commands.registerCommand('liteclient.newRequest', () => {
-		requestPanelManager.openRequest({ method: "GET", url: "https://liteclient.com/hello", headers: {}, body: "" }, 'new');
+		requestPanelManager.openRequest({ method: "GET", url: "https://liteclient.com/hello", headers: {}, body: { mode: 'none' } }, 'new');
 	});
 
 	context.subscriptions.push(

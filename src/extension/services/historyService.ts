@@ -1,5 +1,5 @@
 import { StorageService } from '../storage/storageService';
-import { AuthConfig } from './httpRequestService';
+import { AuthConfig, RequestBody } from '../../shared/models';
 
 export interface HistoryItem {
   id: string;
@@ -8,7 +8,7 @@ export interface HistoryItem {
   method: string;
   url: string;
   headers: Record<string, string>;
-  body: string | null;
+  body: RequestBody;
   auth?: AuthConfig;
   status: string;
 }

@@ -1,18 +1,11 @@
 import { substituteVariablesInRequest } from '../utils/variableSubstitution';
-
-export interface AuthConfig {
-  type: 'none' | 'bearer' | 'basic' | 'apikey';
-  bearer?: { token: string };
-  basic?: { username: string; password: string };
-  apikey?: { key: string; value: string; addTo: 'header' | 'query' };
-}
+import { AuthConfig, RequestBody } from '../../shared/models';
 
 export interface RequestPayload {
   method: string;
   url: string;
   headers?: Record<string, string>;
-  body?: string | null;
-  bodyType: string;
+  body?: RequestBody;
   auth?: AuthConfig;
 }
 
@@ -104,12 +97,44 @@ Please check:
       };
 
       // Only add body if it exists and method allows it
-      if (substitutedPayload.body && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(substitutedPayload.method)) {
-        // Set appropriate content-type if not already set
-        if (substitutedPayload.bodyType === 'json' && !headers['Content-Type']) {
-          headers['Content-Type'] = 'application/json';
+      if (substitutedPayload.body && substitutedPayload.body.mode !== 'none' && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(substitutedPayload.method)) {
+        const body = substitutedPayload.body;
+
+        if (body.mode === 'raw') {
+          // Set appropriate content-type if not already set
+          if (!headers['Content-Type']) {
+            if (body.rawType === 'json') {
+              headers['Content-Type'] = 'application/json';
+            } else if (body.rawType === 'html') {
+              headers['Content-Type'] = 'text/html';
+            } else if (body.rawType === 'xml') {
+              headers['Content-Type'] = 'application/xml';
+            } else if (body.rawType === 'text' || body.rawType === 'javascript') {
+              headers['Content-Type'] = 'text/plain';
+            }
+          }
+          options.body = body.value;
+        } else if (body.mode === 'form-data') {
+          const formData = new FormData();
+          body.rows.forEach((row: any) => {
+            if (row.active && row.key) {
+              formData.append(row.key, row.value || '');
+            }
+          });
+          // Do NOT set Content-Type for form-data, let fetch handle it with boundary
+          options.body = formData;
+        } else if (body.mode === 'x-www-form-urlencoded') {
+          const params = new URLSearchParams();
+          body.rows.forEach((row: any) => {
+            if (row.active && row.key) {
+              params.append(row.key, row.value || '');
+            }
+          });
+          if (!headers['Content-Type']) {
+            headers['Content-Type'] = 'application/x-www-form-urlencoded';
+          }
+          options.body = params.toString();
         }
-        options.body = substitutedPayload.body;
       }
 
       const startTime = Date.now();

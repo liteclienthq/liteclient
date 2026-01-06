@@ -1,16 +1,8 @@
 import { StorageService } from '../storage/storageService';
-import { AuthConfig } from './httpRequestService';
 import { PostmanImporter } from './importers/PostmanImporter';
 import { PostmanExporter } from './exporters/PostmanExporter';
 import { generateId } from '../utils/idUtils';
-
-// Canonical Body Model
-export interface RequestBody {
-  mode: 'raw' | 'formdata' | 'urlencoded' | 'none';
-  raw?: string;
-  formdata?: { key: string; value: string; type: 'text' | 'file'; src?: string; disabled?: boolean }[];
-  urlencoded?: { key: string; value: string; disabled?: boolean }[];
-}
+import { AuthConfig, RequestBody } from '../../shared/models';
 
 export interface RequestItem {
   id: string;
@@ -21,8 +13,7 @@ export interface RequestItem {
   url: string;
   headers: Record<string, string>;
   params?: Record<string, string>; // New: Support for query params map
-  body: string | null;  // Kept for legacy UI compatibility (usually holds the raw string)
-  bodyStruct?: RequestBody; // New: Full structured body data
+  body: RequestBody;
   auth?: AuthConfig;
 }
 

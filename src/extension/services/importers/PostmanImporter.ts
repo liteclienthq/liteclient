@@ -1,6 +1,6 @@
 import { Importer } from './Importer';
-import { Collection, CollectionItem, RequestItem, RequestBody, FolderItem } from '../collectionService';
-import { AuthConfig } from '../httpRequestService';
+import { Collection, CollectionItem, RequestItem, FolderItem } from '../collectionService';
+import { AuthConfig, RequestBody } from '../../../shared/models';
 import { generateId } from '../../utils/idUtils';
 
 export class PostmanImporter implements Importer {
@@ -94,22 +94,38 @@ export class PostmanImporter implements Importer {
         }
 
         // Handle Body
-        let body: string | null = null;
-        let bodyStruct: RequestBody = { mode: 'none' };
+        let body: RequestBody = { mode: 'none' };
 
         if (request.body) {
             const mode = request.body.mode;
-            bodyStruct.mode = mode;
 
             if (mode === 'raw') {
-                body = request.body.raw;
-                bodyStruct.raw = request.body.raw;
+                const language = request.body.options?.raw?.language || 'text';
+                body = {
+                    mode: 'raw',
+                    rawType: (['json', 'javascript', 'html', 'xml', 'text'].includes(language) ? language : 'text') as any,
+                    value: request.body.raw || ''
+                };
             } else if (mode === 'formdata') {
-                bodyStruct.formdata = request.body.formdata;
-                body = ''; // UI default fallback
+                body = {
+                    mode: 'form-data',
+                    rows: Array.isArray(request.body.formdata) ? request.body.formdata.map((f: any) => ({
+                        id: this.generateId(),
+                        key: f.key || '',
+                        value: f.value || '',
+                        active: !f.disabled
+                    })) : []
+                };
             } else if (mode === 'urlencoded') {
-                bodyStruct.urlencoded = request.body.urlencoded;
-                body = ''; // UI default fallback
+                body = {
+                    mode: 'x-www-form-urlencoded',
+                    rows: Array.isArray(request.body.urlencoded) ? request.body.urlencoded.map((u: any) => ({
+                        id: this.generateId(),
+                        key: u.key || '',
+                        value: u.value || '',
+                        active: !u.disabled
+                    })) : []
+                };
             }
         }
 
@@ -123,7 +139,6 @@ export class PostmanImporter implements Importer {
             headers: headers,
             params: Object.keys(params).length > 0 ? params : undefined,
             body: body,
-            bodyStruct: bodyStruct,
             auth: this.mapAuth(request.auth)
         };
     }

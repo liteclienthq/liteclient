@@ -8,6 +8,9 @@ import { customElement, property, query } from 'lit/decorators.js';
 import { EditorView, basicSetup } from 'codemirror';
 import { EditorState } from '@codemirror/state';
 import { json } from '@codemirror/lang-json';
+import { javascript } from '@codemirror/lang-javascript';
+import { html as langHtml } from '@codemirror/lang-html';
+import { xml } from '@codemirror/lang-xml';
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import { LcBaseElement } from './base-element.js';
@@ -233,6 +236,12 @@ export class LcCodeEditor extends LcBaseElement {
 
         if (this.language === 'json') {
             extensions.push(json());
+        } else if (this.language === 'javascript') {
+            extensions.push(javascript());
+        } else if (this.language === 'html') {
+            extensions.push(langHtml());
+        } else if (this.language === 'xml') {
+            extensions.push(xml());
         }
 
         if (this.wordWrap) {

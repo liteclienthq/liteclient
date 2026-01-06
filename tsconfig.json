@@ -13,12 +13,11 @@
 		"experimentalDecorators": true,
 		"useDefineForClassFields": false
 	},
+	"include": [
+		"src/extension/**/*",
+		"src/shared/**/*"
+	],
 	"exclude": [
 		"src/webview/**/*"
-	],
-	"references": [
-		{
-			"path": "./src/webview"
-		}
 	]
 }

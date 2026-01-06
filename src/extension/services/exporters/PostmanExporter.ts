@@ -1,6 +1,6 @@
 import { Exporter } from './Exporter';
 import { Collection, CollectionItem, RequestItem } from '../collectionService';
-import { AuthConfig } from '../httpRequestService';
+import { AuthConfig, RequestBody } from '../../../shared/models';
 import { generateId } from '../../utils/idUtils';
 
 export class PostmanExporter implements Exporter {
@@ -41,8 +41,7 @@ export class PostmanExporter implements Exporter {
     private convertRequest(item: RequestItem): any {
         const url = this.parseUrl(item.url);
 
-        // Use bodyStruct if available, otherwise fallback to basic body string (assumed raw)
-        const body = item.bodyStruct ? this.convertBodyStruct(item.bodyStruct) : this.convertLegacyBody(item.body);
+        const body = this.convertBody(item.body);
 
         return {
             method: item.method,
@@ -93,26 +92,48 @@ export class PostmanExporter implements Exporter {
         return result;
     }
 
-    private convertBodyStruct(bodyStruct: any): any {
-        const mode = bodyStruct.mode;
-        const result: any = { mode };
-
-        if (mode === 'raw') {
-            result.raw = bodyStruct.raw || '';
-        } else if (mode === 'formdata') {
-            result.formdata = bodyStruct.formdata;
-        } else if (mode === 'urlencoded') {
-            result.urlencoded = bodyStruct.urlencoded;
+    private convertBody(body: RequestBody | undefined): any {
+        if (!body || body.mode === 'none') {
+            return { mode: 'none' };
         }
-        return result;
-    }
 
-    private convertLegacyBody(bodyStr: string | null): any {
-        if (!bodyStr) { return { mode: 'none' }; }
-        return {
-            mode: 'raw',
-            raw: bodyStr
-        };
+        if (body.mode === 'raw') {
+            return {
+                mode: 'raw',
+                raw: body.value || '',
+                options: {
+                    raw: {
+                        language: body.rawType || 'text'
+                    }
+                }
+            };
+        }
+
+        if (body.mode === 'form-data') {
+            return {
+                mode: 'formdata',
+                formdata: (body.rows || []).map((r: any) => ({
+                    key: r.key,
+                    value: r.value,
+                    type: 'text',
+                    disabled: !r.active
+                }))
+            };
+        }
+
+        if (body.mode === 'x-www-form-urlencoded') {
+            return {
+                mode: 'urlencoded',
+                urlencoded: (body.rows || []).map((r: any) => ({
+                    key: r.key,
+                    value: r.value,
+                    type: 'text',
+                    disabled: !r.active
+                }))
+            };
+        }
+
+        return { mode: 'none' };
     }
 
     private parseUrl(urlStr: string) {

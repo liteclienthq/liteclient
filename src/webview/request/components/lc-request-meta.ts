@@ -4,8 +4,9 @@ import { LcBaseElement } from '../../shared/base-element.js';
 import './lc-tabs.js';
 import './lc-key-value-editor.js';
 import './lc-auth-panel.js';
+import './lc-body-panel.js';
 import type { KeyValueItem } from './lc-key-value-editor.js';
-import type { AuthConfig } from '../../shared/messaging.js';
+import type { AuthConfig, RequestBody } from '../../shared/messaging.js';
 
 
 @customElement('lc-request-meta')
@@ -71,7 +72,7 @@ export class LcRequestMeta extends LcBaseElement {
 
   @property({ type: Array }) params: KeyValueItem[] = [];
   @property({ type: Array }) headers: KeyValueItem[] = [];
-  @property({ type: String }) body = '';
+  @property({ type: Object }) body: RequestBody = { mode: 'none' };
   @property({ type: Object }) auth: AuthConfig = { type: 'none' };
 
   @state() private activeTab = 'params';
@@ -88,9 +89,8 @@ export class LcRequestMeta extends LcBaseElement {
     this.activeTab = e.detail.tabId;
   }
 
-  private handleBodyChange(e: Event) {
-    const target = e.target as HTMLTextAreaElement;
-    this.body = target.value;
+  private handleBodyChange(e: CustomEvent) {
+    this.body = e.detail.body;
     this.dispatchEvent(new CustomEvent('body-change', { detail: { body: this.body } }));
   }
 
@@ -142,12 +142,10 @@ export class LcRequestMeta extends LcBaseElement {
         </div>
 
         <div class="tab-content ${this.activeTab === 'body' ? 'active' : ''}">
-           <textarea
-             class="body-editor"
-             .value=${this.body}
-             @input=${this.handleBodyChange}
-             placeholder="Request body (JSON, Text, etc.)"
-           ></textarea>
+           <lc-body-panel
+             .body=${this.body}
+             @body-change=${this.handleBodyChange}
+           ></lc-body-panel>
         </div>
       </div>
     `;

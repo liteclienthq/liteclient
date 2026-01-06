@@ -2,12 +2,8 @@
  * Type-safe messaging between extension and webview
  */
 
-export interface AuthConfig {
-    type: 'none' | 'basic' | 'bearer' | 'apikey';
-    basic?: { username: string; password: string };
-    bearer?: { token: string };
-    apikey?: { key: string; value: string; addTo: 'header' | 'query' };
-}
+import { AuthConfig, RequestBody, KeyValueRow } from '../../shared/models.js';
+export { AuthConfig, RequestBody, KeyValueRow };
 
 export interface HistoryItem {
     id: string;
@@ -16,7 +12,7 @@ export interface HistoryItem {
     method: string;
     url: string;
     headers: Record<string, string>;
-    body: string | null;
+    body: RequestBody;
     auth?: AuthConfig;
     status: string;
 }
@@ -27,7 +23,7 @@ export interface RequestItem {
     method: string;
     url: string;
     headers: Record<string, string>;
-    body: string | null;
+    body: RequestBody;
     auth?: AuthConfig;
 }
 
@@ -52,11 +48,12 @@ export interface LoadRequestMessage {
         method: string;
         url: string;
         headers: Record<string, string>;
-        body: string;
+        body: RequestBody;
         auth?: AuthConfig;
         source: 'history' | 'collection' | 'new';
         collectionId?: string;
         collectionPath?: string[];
+        name?: string;
     };
 }
 
@@ -95,8 +92,7 @@ export interface SendRequestMessage {
     method: string;
     url: string;
     headers: Record<string, string>;
-    body: string;
-    bodyType: string;
+    body: RequestBody;
     name: string;
     auth?: AuthConfig;
     environmentId?: string | null;
@@ -110,8 +106,7 @@ export interface SaveRequestMessage {
         method: string;
         url: string;
         headers: Record<string, string>;
-        body: string;
-        bodyType: string;
+        body: RequestBody;
         auth?: AuthConfig;
     };
 }

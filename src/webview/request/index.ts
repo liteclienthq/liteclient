@@ -6,7 +6,7 @@
 import { html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../shared/base-element.js';
-import { onMessage, postMessage, type ExtensionMessage } from '../shared/messaging.js';
+import { onMessage, postMessage, type ExtensionMessage, type RequestBody } from '../shared/messaging.js';
 
 // Import components
 import './components/lc-status-bar.js';
@@ -177,7 +177,7 @@ export class LcRequestPanel extends LcBaseElement {
   @state() requestUrl = '';
   @state() requestParams: any[] = [];
   @state() requestHeaders: any[] = [];
-  @state() requestBody = '';
+  @state() requestBody: RequestBody = { mode: 'none' };
   @state() requestAuth: any = { type: 'none' };
   @state() collectionId: string | undefined;
   @state() requestName = 'New Request';
@@ -240,7 +240,20 @@ export class LcRequestPanel extends LcBaseElement {
     const { payload } = message;
     this.requestMethod = payload.method;
     this.requestUrl = payload.url;
-    this.requestBody = payload.body || '';
+
+    // Handle body loading (with backward compatibility)
+    if (payload.body && typeof payload.body === 'object' && 'mode' in payload.body) {
+      this.requestBody = payload.body;
+    } else if (typeof payload.body === 'string') {
+      this.requestBody = {
+        mode: 'raw',
+        rawType: 'json',
+        value: payload.body
+      };
+    } else {
+      this.requestBody = { mode: 'none' };
+    }
+
     this.requestAuth = payload.auth || { type: 'none' };
     this.collectionId = payload.collectionId;
     this.requestName = payload.name || 'New Request';
@@ -286,7 +299,6 @@ export class LcRequestPanel extends LcBaseElement {
           url: this.requestUrl,
           headers: headersRecord,
           body: this.requestBody,
-          bodyType: 'json',
           auth: this.requestAuth
         }
       });
@@ -300,7 +312,6 @@ export class LcRequestPanel extends LcBaseElement {
         url: this.requestUrl,
         headers: headersRecord,
         body: this.requestBody,
-        bodyType: 'json',
         auth: this.requestAuth,
         name: this.requestName,
         environmentId: selectedEnvironmentId // Add environment ID to the request
