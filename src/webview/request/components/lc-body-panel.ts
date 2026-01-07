@@ -28,13 +28,15 @@ export class LcBodyPanel extends LcBaseElement {
       align-items: center;
       gap: 16px;
       padding: 4px 0 12px 0;
-      border-bottom: 1px solid var(--vscode-panel-border);
       margin-bottom: 12px;
+      position: relative;
+      overflow-x: auto;
     }
 
     .radio-group {
       display: flex;
       gap: 12px;
+      flex-shrink: 0;
     }
 
     .radio-option {
@@ -43,9 +45,11 @@ export class LcBodyPanel extends LcBaseElement {
       gap: 4px;
       cursor: pointer;
       font-size: 13px;
+      font-weight: 500;
       color: var(--vscode-foreground);
       opacity: 0.8;
       user-select: none;
+      white-space: nowrap;
     }
 
     .radio-option:hover {
@@ -55,7 +59,6 @@ export class LcBodyPanel extends LcBaseElement {
     .radio-option.active {
       opacity: 1;
       color: var(--vscode-focusBorder);
-      font-weight: 500;
     }
 
     .radio-input {
@@ -85,7 +88,10 @@ export class LcBodyPanel extends LcBaseElement {
     }
 
     .raw-type-selector {
-      margin-left: auto;
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -109,15 +115,29 @@ export class LcBodyPanel extends LcBaseElement {
     .editor-container {
       flex: 1;
       min-height: 0;
-      border: 1px solid var(--vscode-panel-border);
       border-radius: 2px;
+    }
+
+    .editor-container.with-border {
+      border: 1px solid var(--vscode-panel-border);
+    }
+
+    .editor-wrapper {
+      position: relative;
+      height: 100%;
+    }
+
+    .editor-dropdown {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      z-index: 10;
     }
 
     .none-message {
       flex: 1;
       display: flex;
       align-items: center;
-      justify-content: center;
       color: var(--vscode-descriptionForeground);
       font-size: 13px;
       font-style: italic;
@@ -133,7 +153,7 @@ export class LcBodyPanel extends LcBaseElement {
     } else if (mode === 'raw') {
       newBody = {
         mode: 'raw',
-        rawType: 'text',
+        rawType: 'json',
         value: ''
       };
     } else if (mode === 'form-data') {
@@ -208,28 +228,28 @@ export class LcBodyPanel extends LcBaseElement {
     return html`
       <div class="body-selector">
         <div class="radio-group">
-          <div 
+          <div
             class="radio-option ${this.body.mode === 'none' ? 'active' : ''}"
             @click=${() => this.handleModeChange('none')}
           >
             <div class="radio-circle"></div>
             <span>none</span>
           </div>
-          <div 
+          <div
             class="radio-option ${this.body.mode === 'raw' ? 'active' : ''}"
             @click=${() => this.handleModeChange('raw')}
           >
             <div class="radio-circle"></div>
             <span>raw</span>
           </div>
-          <div 
+          <div
             class="radio-option ${this.body.mode === 'form-data' ? 'active' : ''}"
             @click=${() => this.handleModeChange('form-data')}
           >
             <div class="radio-circle"></div>
             <span>form-data</span>
           </div>
-          <div 
+          <div
             class="radio-option ${this.body.mode === 'x-www-form-urlencoded' ? 'active' : ''}"
             @click=${() => this.handleModeChange('x-www-form-urlencoded')}
           >
@@ -237,30 +257,29 @@ export class LcBodyPanel extends LcBaseElement {
             <span>x-www-form-urlencoded</span>
           </div>
         </div>
-
-        ${this.body.mode === 'raw' ? html`
-          <div class="raw-type-selector">
-            <select class="raw-type-select" @change=${this.handleRawTypeChange}>
-              <option value="text" ?selected=${this.body.rawType === 'text'}>Text</option>
-              <option value="javascript" ?selected=${this.body.rawType === 'javascript'}>JavaScript</option>
-              <option value="json" ?selected=${this.body.rawType === 'json'}>JSON</option>
-              <option value="html" ?selected=${this.body.rawType === 'html'}>HTML</option>
-              <option value="xml" ?selected=${this.body.rawType === 'xml'}>XML</option>
-            </select>
-          </div>
-        ` : ''}
       </div>
 
-      <div class="editor-container">
+      <div class="editor-container ${this.body.mode === 'raw' ? 'with-border' : ''}">
         ${this.body.mode === 'none'
         ? html`<div class="none-message">This request does not have a body</div>`
         : this.body.mode === 'raw'
           ? html`
-            <lc-code-editor
-              .value=${this.body.value}
-              .language=${this.getEditorLanguage(this.body.rawType)}
-              @change=${this.handleValueChange}
-            ></lc-code-editor>
+            <div class="editor-wrapper">
+              <lc-code-editor
+                .value=${this.body.value}
+                .language=${this.getEditorLanguage(this.body.rawType)}
+                @change=${this.handleValueChange}
+              ></lc-code-editor>
+              <div class="editor-dropdown">
+                <select class="raw-type-select" @change=${this.handleRawTypeChange}>
+                  <option value="json" ?selected=${this.body.rawType === 'json'}>JSON</option>
+                  <option value="text" ?selected=${this.body.rawType === 'text'}>Text</option>
+                  <option value="javascript" ?selected=${this.body.rawType === 'javascript'}>JavaScript</option>
+                  <option value="html" ?selected=${this.body.rawType === 'html'}>HTML</option>
+                  <option value="xml" ?selected=${this.body.rawType === 'xml'}>XML</option>
+                </select>
+              </div>
+            </div>
           `
           : html`
             <lc-key-value-editor

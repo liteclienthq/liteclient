@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-01-07
+
+### Changed
+- **Body Panel Improvements**: Enhanced layout and usability of the request body panel.
+- **Default Raw Type**: JSON is now the default selection for raw body types.
+- **Dropdown Positioning**: Moved raw type dropdown to the top right of the editor area for better UX.
+- **UI Polish**: Removed unnecessary borders, improved centering, and fixed layout shifts.
+
+### Fixed
+- **Layout Stability**: Eliminated subtle movements and overlaps in the body panel when switching modes or resizing.
+- **Responsive Design**: Radio buttons now scroll horizontally without text wrapping on narrow panels.
+
 ## [0.5.0] - 2026-01-06
 
 ### Added
