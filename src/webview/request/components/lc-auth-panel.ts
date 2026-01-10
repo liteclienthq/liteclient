@@ -36,8 +36,8 @@ export class LcAuthPanel extends LcBaseElement {
 
       .auth-selector select {
         padding: 4px 8px;
-        background: transparent;
-        color: var(--vscode-dropdown-foreground);
+        background: var(--vscode-editor-background);
+        color: var(--vscode-foreground);
         border: 1px solid var(--vscode-dropdown-border);
         outline: none;
         border-radius: 2px;
@@ -68,8 +68,8 @@ export class LcAuthPanel extends LcBaseElement {
 
       .form-group input, .form-group select {
         padding: 6px 8px;
-        background: transparent;
-        color: var(--vscode-input-foreground);
+        background: var(--vscode-editor-background);
+        color: var(--vscode-foreground);
         border: 1px solid var(--vscode-input-border);
         outline: none;
         border-radius: 2px;

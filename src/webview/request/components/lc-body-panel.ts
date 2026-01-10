@@ -56,6 +56,12 @@ export class LcBodyPanel extends LcBaseElement {
       opacity: 1;
     }
 
+    .radio-option:focus-visible {
+      outline: 2px solid var(--vscode-focusBorder);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+
     .radio-option.active {
       opacity: 1;
       color: var(--vscode-focusBorder);
@@ -98,18 +104,47 @@ export class LcBodyPanel extends LcBaseElement {
     }
 
     .raw-type-select {
-      background: transparent;
+      background: var(--vscode-editor-background);
       color: var(--vscode-foreground);
-      border: 1px solid var(--vscode-settings-dropdownBorder);
+      border: 1px solid var(--vscode-dropdown-border);
       border-radius: 2px;
-      padding: 1px 4px;
+      padding: 4px 24px 4px 8px; /* Extra right padding for dropdown arrow */
       font-size: 12px;
       outline: none;
       cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      position: relative;
     }
 
     .raw-type-select:focus {
       border-color: var(--vscode-focusBorder);
+    }
+
+    .raw-type-select:focus-visible {
+      outline: 2px solid var(--vscode-focusBorder);
+      outline-offset: 2px;
+      border-radius: 2px;
+    }
+
+    .raw-type-select-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .raw-type-select-wrapper::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 8px;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 4px solid var(--vscode-foreground);
+      pointer-events: none;
     }
 
     .editor-container {
@@ -138,9 +173,12 @@ export class LcBodyPanel extends LcBaseElement {
       flex: 1;
       display: flex;
       align-items: center;
+      justify-content: center;
       color: var(--vscode-descriptionForeground);
       font-size: 13px;
       font-style: italic;
+      padding: 20px;
+      text-align: center;
     }
   `;
 
@@ -226,34 +264,50 @@ export class LcBodyPanel extends LcBaseElement {
 
   render() {
     return html`
-      <div class="body-selector">
+      <div class="body-selector" role="radiogroup" aria-label="Request body type">
         <div class="radio-group">
           <div
             class="radio-option ${this.body.mode === 'none' ? 'active' : ''}"
+            role="radio"
+            aria-checked="${this.body.mode === 'none'}"
+            tabindex="0"
             @click=${() => this.handleModeChange('none')}
+            @keydown=${(e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') && this.handleModeChange('none')}
           >
-            <div class="radio-circle"></div>
+            <div class="radio-circle" aria-hidden="true"></div>
             <span>none</span>
           </div>
           <div
             class="radio-option ${this.body.mode === 'raw' ? 'active' : ''}"
+            role="radio"
+            aria-checked="${this.body.mode === 'raw'}"
+            tabindex="0"
             @click=${() => this.handleModeChange('raw')}
+            @keydown=${(e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') && this.handleModeChange('raw')}
           >
-            <div class="radio-circle"></div>
+            <div class="radio-circle" aria-hidden="true"></div>
             <span>raw</span>
           </div>
           <div
             class="radio-option ${this.body.mode === 'form-data' ? 'active' : ''}"
+            role="radio"
+            aria-checked="${this.body.mode === 'form-data'}"
+            tabindex="0"
             @click=${() => this.handleModeChange('form-data')}
+            @keydown=${(e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') && this.handleModeChange('form-data')}
           >
-            <div class="radio-circle"></div>
+            <div class="radio-circle" aria-hidden="true"></div>
             <span>form-data</span>
           </div>
           <div
             class="radio-option ${this.body.mode === 'x-www-form-urlencoded' ? 'active' : ''}"
+            role="radio"
+            aria-checked="${this.body.mode === 'x-www-form-urlencoded'}"
+            tabindex="0"
             @click=${() => this.handleModeChange('x-www-form-urlencoded')}
+            @keydown=${(e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') && this.handleModeChange('x-www-form-urlencoded')}
           >
-            <div class="radio-circle"></div>
+            <div class="radio-circle" aria-hidden="true"></div>
             <span>x-www-form-urlencoded</span>
           </div>
         </div>
@@ -271,13 +325,15 @@ export class LcBodyPanel extends LcBaseElement {
                 @change=${this.handleValueChange}
               ></lc-code-editor>
               <div class="editor-dropdown">
-                <select class="raw-type-select" @change=${this.handleRawTypeChange}>
-                  <option value="json" ?selected=${this.body.rawType === 'json'}>JSON</option>
-                  <option value="text" ?selected=${this.body.rawType === 'text'}>Text</option>
-                  <option value="javascript" ?selected=${this.body.rawType === 'javascript'}>JavaScript</option>
-                  <option value="html" ?selected=${this.body.rawType === 'html'}>HTML</option>
-                  <option value="xml" ?selected=${this.body.rawType === 'xml'}>XML</option>
-                </select>
+                <div class="raw-type-select-wrapper">
+                  <select class="raw-type-select" @change=${this.handleRawTypeChange}>
+                    <option value="json" ?selected=${this.body.rawType === 'json'}>JSON</option>
+                    <option value="text" ?selected=${this.body.rawType === 'text'}>Text</option>
+                    <option value="javascript" ?selected=${this.body.rawType === 'javascript'}>JavaScript</option>
+                    <option value="html" ?selected=${this.body.rawType === 'html'}>HTML</option>
+                    <option value="xml" ?selected=${this.body.rawType === 'xml'}>XML</option>
+                  </select>
+                </div>
               </div>
             </div>
           `
