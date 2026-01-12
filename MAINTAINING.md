@@ -1,55 +1,216 @@
-# Maintenance Guide
+# Maintainer Guide
 
-This document outlines the standard workflow for maintaining, updating, and releasing LiteClient. It serves as a reference for maintainers and contributors to ensure consistency and quality.
+This document defines the release workflow for LiteClient. Follow these steps exactly to ensure consistent, error-free releases.
+
+## Versioning
+
+We follow [Semantic Versioning](https://semver.org/):
+
+| Change Type | Version Bump | Example |
+|-------------|--------------|---------|
+| Breaking changes | Major (X.0.0) | Removing a feature, changing data format |
+| New features (backward compatible) | Minor (0.X.0) | Adding OAuth support |
+| Bug fixes (backward compatible) | Patch (0.0.X) | Fixing a scroll issue |
+
+## Changelog Format
+
+We follow [Keep a Changelog](https://keepachangelog.com/). Categories:
+
+- **Added** — New features
+- **Changed** — Changes to existing features
+- **Fixed** — Bug fixes
+- **Removed** — Removed features
+- **Security** — Security fixes
 
 ## Development Workflow
 
-1.  **Branching Strategy**
-    *   Never commit directly to `main`.
-    *   Create a feature branch for every task: `git checkout -b feature/your-feature-name`.
-    *   Use descriptive branch names (e.g., `feature/auth-improvements`, `fix/response-scrolling`).
+### 1. Start a Feature Branch
 
-2.  **Implementation & Verification**
-    *   Implement changes incrementally.
-    *   Verify changes manually or with tests (`npm run check`, `npm test`).
-    *   Ensure no regressions in existing functionality.
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/your-feature-name
+```
 
-3.  **Documentation Updates**
-    *   **CHANGELOG.md**: Always update the Changelog. Add a new `[Unreleased]` section or update the upcoming version section. List changes under `Added`, `Changed`, `Fixed`, or `Removed`.
-    *   **README.md**: If the feature is user-facing, update the documentation in the README.
-    *   **package.json**: Bump the version number according to [Semantic Versioning](https://semver.org/) rules (Major.Minor.Patch).
+### 2. Develop and Test
 
-## Release Process
+1. Make code changes
+2. Test manually: Press `F5` in VS Code
+3. Run checks: `npm run check`
+4. Fix any issues
 
-Once a feature or set of features is ready on a branch:
+### 3. Update Changelog
 
-1.  **Final Verification**
-    *   Run full checks: `npm run check`.
-    *   Verify the `version` in `package.json` matches the release target.
-    *   Verify `CHANGELOG.md` has the correct date and version entry.
+Add your changes under `[Unreleased]` in CHANGELOG.md:
 
-2.  **Merge to Main**
-    *   Commit all changes on the feature branch.
-    *   Switch to main: `git checkout main`.
-    *   Merge the feature branch: `git merge feature/your-feature-name`.
+```markdown
+## [Unreleased]
 
-3.  **Publish to Marketplaces**
-    *   **VS Code Marketplace**:
-        ```bash
-        npx vsce publish
-        ```
-    *   **Open VSX Registry**:
-        ```bash
-        npx ovsx publish
-        ```
-    *   *Note: Ensure you have the necessary publisher access tokens configured.*
+### Added
+- OAuth 2.0 authentication support
+```
 
-4.  **GitHub Release**
-    *   Create a git tag: `git tag vX.Y.Z` (e.g., `git tag v0.5.0`).
-    *   Push main and tags: `git push origin main --tags`.
-    *   Create a Release on GitHub using the tag, pasting the relevant `CHANGELOG.md` entry as the description.
+### 4. Commit and Push
 
-## Code Style & Standards
-*   Follow the existing code style (Prettier/ESLint are configured).
-*   Keep commits small, scoped, and descriptive.
-*   Prioritize backward compatibility for user data (collections, history).
+```bash
+git add .
+git commit -m "feat: add OAuth 2.0 authentication support"
+git push origin feature/your-feature-name
+```
+
+### 5. Create Pull Request
+
+Use PRs for all changes to maintain:
+- A checkpoint before merging
+- Clear history of what changed and why
+- CI checks (if configured)
+
+---
+
+## Release Workflow
+
+When ready to release (features complete, tested, changelog updated):
+
+### Step 1: Merge to Main
+
+```bash
+git checkout main
+git pull origin main
+git merge feature/your-feature-name
+```
+
+Or merge via GitHub PR.
+
+### Step 2: Determine Version
+
+Based on changes in `[Unreleased]`:
+- Any breaking changes? → Major bump
+- New features? → Minor bump
+- Only fixes? → Patch bump
+
+### Step 3: Update Version and Changelog
+
+1. Update version in `package.json`:
+   ```json
+   "version": "0.6.0"
+   ```
+
+2. Update CHANGELOG.md — rename `[Unreleased]` to the new version:
+   ```markdown
+   ## [0.6.0] - 2025-01-12
+
+   ### Added
+   - OAuth 2.0 authentication support
+   
+   ## [0.5.3] - 2025-01-01
+   ...
+   ```
+
+3. Add empty `[Unreleased]` section at top:
+   ```markdown
+   ## [Unreleased]
+
+   ## [0.6.0] - 2025-01-12
+   ...
+   ```
+
+### Step 4: Final Verification
+
+```bash
+npm run check
+```
+
+Must pass with no errors.
+
+### Step 5: Commit Release
+
+```bash
+git add package.json CHANGELOG.md
+git commit -m "chore: release v0.6.0"
+```
+
+### Step 6: Publish to Marketplaces
+
+**VS Code Marketplace:**
+```bash
+npx vsce publish
+```
+
+**Open VSX Registry:**
+```bash
+npx ovsx publish
+```
+
+> Ensure you have `VSCE_PAT` and `OVSX_PAT` tokens configured.
+
+### Step 7: Tag and Push
+
+Only tag **after** successful publish:
+
+```bash
+git tag v0.6.0
+git push origin main --tags
+```
+
+### Step 8: Create GitHub Release
+
+1. Go to GitHub → Releases → "Create a new release"
+2. Select the tag `v0.6.0`
+3. Title: `v0.6.0`
+4. Description: Copy the changelog entry for this version
+5. Publish release
+
+---
+
+## Release Checklist
+
+Copy this checklist for each release:
+
+```markdown
+## Release v0.X.0 Checklist
+
+- [ ] All features merged to main
+- [ ] `npm run check` passes
+- [ ] Manual testing complete
+- [ ] CHANGELOG.md updated with version and date
+- [ ] package.json version bumped
+- [ ] Committed: "chore: release vX.Y.Z"
+- [ ] Published to VS Code Marketplace: `npx vsce publish`
+- [ ] Published to Open VSX: `npx ovsx publish`
+- [ ] Tagged: `git tag vX.Y.Z`
+- [ ] Pushed: `git push origin main --tags`
+- [ ] GitHub Release created
+```
+
+---
+
+## Hotfix Workflow
+
+For urgent fixes to production:
+
+```bash
+git checkout main
+git checkout -b fix/critical-bug
+# Make fix
+npm run check
+git commit -m "fix: resolve critical bug"
+git checkout main
+git merge fix/critical-bug
+# Follow release workflow (patch bump)
+```
+
+---
+
+## Token Setup
+
+### VS Code Marketplace (vsce)
+
+1. Go to https://dev.azure.com
+2. Create a Personal Access Token with Marketplace (Publish) scope
+3. Run: `npx vsce login liteclienthq`
+
+### Open VSX Registry (ovsx)
+
+1. Go to https://open-vsx.org
+2. Get access token from settings
+3. Set: `export OVSX_PAT=your-token` or pass via `npx ovsx publish -p $OVSX_PAT`

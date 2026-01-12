@@ -1,28 +1,78 @@
 # Contributing to LiteClient
-    
-## Branching Strategy
-We follow a **Feature Branch** workflow.
-- **main**: stable, production-ready code.
-- **feature/name**: for new features and non-trivial changes.
-- **fix/issue**: for bug fixes.
 
-**Workflow:**
-1.  Checkout `main` and pull latest.
-2.  Create a branch: `git checkout -b feature/my-feature`.
-3.  Commit changes.
-4.  Merge back to `main` via PR/Merge.
+Thank you for your interest in contributing to LiteClient! This guide will help you get started.
 
-## Versioning Strategy
-We follow **Semantic Versioning (SemVer)**: `vX.Y.Z`
-- **Major (X)**: Breaking changes.
-- **Minor (Y)**: New features (backward compatible).
-- **Patch (Z)**: Bug fixes (backward compatible).
+## Getting Started
 
-Examples:
-- `v0.1.0` -> First release.
-- `v0.2.0` -> Added Body Type selection.
-- `v0.2.1` -> Fixed a bug in Body Type.
+1. Fork the repository
+2. Clone your fork: `git clone https://github.com/liteclienthq/liteclient.git`
+3. Install dependencies: `npm install`
+4. Open in VS Code and press `F5` to launch the Extension Development Host
 
-## Publishing
-- The extension is published to VS Code Marketplace and Open VSX Registry.
-- Publishing is done manually after verifying a feature set on `main`.
+## Development Workflow
+
+### Branch Naming
+
+Create a branch from `main` using one of these prefixes:
+
+- `feature/` — New features (e.g., `feature/oauth-support`)
+- `fix/` — Bug fixes (e.g., `fix/response-scroll-issue`)
+- `docs/` — Documentation only (e.g., `docs/update-readme`)
+- `refactor/` — Code refactoring (e.g., `refactor/extract-commands`)
+
+### Making Changes
+
+1. Create your branch: `git checkout -b feature/your-feature`
+2. Make changes incrementally
+3. Test manually using the Extension Development Host (`F5`)
+4. Run checks: `npm run check`
+5. Commit with clear messages (see below)
+
+### Commit Messages
+
+Use clear, descriptive commit messages:
+
+```
+feat: add OAuth 2.0 authentication support
+fix: resolve scroll position reset in response panel
+docs: update README with new features
+refactor: extract command handlers to separate files
+chore: update dependencies
+```
+
+Prefix format:
+- `feat:` — New feature
+- `fix:` — Bug fix
+- `docs:` — Documentation
+- `refactor:` — Code refactoring
+- `chore:` — Maintenance tasks
+- `test:` — Adding or updating tests
+
+### Before Submitting
+
+- [ ] Run `npm run check` (must pass)
+- [ ] Test the feature manually
+- [ ] Update documentation if needed
+
+## Pull Request Process
+
+1. Push your branch to your fork
+2. Open a Pull Request against `main`
+3. Describe what your PR does and why
+4. Link any related issues
+
+## Code Style
+
+- TypeScript with strict mode
+- No `any` types — use proper types or `unknown`
+- Follow existing patterns in the codebase
+- See [AGENTS.md](./AGENTS.md) for detailed conventions
+
+## Questions?
+
+- Open an issue for bugs or feature requests
+- Check existing issues before creating new ones
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.
