@@ -5,9 +5,18 @@ import { HistoryService } from '../../services/historyService';
 import { CollectionService, RequestItem } from '../../services/collectionService';
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
+import type { RequestPanelToExtensionMessage } from '../../../shared/messages';
+
+type MessageHandler = (panel: vscode.WebviewPanel, message: any, context: RequestContext) => Promise<void>;
+
+interface RequestContext {
+    originalRequest: any;
+    collectionId?: string;
+}
 
 export class RequestPanelManager {
     private panels = new Map<string, vscode.WebviewPanel>();
+    private messageHandlers: Record<string, MessageHandler> = {};
 
     constructor(
         private context: vscode.ExtensionContext,
@@ -17,7 +26,18 @@ export class RequestPanelManager {
         private settingsService: SettingsService,
         private refreshHistory: () => void,
         private refreshCollections: () => void
-    ) { }
+    ) {
+        this._initMessageHandlers();
+    }
+
+    private _initMessageHandlers(): void {
+        this.messageHandlers = {
+            'send-request': (panel, message) => this._handleSendRequest(panel, message),
+            'get-environments': (panel) => this._handleGetEnvironments(panel),
+            'set-environment': (_panel, message) => this._handleSetEnvironment(message.environmentId),
+            'save-request': (panel, message, ctx) => this._handleSaveRequest(panel, message, ctx),
+        };
+    }
 
     async openRequest(item: any, source: 'history' | 'collection' | 'new', collectionId?: string, collectionName?: string) {
         let requestIdentity = '';
@@ -33,9 +53,9 @@ export class RequestPanelManager {
 
         if (existingPanel) {
             existingPanel.reveal();
-            this.populatePanel(existingPanel, item, source, collectionId, collectionName);
+            this._populatePanel(existingPanel, item, source, collectionId, collectionName);
         } else {
-            const title = this.getShortenedTitle(item.name || item.url || 'New Request');
+            const title = this._getShortenedTitle(item.name || item.url || 'New Request');
             const panel = vscode.window.createWebviewPanel(
                 "requestWebview",
                 title,
@@ -47,17 +67,16 @@ export class RequestPanelManager {
                 }
             );
 
-            this.setupMessageHandler(panel, item, collectionId);
+            this._setupMessageHandler(panel, item, collectionId);
             panel.webview.html = RequestWebView.getHtmlContent(panel.webview, this.context.extensionUri);
-
-            this.populatePanel(panel, item, source, collectionId, collectionName);
+            this._populatePanel(panel, item, source, collectionId, collectionName);
 
             this.panels.set(requestIdentity, panel);
             panel.onDidDispose(() => this.panels.delete(requestIdentity));
         }
     }
 
-    private populatePanel(panel: vscode.WebviewPanel, item: any, source: string, collectionId?: string, collectionName?: string) {
+    private _populatePanel(panel: vscode.WebviewPanel, item: any, source: string, collectionId?: string, collectionName?: string) {
         panel.webview.postMessage({
             type: "load-request",
             payload: {
@@ -69,51 +88,36 @@ export class RequestPanelManager {
         });
     }
 
-    private setupMessageHandler(panel: vscode.WebviewPanel, originalRequest: any, collectionId?: string) {
-        panel.webview.onDidReceiveMessage(async (message) => {
-            switch (message.type) {
-                case 'send-request':
-                    await this.handleSendRequest(panel, message);
-                    break;
-                case 'get-environments':
-                    await this.handleGetEnvironments(panel);
-                    break;
-                case 'set-environment':
-                    await this.handleSetEnvironment(message.environmentId);
-                    break;
-                case 'save-request':
-                    await this.handleSaveRequest(panel, message, originalRequest, collectionId);
-                    break;
+    private _setupMessageHandler(panel: vscode.WebviewPanel, originalRequest: any, collectionId?: string) {
+        const context: RequestContext = { originalRequest, collectionId };
+
+        panel.webview.onDidReceiveMessage(async (message: RequestPanelToExtensionMessage) => {
+            const handler = this.messageHandlers[message.type];
+            if (handler) {
+                await handler(panel, message, context);
             }
         });
     }
 
-    private async handleSendRequest(panel: vscode.WebviewPanel, message: any) {
+    // --- Message Handlers ---
+
+    private async _handleSendRequest(panel: vscode.WebviewPanel, message: any) {
         let environmentVariables: Record<string, string> = {};
 
-        // Use the environmentId from the message if provided, otherwise fall back to the global setting
         const messageEnvironmentId = message.environmentId;
         const globalSelectedEnvironmentId = await this.settingsService.getSelectedEnvironmentId();
-
-        // Prioritize the environment selected in the request panel over the global setting
         const selectedEnvironmentId = messageEnvironmentId !== undefined ? messageEnvironmentId : globalSelectedEnvironmentId;
 
-        // Load Globals first (always available as the base layer)
         const globals = await this.environmentService.getEnvironmentById('globals');
         if (globals) {
             environmentVariables = { ...globals.variables };
         }
 
-        // Merge custom environment variables if selected (overwrites globals)
         if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
             const selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
             if (selectedEnvironment) {
                 environmentVariables = { ...environmentVariables, ...selectedEnvironment.variables };
-            } else {
-                // Environment not found for ID
             }
-        } else if (!selectedEnvironmentId) {
-            // No custom environment selected, using Globals only
         }
 
         const response = await HttpRequestService.sendRequest(message, environmentVariables);
@@ -123,13 +127,13 @@ export class RequestPanelManager {
             try {
                 const url = new URL(message.url);
                 historyName = url.hostname + (url.pathname !== '/' ? url.pathname : '');
-            } catch (e) {
+            } catch {
                 historyName = message.url || 'New Request';
             }
         }
 
         await this.historyService.add({
-            id: this.generateId(),
+            id: this._generateId(),
             timestamp: Date.now(),
             name: historyName,
             method: message.method,
@@ -138,7 +142,6 @@ export class RequestPanelManager {
             body: message.body || { mode: 'none' },
             status: response.status
         });
-
 
         this.refreshHistory();
 
@@ -150,10 +153,9 @@ export class RequestPanelManager {
             time: response.time,
             isError: response.isError
         });
-
     }
 
-    private async handleGetEnvironments(panel: vscode.WebviewPanel) {
+    private async _handleGetEnvironments(panel: vscode.WebviewPanel) {
         const environments = await this.environmentService.load();
         const selectedEnvironmentId = await this.settingsService.getSelectedEnvironmentId();
         panel.webview.postMessage({
@@ -163,28 +165,29 @@ export class RequestPanelManager {
         });
     }
 
-    private async handleSetEnvironment(environmentId: string) {
+    private async _handleSetEnvironment(environmentId: string | undefined) {
         await this.settingsService.setSelectedEnvironmentId(environmentId);
         if (environmentId) {
             const env = await this.environmentService.getEnvironmentById(environmentId);
             if (env) {
                 vscode.window.showInformationMessage(`Environment set to: ${env.name}`);
             }
-
         } else {
             vscode.window.showInformationMessage('Environment cleared');
         }
-        this.broadcastToPanels('environments-list', {
+        this._broadcastToPanels('environments-list', {
             environments: await this.environmentService.load(),
             selectedEnvironmentId: environmentId
         });
     }
 
-    private async handleSaveRequest(panel: vscode.WebviewPanel, message: any, originalRequest: any, collectionId?: string) {
+    private async _handleSaveRequest(panel: vscode.WebviewPanel, message: any, ctx: RequestContext) {
+        const { originalRequest, collectionId } = ctx;
+
         if (collectionId) {
-            // Update existing
             const updatedRequest: RequestItem = {
                 ...message.payload,
+                type: 'request',
                 id: originalRequest.id,
                 name: message.name || originalRequest.name
             };
@@ -192,7 +195,6 @@ export class RequestPanelManager {
             this.refreshCollections();
             vscode.window.showInformationMessage('Request updated!');
         } else {
-            // New save (show picker)
             const collections = await this.collectionService.load();
             const selected = await vscode.window.showQuickPick(
                 collections.map(c => ({ label: c.name, detail: c.id, collection: c })),
@@ -202,7 +204,8 @@ export class RequestPanelManager {
             if (selected) {
                 const newRequest: RequestItem = {
                     ...message.payload,
-                    id: this.generateId(),
+                    type: 'request',
+                    id: this._generateId(),
                     name: message.name || message.payload.url || 'Unnamed Request'
                 };
                 await this.collectionService.addRequest(selected.collection.id, newRequest);
@@ -212,39 +215,42 @@ export class RequestPanelManager {
         }
     }
 
-    private broadcastToPanels(type: string, data: any) {
+    // --- Broadcast Methods ---
+
+    private _broadcastToPanels(type: string, data: any) {
         for (const panel of this.panels.values()) {
             panel.webview.postMessage({ type, ...data });
         }
     }
 
     public async broadcastEnvironments() {
-        this.broadcastToPanels('environments-list', {
+        this._broadcastToPanels('environments-list', {
             environments: await this.environmentService.load(),
             selectedEnvironmentId: await this.settingsService.getSelectedEnvironmentId()
         });
     }
 
     public async broadcastCollections() {
-        this.broadcastToPanels('collections-list', {
+        this._broadcastToPanels('collections-list', {
             collections: await this.collectionService.load()
         });
     }
 
     public updateTitle(id: string, newTitle: string) {
-        const panels = Array.from(this.panels.entries());
-        for (const [key, panel] of panels) {
+        for (const [key, panel] of this.panels.entries()) {
             if (key.includes(id)) {
-                panel.title = this.getShortenedTitle(newTitle);
+                panel.title = this._getShortenedTitle(newTitle);
             }
         }
     }
 
-    private getShortenedTitle(title: string): string {
+    // --- Utilities ---
+
+    private _getShortenedTitle(title: string): string {
         return title.length > 20 ? title.substring(0, 17) + '...' : title;
     }
 
-    private generateId(): string {
+    private _generateId(): string {
         return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
     }
 }
