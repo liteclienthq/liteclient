@@ -36,7 +36,12 @@ npm test
 ```
 src/
 ├── extension/                 # VS Code extension (Node.js)
-│   ├── commands/              # Command handlers (to be created)
+│   ├── commands/              # Command handlers
+│   │   ├── index.ts           # Registers all commands
+│   │   ├── historyCommands.ts
+│   │   ├── collectionCommands.ts
+│   │   ├── environmentCommands.ts
+│   │   └── requestCommands.ts
 │   ├── providers/webviews/    # Webview providers
 │   │   ├── requestPanelManager.ts   # Manages request editor panels
 │   │   ├── sidebarProvider.ts       # Sidebar webview provider
@@ -61,7 +66,8 @@ src/
 │   │   └── components/        # lc-history-list, lc-collection-tree, etc.
 │   └── shared/                # Shared webview utilities
 ├── shared/                    # Shared types (extension + webview)
-│   └── models.ts              # AuthConfig, RequestBody, etc.
+│   ├── models.ts              # AuthConfig, RequestBody, etc.
+│   └── messages.ts            # Typed message protocol
 └── test/                      # Tests
 ```
 
@@ -69,7 +75,7 @@ src/
 
 ### Extension ↔ Webview Communication
 - Uses `postMessage` API for bidirectional communication
-- Messages are currently untyped (improvement planned)
+- Messages are typed in `src/shared/messages.ts`
 - Sidebar: `SidebarProvider` ↔ `lc-sidebar-panel`
 - Request panels: `RequestPanelManager` ↔ request webview
 

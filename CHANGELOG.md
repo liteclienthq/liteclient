@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **Codebase Refactor**: Extracted command handlers to dedicated files in `src/extension/commands/` for better maintainability.
+- **Message Protocol**: Added typed message definitions in `src/shared/messages.ts` for type-safe extension ↔ webview communication.
+- **Handler Pattern**: Replaced switch statements with handler maps in `SidebarProvider` and `RequestPanelManager`.
+- **Extension Entry Point**: Simplified `extension.ts` from ~440 lines to ~50 lines.
+
+### Added
+- **Save Button**: Added save button to the request panel URL bar for saving requests to collections.
+- **Keyboard Shortcut**: Added Ctrl+S / Cmd+S shortcut to save requests.
+
+### Fixed
+- **Collection Save**: Ensured `type: 'request'` is set when saving requests to collections.
+
 ## [0.5.3] - 2026-01-11
 
 ### Changed
