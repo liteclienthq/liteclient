@@ -193,10 +193,20 @@ export class LcRequestPanel extends LcBaseElement {
   connectedCallback() {
     super.connectedCallback();
     this.setupMessageListener();
+    this.setupKeyboardShortcuts();
 
     // Bind handlers
     this.handleGlobalMouseMove = this.handleGlobalMouseMove.bind(this);
     this.handleGlobalMouseUp = this.handleGlobalMouseUp.bind(this);
+  }
+
+  private setupKeyboardShortcuts() {
+    window.addEventListener('keydown', (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        this.handleSaveRequest();
+      }
+    });
   }
 
 

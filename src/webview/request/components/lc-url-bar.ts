@@ -271,6 +271,13 @@ export class LcUrlBar extends LcBaseElement {
         </div>
 
         <div class="right-section">
+          <button class="icon-button" @click=${() => this.dispatchEvent(new CustomEvent('save-request'))} title="Save to Collection (Ctrl+S)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2">
+              <path d="M12.5 14.5h-9a1 1 0 0 1-1-1v-11a1 1 0 0 1 1-1h7l3 3v9a1 1 0 0 1-1 1z"/>
+              <path d="M10.5 1.5v3h-5v-3"/>
+              <path d="M5 8.5h6M5 11h4"/>
+            </svg>
+          </button>
           <div class="env-selector" title="Select environment">
             <div class="env-select-wrapper">
               <select @change=${this.handleEnvChange} .value=${this.selectedEnvironmentId || ''}>
