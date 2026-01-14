@@ -4,14 +4,21 @@ import { LcBaseElement } from '../../shared/base-element';
 import './lc-sidebar-item';
 import { SidebarItemAction } from './lc-sidebar-item';
 
-
-export interface HistoryItem {
+export interface RequestExecution {
   id: string;
-  name?: string;
-  url: string;
-  method: string;
-  status: string;
   timestamp: number;
+  source: { type: string; collectionId?: string; requestId?: string; executionId?: string };
+  request: {
+    name?: string;
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body: any;
+    auth?: any;
+  };
+  result: {
+    status: string;
+  };
 }
 
 @customElement('lc-history-list')
@@ -39,12 +46,11 @@ export class LcHistoryList extends LcBaseElement {
       }
     `;
 
-  @property({ type: Array }) items: HistoryItem[] = [];
+  @property({ type: Array }) items: RequestExecution[] = [];
   @property() filterText = '';
 
   private historyActions: SidebarItemAction[] = [
     { id: 'add-to-collection', label: 'Add to Collection', icon: 'plus' },
-    { id: 'rename', label: 'Rename' },
     { id: 'delete', label: 'Delete', danger: true }
   ];
 
@@ -79,13 +85,13 @@ export class LcHistoryList extends LcBaseElement {
           .filter(item => {
             if (!this.filterText) { return true; }
             const search = this.filterText.toLowerCase();
-            return (item.name?.toLowerCase().includes(search) || item.url.toLowerCase().includes(search));
+            return (item.request.name?.toLowerCase().includes(search) || item.request.url.toLowerCase().includes(search));
           })
           .map(item => html`
             <lc-sidebar-item
               .id=${item.id}
-              .name=${item.url}
-              .method=${item.method}
+              .name=${item.request.url}
+              .method=${item.request.method}
               .details=${''}
               type="request"
               .actions=${this.historyActions}

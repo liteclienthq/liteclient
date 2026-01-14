@@ -8,7 +8,8 @@
 // Re-export all message types for webview components
 export type {
     // Data types
-    HistoryItem,
+    RequestExecution,
+    RequestExecutionSource,
     Environment,
     // Extension → Webview
     ResponseMessage,

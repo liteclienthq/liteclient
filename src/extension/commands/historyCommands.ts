@@ -38,7 +38,7 @@ export function registerHistoryCommands(
             }
         }),
 
-        vscode.commands.registerCommand('liteclient.addHistoryToCollection', async (historyItem: any) => {
+        vscode.commands.registerCommand('liteclient.addHistoryToCollection', async (execution: any) => {
             const collections = await collectionService.load();
             if (collections.length === 0) {
                 vscode.window.showErrorMessage("No collections found. Create a collection first.");
@@ -49,15 +49,16 @@ export function registerHistoryCommands(
             const selected = await vscode.window.showQuickPick(items, { placeHolder: "Select a collection" });
 
             if (selected) {
+                const snapshot = execution.request;
                 const request: RequestItem = {
                     id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-                    name: historyItem.name || "New Request",
+                    name: snapshot.name || "New Request",
                     type: 'request',
-                    method: historyItem.method,
-                    url: historyItem.url,
-                    headers: historyItem.headers,
-                    body: historyItem.body,
-                    auth: historyItem.auth
+                    method: snapshot.method,
+                    url: snapshot.url,
+                    headers: snapshot.headers,
+                    body: snapshot.body,
+                    auth: snapshot.auth
                 };
                 await collectionService.addRequest(selected.description!, request);
                 vscode.window.showInformationMessage(`Added to collection "${selected.label}"`);
@@ -76,25 +77,6 @@ export function registerHistoryCommands(
             if (confirmation === "Clear") {
                 await historyService.clear();
                 sidebarProvider.refreshHistory();
-            }
-        }),
-
-        vscode.commands.registerCommand('liteclient.renameHistoryRequest', async (item: any) => {
-            const itemId = item.id || (item.item ? item.item.id : null);
-            if (itemId) {
-                const history = await historyService.load();
-                const historyItem = history.find(h => h.id === itemId);
-                if (historyItem) {
-                    const newName = await vscode.window.showInputBox({
-                        prompt: 'Enter new name',
-                        value: historyItem.name || historyItem.url
-                    });
-                    if (newName !== undefined) {
-                        await historyService.rename(itemId, newName);
-                        sidebarProvider.refreshHistory();
-                        requestPanelManager.updateTitle(itemId, newName || historyItem.url);
-                    }
-                }
             }
         })
     );

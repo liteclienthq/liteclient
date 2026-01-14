@@ -12,6 +12,35 @@ export interface KeyValueRow {
     active: boolean;
 }
 
+// ============================================================================
+// Execution Ledger Types (Postman-style immutable history)
+// ============================================================================
+
+export type RequestExecutionSource =
+    | { type: 'scratch' }
+    | { type: 'collection'; collectionId: string; requestId: string }
+    | { type: 'history'; executionId: string }
+    | { type: 'unknown' };
+
+export interface RequestSnapshot {
+    name?: string;
+    method: string;
+    url: string;
+    headers: Record<string, string>;
+    body: RequestBody;
+    auth?: AuthConfig;
+}
+
+export interface RequestExecution {
+    id: string;
+    timestamp: number;
+    source: RequestExecutionSource;
+    request: RequestSnapshot;
+    result: {
+        status: string;
+    };
+}
+
 export type RequestBody =
     | {
         mode: "none";

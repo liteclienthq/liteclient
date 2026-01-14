@@ -5,23 +5,10 @@
  * Do NOT add any runtime code here — only type definitions.
  */
 
-import { AuthConfig, RequestBody } from './models';
+import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource } from './models';
 
-// ============================================================================
-// Shared Data Types
-// ============================================================================
-
-export interface HistoryItem {
-    id: string;
-    name?: string;
-    timestamp: number;
-    method: string;
-    url: string;
-    headers: Record<string, string>;
-    body: RequestBody;
-    auth?: AuthConfig;
-    status: string;
-}
+// Re-export for convenience
+export type { RequestExecution, RequestExecutionSource };
 
 export interface Environment {
     id: string;
@@ -71,7 +58,7 @@ export interface SetEnvironmentBroadcastMessage {
 
 export interface HistoryListMessage {
     type: 'history-list';
-    items: HistoryItem[];
+    items: RequestExecution[];
 }
 
 export interface CollectionsListMessage {
@@ -129,7 +116,7 @@ export interface OpenRequestMessage {
 
 export interface HistoryActionMessage {
     type: 'history-action';
-    action: 'delete' | 'rename' | 'clear-all' | 'add-to-collection';
+    action: 'delete' | 'clear-all' | 'add-to-collection';
     id?: string;
 }
 

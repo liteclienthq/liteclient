@@ -1,6 +1,6 @@
 {
   "name": "liteclient",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "publisher": "liteclienthq",
   "license": "MIT",
   "engines": {
@@ -169,11 +169,6 @@
         "title": "Clear History",
         "icon": "$(trash)",
         "category": "LiteClient"
-      },
-      {
-        "command": "liteclient.renameHistoryRequest",
-        "title": "Rename",
-        "category": "LiteClient"
       }
     ],
     "menus": {
@@ -239,10 +234,6 @@
         {
           "when": "view == requests && viewItem == historyItem",
           "command": "liteclient.deleteHistoryItem"
-        },
-        {
-          "when": "view == requests && viewItem == historyItem",
-          "command": "liteclient.renameHistoryRequest"
         },
         {
           "when": "view == environments && viewItem == variable",

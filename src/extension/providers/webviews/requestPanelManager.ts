@@ -5,13 +5,15 @@ import { HistoryService } from '../../services/historyService';
 import { CollectionService, RequestItem } from '../../services/collectionService';
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
-import type { RequestPanelToExtensionMessage } from '../../../shared/messages';
+import type { RequestPanelToExtensionMessage, RequestExecutionSource } from '../../../shared/messages';
 
 type MessageHandler = (panel: vscode.WebviewPanel, message: any, context: RequestContext) => Promise<void>;
 
 interface RequestContext {
     originalRequest: any;
+    source: 'history' | 'collection' | 'new';
     collectionId?: string;
+    executionId?: string;
 }
 
 export class RequestPanelManager {
@@ -32,7 +34,7 @@ export class RequestPanelManager {
 
     private _initMessageHandlers(): void {
         this.messageHandlers = {
-            'send-request': (panel, message) => this._handleSendRequest(panel, message),
+            'send-request': (panel, message, ctx) => this._handleSendRequest(panel, message, ctx),
             'get-environments': (panel) => this._handleGetEnvironments(panel),
             'set-environment': (_panel, message) => this._handleSetEnvironment(message.environmentId),
             'save-request': (panel, message, ctx) => this._handleSaveRequest(panel, message, ctx),
@@ -42,7 +44,7 @@ export class RequestPanelManager {
     async openRequest(item: any, source: 'history' | 'collection' | 'new', collectionId?: string, collectionName?: string) {
         let requestIdentity = '';
         if (source === 'history') {
-            requestIdentity = `history-${item.id || `${item.method.toUpperCase()}-${item.url}`}`;
+            requestIdentity = `history-${item.id}`;
         } else if (source === 'collection') {
             requestIdentity = `collection-${collectionId}-${item.id}`;
         } else {
@@ -55,7 +57,9 @@ export class RequestPanelManager {
             existingPanel.reveal();
             this._populatePanel(existingPanel, item, source, collectionId, collectionName);
         } else {
-            const title = this._getShortenedTitle(item.name || item.url || 'New Request');
+            const itemName = source === 'history' ? item.request?.name : item.name;
+            const itemUrl = source === 'history' ? item.request?.url : item.url;
+            const title = this._getShortenedTitle(itemName || itemUrl || 'New Request');
             const panel = vscode.window.createWebviewPanel(
                 "requestWebview",
                 title,
@@ -67,7 +71,7 @@ export class RequestPanelManager {
                 }
             );
 
-            this._setupMessageHandler(panel, item, collectionId);
+            this._setupMessageHandler(panel, item, source, collectionId);
             panel.webview.html = RequestWebView.getHtmlContent(panel.webview, this.context.extensionUri);
             this._populatePanel(panel, item, source, collectionId, collectionName);
 
@@ -76,20 +80,37 @@ export class RequestPanelManager {
         }
     }
 
-    private _populatePanel(panel: vscode.WebviewPanel, item: any, source: string, collectionId?: string, collectionName?: string) {
-        panel.webview.postMessage({
-            type: "load-request",
-            payload: {
-                ...item,
-                source,
-                collectionId,
-                collectionPath: collectionName ? [collectionName] : undefined
-            }
-        });
+    private _populatePanel(panel: vscode.WebviewPanel, item: any, source: 'history' | 'collection' | 'new', collectionId?: string, collectionName?: string) {
+        if (source === 'history') {
+            panel.webview.postMessage({
+                type: "load-request",
+                payload: {
+                    id: item.id,
+                    ...item.request,
+                    source,
+                    executionId: item.id
+                }
+            });
+        } else {
+            panel.webview.postMessage({
+                type: "load-request",
+                payload: {
+                    ...item,
+                    source,
+                    collectionId,
+                    collectionPath: collectionName ? [collectionName] : undefined
+                }
+            });
+        }
     }
 
-    private _setupMessageHandler(panel: vscode.WebviewPanel, originalRequest: any, collectionId?: string) {
-        const context: RequestContext = { originalRequest, collectionId };
+    private _setupMessageHandler(panel: vscode.WebviewPanel, originalRequest: any, source: 'history' | 'collection' | 'new', collectionId?: string) {
+        const context: RequestContext = {
+            originalRequest,
+            source,
+            collectionId,
+            executionId: source === 'history' ? originalRequest.id : undefined
+        };
 
         panel.webview.onDidReceiveMessage(async (message: RequestPanelToExtensionMessage) => {
             const handler = this.messageHandlers[message.type];
@@ -101,7 +122,7 @@ export class RequestPanelManager {
 
     // --- Message Handlers ---
 
-    private async _handleSendRequest(panel: vscode.WebviewPanel, message: any) {
+    private async _handleSendRequest(panel: vscode.WebviewPanel, message: any, ctx: RequestContext) {
         let environmentVariables: Record<string, string> = {};
 
         const messageEnvironmentId = message.environmentId;
@@ -132,17 +153,22 @@ export class RequestPanelManager {
             }
         }
 
-        await this.historyService.add({
-            id: this._generateId(),
-            timestamp: Date.now(),
-            name: historyName,
-            method: message.method,
-            url: message.url,
-            headers: message.headers || {},
-            body: message.body || { mode: 'none' },
-            status: response.status
-        });
+        const executionSource = this._buildExecutionSource(ctx);
 
+        const execution = this.historyService.createExecution(
+            {
+                name: historyName,
+                method: message.method,
+                url: message.url,
+                headers: message.headers || {},
+                body: message.body || { mode: 'none' },
+                auth: message.auth
+            },
+            executionSource,
+            response.status
+        );
+
+        await this.historyService.add(execution);
         this.refreshHistory();
 
         panel.webview.postMessage({
@@ -153,6 +179,22 @@ export class RequestPanelManager {
             time: response.time,
             isError: response.isError
         });
+    }
+
+    private _buildExecutionSource(ctx: RequestContext): RequestExecutionSource {
+        if (ctx.source === 'collection' && ctx.collectionId) {
+            return {
+                type: 'collection',
+                collectionId: ctx.collectionId,
+                requestId: ctx.originalRequest.id
+            };
+        } else if (ctx.source === 'history' && ctx.executionId) {
+            return {
+                type: 'history',
+                executionId: ctx.executionId
+            };
+        }
+        return { type: 'scratch' };
     }
 
     private async _handleGetEnvironments(panel: vscode.WebviewPanel) {

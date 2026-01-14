@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2025-01-15
+
+### Changed
+- **History Architecture**: Migrated from Thunder Client-style deduplication to Postman-style execution ledger. Every Send creates a new immutable history entry.
+- **History Limit**: Increased from 50 to 100 entries.
+
+### Added
+- **Source Tracking**: History entries now track their origin (scratch, collection, or history replay).
+- **Automatic Migration**: Existing history entries are automatically converted to the new format.
+
+### Removed
+- **History Rename**: Removed ability to rename history entries (immutability by design).
+
 ## [0.6.0] - 2025-01-13
 
 ### Changed

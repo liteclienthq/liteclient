@@ -87,17 +87,14 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             case 'delete':
                 vscode.commands.executeCommand('liteclient.deleteHistoryItem', { id: data.id });
                 break;
-            case 'rename':
-                vscode.commands.executeCommand('liteclient.renameHistoryRequest', { id: data.id });
-                break;
             case 'clear-all':
                 vscode.commands.executeCommand('liteclient.clearHistory');
                 break;
             case 'add-to-collection':
                 const history = await this._historyService.load();
-                const item = history.find(h => h.id === data.id);
-                if (item) {
-                    vscode.commands.executeCommand('liteclient.addHistoryToCollection', item);
+                const execution = history.find(h => h.id === data.id);
+                if (execution) {
+                    vscode.commands.executeCommand('liteclient.addHistoryToCollection', execution);
                 }
                 break;
         }
