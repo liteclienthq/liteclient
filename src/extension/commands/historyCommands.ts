@@ -25,16 +25,17 @@ export function registerHistoryCommands(
         vscode.commands.registerCommand('liteclient.deleteHistoryItem', async (item: any) => {
             const itemId = item.id || (item.item ? item.item.id : null);
             if (itemId) {
-                const confirmation = await vscode.window.showInformationMessage(
-                    "Delete this history item?",
-                    { modal: true },
-                    "Delete"
-                );
+                await historyService.delete(itemId);
+                sidebarProvider.refreshHistory();
+            }
+        }),
 
-                if (confirmation === "Delete") {
-                    await historyService.delete(itemId);
-                    sidebarProvider.refreshHistory();
+        vscode.commands.registerCommand('liteclient.deleteHistoryItems', async (data: { ids: string[] }) => {
+            if (data.ids && data.ids.length > 0) {
+                for (const id of data.ids) {
+                    await historyService.delete(id);
                 }
+                sidebarProvider.refreshHistory();
             }
         }),
 

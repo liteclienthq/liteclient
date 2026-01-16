@@ -58,16 +58,15 @@ export class LcSidebarPanel extends LcBaseElement {
 
       .tab-content {
         display: none;
-        height: 100%;
       }
 
       .tab-content.active {
-        display: block;
+        display: contents;
       }
     `;
 
 
-  @state() private activeTab = 'history';
+  @state() private activeTab = 'collections';
   @state() private filterText = '';
 
   // No additional state needed for confirmation since it's handled by extension
@@ -75,9 +74,9 @@ export class LcSidebarPanel extends LcBaseElement {
 
 
   private tabs = [
-    { id: 'history', label: 'History' },
     { id: 'collections', label: 'Collections' },
-    { id: 'env', label: 'Env' }
+    { id: 'env', label: 'Env' },
+    { id: 'history', label: 'History' }
   ];
 
   private handleTabChange(e: CustomEvent) {
@@ -139,8 +138,8 @@ export class LcSidebarPanel extends LcBaseElement {
   }
 
   private handleHistoryAction(e: CustomEvent) {
-    const { action, id } = e.detail;
-    postMessage({ type: 'history-action', action, id });
+    const { action, id, ids } = e.detail;
+    postMessage({ type: 'history-action', action, id, ids });
   }
 
   private handleCollectionAction(e: CustomEvent) {

@@ -14,8 +14,8 @@ export class SidebarWebView {
         <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}'; connect-src https:;">
         <title>LiteClient Sidebar</title>
       </head>
-      <body style="padding: 0; margin: 0; overflow: hidden;">
-        <div id="app"></div>
+      <body style="padding: 0; margin: 0; overflow: hidden; height: 100vh;">
+        <div id="app" style="height: 100%;"></div>
         <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
 
       </body>

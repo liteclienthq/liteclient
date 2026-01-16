@@ -116,8 +116,9 @@ export interface OpenRequestMessage {
 
 export interface HistoryActionMessage {
     type: 'history-action';
-    action: 'delete' | 'clear-all' | 'add-to-collection';
+    action: 'delete' | 'delete-bulk' | 'clear-all';
     id?: string;
+    ids?: string[];
 }
 
 export interface CollectionActionMessage {

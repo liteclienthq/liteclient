@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **History Panel UI**: Grouped history items by local calendar day with collapsible accordions (Today, Yesterday, January 18, etc.)
+- **History Item Display**: Simplified to show only METHOD + URL with tooltip for full URL on hover
+- **Tab Order**: Changed sidebar tabs to Collections → Env → History
+
+### Added
+- **Day-Level Delete**: Trash icon on day headers to bulk-delete all requests from that day
+- **Item-Level Delete**: Trash icon appears on hover for individual history items
+
+### Fixed
+- **Sidebar Scrolling**: Fixed scrolling issue in History, Collections, and Env panels
+
 ## [0.7.0] - 2025-01-15
 
 ### Changed
