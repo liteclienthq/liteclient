@@ -8,13 +8,14 @@ export class LcFilterBar extends LcBaseElement {
     :host {
       display: block;
       padding: 4px 12px 8px 12px;
+      background: var(--vscode-sideBar-background);
     }
 
     .filter-container {
       position: relative;
       display: flex;
       align-items: center;
-      background: var(--vscode-input-background);
+      background: transparent;
       border: 1px solid var(--vscode-input-border);
       border-radius: 2px;
       padding: 2px 4px;

@@ -39,6 +39,7 @@ export type {
     // Webview → Extension (Request Panel)
     SendRequestMessage,
     SaveRequestMessage,
+    DirtyStateMessage,
     RequestPanelToExtensionMessage,
     // Combined
     WebviewToExtensionMessage,

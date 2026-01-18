@@ -22,35 +22,30 @@ export class LcTabs extends LcBaseElement {
       display: flex;
       gap: 0;
       width: 100%;
-      overflow: hidden;
+      border-bottom: 1px solid var(--vscode-panel-border);
     }
 
-
     .tab {
-      flex: 1;
+      flex: 1 1 0;
       min-width: 0;
-      padding: 6px 8px;
-      font-size: 14px;
+      padding: 6px 4px;
+      font-size: 13px;
+      font-weight: 600;
       color: var(--vscode-foreground);
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
       cursor: pointer;
-      opacity: 0.7;
-      transition: opacity 0.15s, border-color 0.15s;
+      opacity: 0.6;
       white-space: nowrap;
+      text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
-      text-align: center;
-    }
-
-
-    .tab:hover {
-      opacity: 1;
     }
 
     .tab.active {
       opacity: 1;
+      color: var(--vscode-foreground);
       border-bottom-color: var(--vscode-focusBorder);
     }
   `;

@@ -222,12 +222,18 @@ export interface SetEnvironmentFromPanelMessage {
     environmentId: string | undefined;
 }
 
+export interface DirtyStateMessage {
+    type: 'dirty-state';
+    isDirty: boolean;
+}
+
 /** Messages from request panel webview to extension */
 export type RequestPanelToExtensionMessage =
     | SendRequestMessage
     | SaveRequestMessage
     | GetEnvironmentsFromPanelMessage
-    | SetEnvironmentFromPanelMessage;
+    | SetEnvironmentFromPanelMessage
+    | DirtyStateMessage;
 
 // ============================================================================
 // Combined Types

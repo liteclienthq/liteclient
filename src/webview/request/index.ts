@@ -6,7 +6,16 @@
 import { html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../shared/base-element.js';
-import { onMessage, postMessage, type ExtensionMessage, type RequestBody } from '../shared/messaging.js';
+import { onMessage, postMessage, type ExtensionMessage, type RequestBody, type AuthConfig } from '../shared/messaging.js';
+
+interface OriginalRequestState {
+  method: string;
+  url: string;
+  headers: Array<{ key: string; value: string; active: boolean }>;
+  body: RequestBody;
+  auth: AuthConfig;
+  params: Array<{ key: string; value: string; active: boolean }>;
+}
 
 // Import components
 import './components/lc-status-bar.js';
@@ -183,6 +192,9 @@ export class LcRequestPanel extends LcBaseElement {
   @state() requestName = 'New Request';
   @state() selectedEnvironmentId: string | null = null;
 
+  @state() private isDirty = false;
+  private originalRequest: OriginalRequestState | null = null;
+
 
 
   private tabs: Tab[] = [
@@ -284,11 +296,74 @@ export class LcRequestPanel extends LcBaseElement {
     if (this.requestParams.length === 0) {
       this.requestParams = [{ id: crypto.randomUUID(), key: '', value: '', active: true }];
     }
+
+    // Store original state for dirty tracking (deep copy)
+    this.storeOriginalRequest();
+    this.setDirtyState(false);
   }
 
+  private storeOriginalRequest() {
+    this.originalRequest = {
+      method: this.requestMethod,
+      url: this.requestUrl,
+      headers: JSON.parse(JSON.stringify(this.requestHeaders)),
+      body: JSON.parse(JSON.stringify(this.requestBody)),
+      auth: JSON.parse(JSON.stringify(this.requestAuth)),
+      params: JSON.parse(JSON.stringify(this.requestParams))
+    };
+  }
+
+  private checkDirtyState(): boolean {
+    if (!this.originalRequest) {
+      return false;
+    }
+
+    if (this.requestMethod !== this.originalRequest.method) {
+      return true;
+    }
+    if (this.requestUrl !== this.originalRequest.url) {
+      return true;
+    }
+    if (JSON.stringify(this.requestBody) !== JSON.stringify(this.originalRequest.body)) {
+      return true;
+    }
+    if (JSON.stringify(this.requestAuth) !== JSON.stringify(this.originalRequest.auth)) {
+      return true;
+    }
+
+    // Compare headers (ignoring empty rows)
+    const currentHeaders = this.requestHeaders.filter(h => h.key);
+    const originalHeaders = this.originalRequest.headers.filter(h => h.key);
+    if (JSON.stringify(currentHeaders) !== JSON.stringify(originalHeaders)) {
+      return true;
+    }
+
+    // Compare params (ignoring empty rows)
+    const currentParams = this.requestParams.filter(p => p.key);
+    const originalParams = this.originalRequest.params.filter(p => p.key);
+    if (JSON.stringify(currentParams) !== JSON.stringify(originalParams)) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private setDirtyState(dirty: boolean) {
+    if (this.isDirty !== dirty) {
+      this.isDirty = dirty;
+      postMessage({ type: 'dirty-state', isDirty: dirty });
+    }
+  }
+
+  private updateDirtyState() {
+    this.setDirtyState(this.checkDirtyState());
+  }
 
   private handleSaveRequest() {
     this.sendExtensionMessage('save-request');
+    // Reset dirty state after save (extension will show success/failure toast)
+    this.storeOriginalRequest();
+    this.setDirtyState(false);
   }
 
   private sendExtensionMessage(type: 'send-request' | 'save-request') {
@@ -365,11 +440,13 @@ export class LcRequestPanel extends LcBaseElement {
 
   private handleMethodChange(e: CustomEvent<{ method: string }>) {
     this.requestMethod = e.detail.method;
+    this.updateDirtyState();
   }
 
   private handleUrlChange(e: CustomEvent<{ url: string }>) {
     this.requestUrl = e.detail.url;
     this.updateParamsFromUrl();
+    this.updateDirtyState();
   }
 
   private handleSendRequest() {
@@ -389,6 +466,7 @@ export class LcRequestPanel extends LcBaseElement {
   private handleParamsChange(e: CustomEvent) {
     this.requestParams = e.detail.items;
     this.updateUrlFromParams();
+    this.updateDirtyState();
   }
 
   private updateUrlFromParams() {
@@ -432,6 +510,7 @@ export class LcRequestPanel extends LcBaseElement {
 
   private handleHeadersChange(e: CustomEvent) {
     this.requestHeaders = e.detail.items;
+    this.updateDirtyState();
   }
 
   private handleResizerMouseDown(e: MouseEvent) {
@@ -502,8 +581,8 @@ export class LcRequestPanel extends LcBaseElement {
               .auth=${this.requestAuth}
               @params-change=${this.handleParamsChange}
               @headers-change=${this.handleHeadersChange}
-              @body-change=${(e: CustomEvent) => this.requestBody = e.detail.body}
-              @auth-change=${(e: CustomEvent) => this.requestAuth = e.detail.auth}
+              @body-change=${(e: CustomEvent) => { this.requestBody = e.detail.body; this.updateDirtyState(); }}
+              @auth-change=${(e: CustomEvent) => { this.requestAuth = e.detail.auth; this.updateDirtyState(); }}
             ></lc-request-meta>
           </div>
 

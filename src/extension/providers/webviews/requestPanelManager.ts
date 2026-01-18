@@ -16,8 +16,15 @@ interface RequestContext {
     executionId?: string;
 }
 
+interface PanelState {
+    panel: vscode.WebviewPanel;
+    baseTitle: string;
+    isDirty: boolean;
+}
+
 export class RequestPanelManager {
     private panels = new Map<string, vscode.WebviewPanel>();
+    private panelStates = new Map<string, PanelState>();
     private messageHandlers: Record<string, MessageHandler> = {};
 
     constructor(
@@ -38,6 +45,7 @@ export class RequestPanelManager {
             'get-environments': (panel) => this._handleGetEnvironments(panel),
             'set-environment': (_panel, message) => this._handleSetEnvironment(message.environmentId),
             'save-request': (panel, message, ctx) => this._handleSaveRequest(panel, message, ctx),
+            'dirty-state': (panel, message) => this._handleDirtyState(panel, message.isDirty),
         };
     }
 
@@ -71,12 +79,18 @@ export class RequestPanelManager {
                 }
             );
 
-            this._setupMessageHandler(panel, item, source, collectionId);
+            panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'media', 'file_icon.png');
+
+            this._setupMessageHandler(panel, item, source, collectionId, requestIdentity);
             panel.webview.html = RequestWebView.getHtmlContent(panel.webview, this.context.extensionUri);
             this._populatePanel(panel, item, source, collectionId, collectionName);
 
             this.panels.set(requestIdentity, panel);
-            panel.onDidDispose(() => this.panels.delete(requestIdentity));
+            this.panelStates.set(requestIdentity, { panel, baseTitle: title, isDirty: false });
+            panel.onDidDispose(() => {
+                this.panels.delete(requestIdentity);
+                this.panelStates.delete(requestIdentity);
+            });
         }
     }
 
@@ -104,7 +118,7 @@ export class RequestPanelManager {
         }
     }
 
-    private _setupMessageHandler(panel: vscode.WebviewPanel, originalRequest: any, source: 'history' | 'collection' | 'new', collectionId?: string) {
+    private _setupMessageHandler(panel: vscode.WebviewPanel, originalRequest: any, source: 'history' | 'collection' | 'new', collectionId?: string, requestIdentity?: string) {
         const context: RequestContext = {
             originalRequest,
             source,
@@ -113,11 +127,36 @@ export class RequestPanelManager {
         };
 
         panel.webview.onDidReceiveMessage(async (message: RequestPanelToExtensionMessage) => {
+            if (message.type === 'dirty-state' && requestIdentity) {
+                this._handleDirtyState(panel, message.isDirty, requestIdentity);
+                return;
+            }
             const handler = this.messageHandlers[message.type];
             if (handler) {
                 await handler(panel, message, context);
             }
         });
+    }
+
+    private async _handleDirtyState(panel: vscode.WebviewPanel, isDirty: boolean, requestIdentity?: string): Promise<void> {
+        if (!requestIdentity) {
+            for (const [id, state] of this.panelStates.entries()) {
+                if (state.panel === panel) {
+                    requestIdentity = id;
+                    break;
+                }
+            }
+        }
+
+        if (!requestIdentity) {
+            return;
+        }
+
+        const state = this.panelStates.get(requestIdentity);
+        if (state && state.isDirty !== isDirty) {
+            state.isDirty = isDirty;
+            panel.title = isDirty ? `${state.baseTitle} ●` : state.baseTitle;
+        }
     }
 
     // --- Message Handlers ---
