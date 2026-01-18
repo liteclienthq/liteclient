@@ -23,7 +23,7 @@ export class HistoryService {
 
   async load(): Promise<RequestExecution[]> {
     await this.storage.ensureExists(HistoryService.HISTORY_FILE, []);
-    const rawHistory = await this.storage.readJson<any[]>(HistoryService.HISTORY_FILE);
+    const rawHistory = await this.storage.readJson<any[]>(HistoryService.HISTORY_FILE, []);
 
     if (rawHistory.length === 0) {
       return [];

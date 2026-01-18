@@ -49,7 +49,7 @@ export class CollectionService {
 
   async load(): Promise<Collection[]> {
     await this.storage.ensureExists(CollectionService.COLLECTIONS_FILE, []);
-    const rawCollections = await this.storage.readJson<LegacyCollection[]>(CollectionService.COLLECTIONS_FILE);
+    const rawCollections = await this.storage.readJson<LegacyCollection[]>(CollectionService.COLLECTIONS_FILE, []);
 
     // Migration: Transform legacy requests to items
     const collections: Collection[] = rawCollections.map(c => {

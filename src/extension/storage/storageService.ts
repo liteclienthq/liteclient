@@ -1,9 +1,12 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import * as crypto from 'crypto';
+
 
 export class StorageService {
   private storagePath: string;
+  private writeLocks = new Map<string, Promise<void>>();
 
   constructor(private context: vscode.ExtensionContext) {
     this.storagePath = context.globalStorageUri.fsPath;
@@ -25,7 +28,7 @@ export class StorageService {
     }
   }
 
-  async readJson<T>(fileName: string): Promise<T> {
+  async readJson<T>(fileName: string, defaultValue?: T): Promise<T> {
     const filePath = this.getFilePath(fileName);
     
     try {
@@ -34,19 +37,66 @@ export class StorageService {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         // File doesn't exist, return default value
-        return {} as T;
+        return defaultValue ?? ({} as T);
+      }
+      if (error instanceof SyntaxError) {
+        // JSON parse error - file is corrupted
+        const backupPath = `${filePath}.backup.${Date.now()}`;
+        let backupSucceeded = false;
+
+        try {
+          await fs.rename(filePath, backupPath);
+          backupSucceeded = true;
+        } catch {
+          // Ignore backup errors
+        }
+
+        const friendlyName = fileName.replace('.json', '');
+        const message = backupSucceeded
+          ? `LiteClient: Your ${friendlyName} data file was corrupted and has been backed up. Your data may be recoverable.`
+          : `LiteClient: Your ${friendlyName} data file was corrupted and could not be read.`;
+
+        const action = backupSucceeded ? 'Open Backup File' : undefined;
+        vscode.window.showWarningMessage(message, ...(action ? [action] : [])).then(async selected => {
+          if (selected === action) {
+            const doc = await vscode.workspace.openTextDocument(backupPath);
+            await vscode.window.showTextDocument(doc);
+          }
+        });
+
+        return defaultValue ?? ({} as T);
       }
       throw error;
     }
   }
 
   async writeJson(fileName: string, data: any): Promise<void> {
+    const existingLock = this.writeLocks.get(fileName);
+    if (existingLock) {
+      await existingLock;
+    }
+
+    const writeOperation = this._writeJsonAtomic(fileName, data);
+    this.writeLocks.set(fileName, writeOperation);
+
+    try {
+      await writeOperation;
+    } finally {
+      if (this.writeLocks.get(fileName) === writeOperation) {
+        this.writeLocks.delete(fileName);
+      }
+    }
+  }
+
+  private async _writeJsonAtomic(fileName: string, data: any): Promise<void> {
     const filePath = this.getFilePath(fileName);
-    
-    // Ensure parent directory exists
+    const tempPath = `${filePath}.tmp.${crypto.randomBytes(4).toString('hex')}`;
+
     await fs.mkdir(path.dirname(filePath), { recursive: true });
-    
-    // Write the JSON data with 2-space indentation
-    await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+
+    const jsonContent = JSON.stringify(data, null, 2);
+    await fs.writeFile(tempPath, jsonContent, 'utf8');
+
+    await fs.rename(tempPath, filePath);
   }
 }

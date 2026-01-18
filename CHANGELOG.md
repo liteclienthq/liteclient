@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.3] - 2025-01-19
+
+### Fixed
+- **Critical: Collections Not Loading**: Fixed JSON parse error that prevented collections, history, and environments from loading when data files were corrupted. The extension now gracefully handles corrupted files by backing them up and starting fresh.
+- **Data Corruption Prevention**: Implemented atomic file writes with write locking to prevent race conditions that could corrupt JSON data files during rapid operations.
+
 ## [0.7.2] - 2025-01-19
 
 ### Added

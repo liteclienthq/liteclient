@@ -13,7 +13,7 @@ export class EnvironmentService {
 
   async load(): Promise<Environment[]> {
     await this.storage.ensureExists(EnvironmentService.ENVIRONMENTS_FILE, []);
-    const environments = await this.storage.readJson<Environment[]>(EnvironmentService.ENVIRONMENTS_FILE);
+    const environments = await this.storage.readJson<Environment[]>(EnvironmentService.ENVIRONMENTS_FILE, []);
 
     let globals = environments.find(env => env.id === 'globals');
     if (!globals) {
