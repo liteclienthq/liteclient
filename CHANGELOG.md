@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2025-01-19
+
+### Added
+- **Unsaved Changes Indicator**: Request editor tabs now show a "●" suffix when there are unsaved changes, following VS Code's file indicator pattern. Cleared only on explicit save.
+- **Tab Icon**: LiteClient request tabs now display the LC icon for instant recognition among other editor tabs.
+
+### Changed
+- **Sidebar Tabs**: Improved tab navigation UX with bold text, proper active state styling, and a separator below tabs. Tabs gracefully truncate at narrow widths without overlapping.
+- **Filter Bar**: Transparent background to match sidebar styling.
+
 ## [0.7.1] - 2025-01-17
 
 ### Changed
