@@ -11,6 +11,7 @@ import { json } from '@codemirror/lang-json';
 import { javascript } from '@codemirror/lang-javascript';
 import { html as langHtml } from '@codemirror/lang-html';
 import { xml } from '@codemirror/lang-xml';
+import { yaml } from '@codemirror/lang-yaml';
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import { LcBaseElement } from './base-element.js';
@@ -139,17 +140,7 @@ export class LcCodeEditor extends LcBaseElement {
             if (changedProperties.has('value') && !this.isUpdating) {
                 const currentContent = this.editor.state.doc.toString();
                 let newValue = this.value || '';
-
-                // Format JSON if needed
-                if (this.language === 'json' && newValue.trim()) {
-                    try {
-                        const parsed = JSON.parse(newValue);
-                        newValue = JSON.stringify(parsed, null, 2);
-                    } catch (e) {
-                        // Keep original
-                    }
-                }
-
+                
                 if (currentContent !== newValue) {
                     this.editor.dispatch({
                         changes: { from: 0, to: currentContent.length, insert: newValue }
@@ -179,12 +170,6 @@ export class LcCodeEditor extends LcBaseElement {
         if (!this.container || this.editor) { return; }
 
         let startValue = this.value || '';
-        if (this.language === 'json' && startValue.trim()) {
-            try {
-                const parsed = JSON.parse(startValue);
-                startValue = JSON.stringify(parsed, null, 2);
-            } catch (e) { /* ignore */ }
-        }
 
         const extensions = [
             basicSetup,
@@ -242,6 +227,8 @@ export class LcCodeEditor extends LcBaseElement {
             extensions.push(langHtml());
         } else if (this.language === 'xml') {
             extensions.push(xml());
+        } else if (this.language === 'yaml') {
+            extensions.push(yaml());
         }
 
         if (this.wordWrap) {
