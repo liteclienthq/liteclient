@@ -46,7 +46,7 @@ export type {
 } from '../../shared/messages.js';
 
 // Re-export model types for convenience
-export type { AuthConfig, RequestBody, KeyValueRow } from '../../shared/models.js';
+export type { AuthConfig, RequestBody, KeyValueRow, FormDataRow } from '../../shared/models.js';
 
 // Legacy type aliases for backward compatibility
 export type ExtensionMessage = import('../../shared/messages.js').ExtensionToWebviewMessage;

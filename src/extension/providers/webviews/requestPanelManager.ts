@@ -131,6 +131,16 @@ export class RequestPanelManager {
                 this._handleDirtyState(panel, message.isDirty, requestIdentity);
                 return;
             }
+            if (message.type === 'show-notification') {
+                if (message.level === 'error') {
+                    vscode.window.showErrorMessage(message.message);
+                } else if (message.level === 'warning') {
+                    vscode.window.showWarningMessage(message.message);
+                } else {
+                    vscode.window.showInformationMessage(message.message);
+                }
+                return;
+            }
             const handler = this.messageHandlers[message.type];
             if (handler) {
                 await handler(panel, message, context);

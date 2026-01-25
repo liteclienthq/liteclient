@@ -6,9 +6,10 @@
 import { html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
-import { RequestBody, KeyValueRow } from '../../shared/messaging.js';
+import { RequestBody, KeyValueRow, FormDataRow } from '../../shared/messaging.js';
 import '../../shared/lc-code-editor.js';
 import './lc-key-value-editor.js';
+import './lc-form-data-editor.js';
 
 @customElement('lc-body-panel')
 export class LcBodyPanel extends LcBaseElement {
@@ -197,7 +198,7 @@ export class LcBodyPanel extends LcBaseElement {
     } else if (mode === 'form-data') {
       newBody = {
         mode: 'form-data',
-        rows: [{ id: crypto.randomUUID(), key: '', value: '', active: true }]
+        rows: [{ id: crypto.randomUUID(), key: '', type: 'text' as const, value: '', active: true }]
       };
     } else {
       newBody = {
@@ -337,12 +338,19 @@ export class LcBodyPanel extends LcBaseElement {
               </div>
             </div>
           `
-          : html`
-            <lc-key-value-editor
-              .items=${this.body.rows}
-              @change=${this.handleRowsChange}
-            ></lc-key-value-editor>
-          `
+          : this.body.mode === 'form-data'
+            ? html`
+              <lc-form-data-editor
+                .items=${this.body.rows}
+                @change=${this.handleRowsChange}
+              ></lc-form-data-editor>
+            `
+            : html`
+              <lc-key-value-editor
+                .items=${this.body.rows}
+                @change=${this.handleRowsChange}
+              ></lc-key-value-editor>
+            `
       }
       </div>
     `;

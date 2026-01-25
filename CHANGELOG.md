@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **File Upload Support**: Form-data requests now support file uploads with a Postman-style UI
+  - Text/File type dropdown inside the key field
+  - File picker with name and size display
+  - 25MB file size limit with VS Code notification warning
+- **YAML Language Support**: Added YAML syntax highlighting using @codemirror/lang-yaml
+
+### Fixed
+- **JSON Auto-Formatting**: Removed aggressive automatic JSON formatting to match VS Code's behavior - now preserves user input exactly as typed
+
 ## [0.7.3] - 2025-01-19
 
 ### Fixed

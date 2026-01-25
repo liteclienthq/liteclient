@@ -114,8 +114,8 @@ export class PostmanExporter implements Exporter {
                 mode: 'formdata',
                 formdata: (body.rows || []).map((r: any) => ({
                     key: r.key,
-                    value: r.value,
-                    type: 'text',
+                    value: r.type === 'file' ? '' : r.value,
+                    type: r.type === 'file' ? 'file' : 'text',
                     disabled: !r.active
                 }))
             };

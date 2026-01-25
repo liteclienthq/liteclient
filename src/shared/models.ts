@@ -12,6 +12,20 @@ export interface KeyValueRow {
     active: boolean;
 }
 
+export interface FormDataRow {
+    id: string;
+    key: string;
+    type: 'text' | 'file';
+    value: string;
+    file?: {
+        name: string;
+        size: number;
+        type: string;
+        data: string; // base64 encoded
+    };
+    active: boolean;
+}
+
 // ============================================================================
 // Execution Ledger Types (Postman-style immutable history)
 // ============================================================================
@@ -52,7 +66,7 @@ export type RequestBody =
     }
     | {
         mode: "form-data";
-        rows: KeyValueRow[];
+        rows: FormDataRow[];
     }
     | {
         mode: "x-www-form-urlencoded";

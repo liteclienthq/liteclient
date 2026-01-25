@@ -112,7 +112,8 @@ export class PostmanImporter implements Importer {
                     rows: Array.isArray(request.body.formdata) ? request.body.formdata.map((f: any) => ({
                         id: this.generateId(),
                         key: f.key || '',
-                        value: f.value || '',
+                        type: f.type === 'file' ? 'file' as const : 'text' as const,
+                        value: f.type === 'file' ? '' : (f.value || ''),
                         active: !f.disabled
                     })) : []
                 };

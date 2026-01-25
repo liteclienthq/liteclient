@@ -1,5 +1,6 @@
 import { substituteVariablesInRequest } from '../utils/variableSubstitution';
-import { AuthConfig, RequestBody } from '../../shared/models';
+import { AuthConfig, RequestBody, FormDataRow } from '../../shared/models';
+import FormData from 'form-data';
 
 export interface RequestPayload {
   method: string;
@@ -116,13 +117,32 @@ Please check:
           options.body = body.value;
         } else if (body.mode === 'form-data') {
           const formData = new FormData();
-          body.rows.forEach((row: any) => {
+          const sanitize = (s: string) => s.replace(/[\r\n"]/g, '_');
+          
+          body.rows.forEach((row: FormDataRow) => {
             if (row.active && row.key) {
-              formData.append(row.key, row.value || '');
+              const rowType = row.type || 'text';
+              const fieldName = sanitize(row.key);
+              
+              if (rowType === 'file') {
+                if (row.file) {
+                  const buffer = Buffer.from(row.file.data, 'base64');
+                  formData.append(fieldName, buffer, {
+                    filename: sanitize(row.file.name),
+                    contentType: row.file.type || 'application/octet-stream'
+                  });
+                }
+              } else {
+                formData.append(fieldName, row.value || '');
+              }
             }
           });
-          // Do NOT set Content-Type for form-data, let fetch handle it with boundary
-          options.body = formData;
+          
+          const formHeaders = formData.getHeaders();
+          for (const [key, value] of Object.entries(formHeaders)) {
+            headers[key] = value;
+          }
+          options.body = formData.getBuffer() as unknown as BodyInit;
         } else if (body.mode === 'x-www-form-urlencoded') {
           const params = new URLSearchParams();
           body.rows.forEach((row: any) => {

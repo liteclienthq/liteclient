@@ -5,10 +5,10 @@
  * Do NOT add any runtime code here — only type definitions.
  */
 
-import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource } from './models';
+import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow } from './models';
 
 // Re-export for convenience
-export type { RequestExecution, RequestExecutionSource };
+export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow };
 
 export interface Environment {
     id: string;
@@ -227,13 +227,20 @@ export interface DirtyStateMessage {
     isDirty: boolean;
 }
 
+export interface ShowNotificationMessage {
+    type: 'show-notification';
+    level: 'info' | 'warning' | 'error';
+    message: string;
+}
+
 /** Messages from request panel webview to extension */
 export type RequestPanelToExtensionMessage =
     | SendRequestMessage
     | SaveRequestMessage
     | GetEnvironmentsFromPanelMessage
     | SetEnvironmentFromPanelMessage
-    | DirtyStateMessage;
+    | DirtyStateMessage
+    | ShowNotificationMessage;
 
 // ============================================================================
 // Combined Types
