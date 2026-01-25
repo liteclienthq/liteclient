@@ -1,4 +1,5 @@
 import { StorageService } from '../storage/storageService';
+import { generateId } from '../utils/idUtils';
 
 export interface Environment {
   id: string;
@@ -31,7 +32,7 @@ export class EnvironmentService {
   async addEnvironment(name: string): Promise<void> {
     const environments = await this.load();
     const newEnvironment: Environment = {
-      id: this.generateId(),
+      id: generateId(),
       name,
       variables: {}
     };
@@ -67,7 +68,4 @@ export class EnvironmentService {
     return environments.find(env => env.id === id);
   }
 
-  private generateId(): string {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-  }
 }

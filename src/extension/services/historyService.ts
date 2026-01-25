@@ -63,7 +63,8 @@ export class HistoryService {
   createExecution(
     request: { name?: string; method: string; url: string; headers: Record<string, string>; body: any; auth?: any },
     source: RequestExecutionSource,
-    status: string
+    status: string,
+    durationMs?: number
   ): RequestExecution {
     return {
       id: generateId(),
@@ -77,7 +78,7 @@ export class HistoryService {
         body: request.body,
         auth: request.auth
       },
-      result: { status }
+      result: { status, durationMs }
     };
   }
 

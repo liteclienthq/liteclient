@@ -52,6 +52,7 @@ export interface RequestExecution {
     request: RequestSnapshot;
     result: {
         status: string;
+        durationMs?: number;
     };
 }
 

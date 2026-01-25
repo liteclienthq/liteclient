@@ -6,6 +6,7 @@ import { CollectionService, RequestItem } from '../../services/collectionService
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
 import type { RequestPanelToExtensionMessage, RequestExecutionSource } from '../../../shared/messages';
+import { generateId } from '../../utils/idUtils';
 
 type MessageHandler = (panel: vscode.WebviewPanel, message: any, context: RequestContext) => Promise<void>;
 
@@ -214,7 +215,8 @@ export class RequestPanelManager {
                 auth: message.auth
             },
             executionSource,
-            response.status
+            response.status,
+            response.time
         );
 
         await this.historyService.add(execution);
@@ -296,7 +298,7 @@ export class RequestPanelManager {
                 const newRequest: RequestItem = {
                     ...message.payload,
                     type: 'request',
-                    id: this._generateId(),
+                    id: generateId(),
                     name: message.name || message.payload.url || 'Unnamed Request'
                 };
                 await this.collectionService.addRequest(selected.collection.id, newRequest);
@@ -339,9 +341,5 @@ export class RequestPanelManager {
 
     private _getShortenedTitle(title: string): string {
         return title.length > 20 ? title.substring(0, 17) + '...' : title;
-    }
-
-    private _generateId(): string {
-        return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
     }
 }

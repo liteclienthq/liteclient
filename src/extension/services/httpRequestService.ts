@@ -80,7 +80,7 @@ Please check:
         if (auth.type === 'bearer' && auth.bearer?.token) {
           headers['Authorization'] = `Bearer ${auth.bearer.token}`;
         } else if (auth.type === 'basic' && auth.basic) {
-          const credentials = btoa(`${auth.basic.username}:${auth.basic.password}`);
+          const credentials = Buffer.from(`${auth.basic.username}:${auth.basic.password}`).toString('base64');
           headers['Authorization'] = `Basic ${credentials}`;
         } else if (auth.type === 'apikey' && auth.apikey?.key && auth.apikey?.value) {
           if (auth.apikey.addTo === 'header') {
