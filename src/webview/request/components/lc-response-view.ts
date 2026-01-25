@@ -69,6 +69,21 @@ export class LcResponseView extends LcBaseElement {
       to { transform: rotate(360deg); }
     }
 
+    .cancel-btn {
+      padding: 6px 16px;
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: 1px solid var(--vscode-button-border, transparent);
+      border-radius: 2px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    .cancel-btn:hover {
+      background: var(--vscode-button-secondaryHoverBackground);
+    }
+
     .copy-btn-floating {
       position: absolute;
       top: 8px;
@@ -112,6 +127,10 @@ export class LcResponseView extends LcBaseElement {
     return 'plaintext';
   }
 
+  private handleCancel() {
+    this.dispatchEvent(new CustomEvent('cancel-request', { bubbles: true, composed: true }));
+  }
+
   private async copyBody() {
     try {
       await navigator.clipboard.writeText(this.body);
@@ -135,6 +154,7 @@ export class LcResponseView extends LcBaseElement {
           <div class="loading-overlay">
             <div class="spinner"></div>
             <div>Sending request...</div>
+            <button class="cancel-btn" @click=${this.handleCancel}>Cancel</button>
           </div>
         ` : ''}
 

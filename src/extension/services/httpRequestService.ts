@@ -16,12 +16,32 @@ export interface ResponseData {
   headers: Record<string, string>;
   time?: number;
   isError?: boolean;
-  errorType?: 'network' | 'timeout' | 'invalid_url' | 'unknown' | 'unresolved_variables';
+  errorType?: 'network' | 'timeout' | 'invalid_url' | 'unknown' | 'unresolved_variables' | 'cancelled';
+}
+
+export interface RequestOptions {
+  signal?: AbortSignal;
+  timeout?: number;
 }
 
 
 export class HttpRequestService {
-  static async sendRequest(payload: RequestPayload, environmentVariables: Record<string, string> = {}): Promise<ResponseData> {
+  private static readonly DEFAULT_TIMEOUT = 30000;
+
+  static async sendRequest(
+    payload: RequestPayload, 
+    environmentVariables: Record<string, string> = {},
+    options: RequestOptions = {}
+  ): Promise<ResponseData> {
+    const { signal, timeout = HttpRequestService.DEFAULT_TIMEOUT } = options;
+    
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(() => timeoutController.abort(), timeout);
+    
+    const combinedSignal = signal 
+      ? AbortSignal.any([signal, timeoutController.signal])
+      : timeoutController.signal;
+
     try {
       // Perform variable substitution on the request payload
       const substitutedPayload = substituteVariablesInRequest(payload, environmentVariables);
@@ -92,9 +112,10 @@ Please check:
         }
       }
 
-      const options: RequestInit = {
+      const fetchOptions: RequestInit = {
         method: substitutedPayload.method,
-        headers
+        headers,
+        signal: combinedSignal
       };
 
       // Only add body if it exists and method allows it
@@ -114,7 +135,7 @@ Please check:
               headers['Content-Type'] = 'text/plain';
             }
           }
-          options.body = body.value;
+          fetchOptions.body = body.value;
         } else if (body.mode === 'form-data') {
           const formData = new FormData();
           const sanitize = (s: string) => s.replace(/[\r\n"]/g, '_');
@@ -142,7 +163,7 @@ Please check:
           for (const [key, value] of Object.entries(formHeaders)) {
             headers[key] = value;
           }
-          options.body = formData.getBuffer() as unknown as BodyInit;
+          fetchOptions.body = formData.getBuffer() as unknown as BodyInit;
         } else if (body.mode === 'x-www-form-urlencoded') {
           const params = new URLSearchParams();
           body.rows.forEach((row: any) => {
@@ -153,12 +174,13 @@ Please check:
           if (!headers['Content-Type']) {
             headers['Content-Type'] = 'application/x-www-form-urlencoded';
           }
-          options.body = params.toString();
+          fetchOptions.body = params.toString();
         }
       }
 
       const startTime = Date.now();
-      const response = await fetch(parsedUrl.toString(), options);
+      const response = await fetch(parsedUrl.toString(), fetchOptions);
+      clearTimeout(timeoutId);
       const text = await response.text();
       const endTime = Date.now();
       const duration = endTime - startTime;
@@ -177,6 +199,28 @@ Please check:
       };
 
     } catch (error) {
+      clearTimeout(timeoutId);
+      
+      // Handle abort errors (cancellation or timeout)
+      if (error instanceof Error && error.name === 'AbortError') {
+        if (signal?.aborted) {
+          return {
+            body: 'Request Cancelled\n\nThe request was cancelled by the user.',
+            status: 'Cancelled',
+            headers: {},
+            isError: true,
+            errorType: 'cancelled'
+          };
+        }
+        return {
+          body: `Request Timeout\n\nThe server took too long to respond (timeout: ${timeout / 1000}s).`,
+          status: 'Timeout',
+          headers: {},
+          isError: true,
+          errorType: 'timeout'
+        };
+      }
+
       // Provide user-friendly error messages based on error type
       const errorMessage = error instanceof Error ? error.message : String(error);
 
@@ -195,7 +239,7 @@ Please check:
         };
       }
 
-      // Timeout errors
+      // Timeout errors (legacy check for non-AbortError timeouts)
       if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
         return {
           body: `Request Timeout\n\nThe server took too long to respond.\n\nDetails: ${errorMessage}`,

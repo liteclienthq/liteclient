@@ -23,9 +23,14 @@ interface PanelState {
     isDirty: boolean;
 }
 
+interface ActiveRequest {
+    abortController: AbortController;
+}
+
 export class RequestPanelManager {
     private panels = new Map<string, vscode.WebviewPanel>();
     private panelStates = new Map<string, PanelState>();
+    private activeRequests = new Map<vscode.WebviewPanel, ActiveRequest>();
     private messageHandlers: Record<string, MessageHandler> = {};
 
     constructor(
@@ -43,6 +48,7 @@ export class RequestPanelManager {
     private _initMessageHandlers(): void {
         this.messageHandlers = {
             'send-request': (panel, message, ctx) => this._handleSendRequest(panel, message, ctx),
+            'cancel-request': (panel) => this._handleCancelRequest(panel),
             'get-environments': (panel) => this._handleGetEnvironments(panel),
             'set-environment': (_panel, message) => this._handleSetEnvironment(message.environmentId),
             'save-request': (panel, message, ctx) => this._handleSaveRequest(panel, message, ctx),
@@ -173,6 +179,9 @@ export class RequestPanelManager {
     // --- Message Handlers ---
 
     private async _handleSendRequest(panel: vscode.WebviewPanel, message: any, ctx: RequestContext) {
+        const abortController = new AbortController();
+        this.activeRequests.set(panel, { abortController });
+
         let environmentVariables: Record<string, string> = {};
 
         const messageEnvironmentId = message.environmentId;
@@ -191,36 +200,42 @@ export class RequestPanelManager {
             }
         }
 
-        const response = await HttpRequestService.sendRequest(message, environmentVariables);
+        const response = await HttpRequestService.sendRequest(message, environmentVariables, {
+            signal: abortController.signal
+        });
 
-        let historyName = message.name;
-        if (!historyName || historyName === 'New Request') {
-            try {
-                const url = new URL(message.url);
-                historyName = url.hostname + (url.pathname !== '/' ? url.pathname : '');
-            } catch {
-                historyName = message.url || 'New Request';
+        this.activeRequests.delete(panel);
+
+        if (response.errorType !== 'cancelled') {
+            let historyName = message.name;
+            if (!historyName || historyName === 'New Request') {
+                try {
+                    const url = new URL(message.url);
+                    historyName = url.hostname + (url.pathname !== '/' ? url.pathname : '');
+                } catch {
+                    historyName = message.url || 'New Request';
+                }
             }
+
+            const executionSource = this._buildExecutionSource(ctx);
+
+            const execution = this.historyService.createExecution(
+                {
+                    name: historyName,
+                    method: message.method,
+                    url: message.url,
+                    headers: message.headers || {},
+                    body: message.body || { mode: 'none' },
+                    auth: message.auth
+                },
+                executionSource,
+                response.status,
+                response.time
+            );
+
+            await this.historyService.add(execution);
+            this.refreshHistory();
         }
-
-        const executionSource = this._buildExecutionSource(ctx);
-
-        const execution = this.historyService.createExecution(
-            {
-                name: historyName,
-                method: message.method,
-                url: message.url,
-                headers: message.headers || {},
-                body: message.body || { mode: 'none' },
-                auth: message.auth
-            },
-            executionSource,
-            response.status,
-            response.time
-        );
-
-        await this.historyService.add(execution);
-        this.refreshHistory();
 
         panel.webview.postMessage({
             type: 'response',
@@ -230,6 +245,13 @@ export class RequestPanelManager {
             time: response.time,
             isError: response.isError
         });
+    }
+
+    private async _handleCancelRequest(panel: vscode.WebviewPanel): Promise<void> {
+        const activeRequest = this.activeRequests.get(panel);
+        if (activeRequest) {
+            activeRequest.abortController.abort();
+        }
     }
 
     private _buildExecutionSource(ctx: RequestContext): RequestExecutionSource {

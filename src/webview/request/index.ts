@@ -451,7 +451,6 @@ export class LcRequestPanel extends LcBaseElement {
 
   private handleSendRequest() {
     this.loading = true;
-    // Clear previous response state
     this.status = '-';
     this.size = '-';
     this.time = '-- ms';
@@ -460,6 +459,10 @@ export class LcRequestPanel extends LcBaseElement {
     this.responseHeaders = {};
 
     this.sendExtensionMessage('send-request');
+  }
+
+  private handleCancelRequest() {
+    postMessage({ type: 'cancel-request' });
   }
 
 
@@ -615,6 +618,7 @@ export class LcRequestPanel extends LcBaseElement {
                   .body=${this.responseBody}
                   contentType=${this.responseContentType}
                   ?loading=${this.loading}
+                  @cancel-request=${this.handleCancelRequest}
                 ></lc-response-view>
               </div>
               

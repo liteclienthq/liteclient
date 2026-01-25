@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Request Timeout & Cancel**: Requests now have a 30-second default timeout. Cancel button appears in the response area while a request is in flight, allowing users to abort long-running requests.
+
+### Changed
+- **Basic Auth Encoding**: Replaced deprecated `btoa` with `Buffer.from().toString('base64')` for proper Base64 encoding.
+- **ID Generation**: Unified all ID generators to use `crypto.randomUUID()` via `idUtils.ts`.
+- **History Metadata**: Added `durationMs` to history execution records for response time tracking.
+
 ## [0.8.0] - 2025-01-25
 
 ### Added

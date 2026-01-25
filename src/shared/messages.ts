@@ -233,6 +233,10 @@ export interface ShowNotificationMessage {
     message: string;
 }
 
+export interface CancelRequestMessage {
+    type: 'cancel-request';
+}
+
 /** Messages from request panel webview to extension */
 export type RequestPanelToExtensionMessage =
     | SendRequestMessage
@@ -240,7 +244,8 @@ export type RequestPanelToExtensionMessage =
     | GetEnvironmentsFromPanelMessage
     | SetEnvironmentFromPanelMessage
     | DirtyStateMessage
-    | ShowNotificationMessage;
+    | ShowNotificationMessage
+    | CancelRequestMessage;
 
 // ============================================================================
 // Combined Types
