@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2025-01-26
+
 ### Added
 - **Request Timeout & Cancel**: Requests now have a 30-second default timeout. Cancel button appears in the response area while a request is in flight, allowing users to abort long-running requests.
 - **Cookie Jar**: Per-domain cookie persistence using `tough-cookie`. Cookies are automatically sent on subsequent requests to the same domain.
