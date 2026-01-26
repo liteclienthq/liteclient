@@ -7,6 +7,7 @@ import { HistoryService } from './services/historyService';
 import { CookieJarService } from './services/cookieJarService';
 import { SidebarProvider } from './providers/webviews/sidebarProvider';
 import { RequestPanelManager } from './providers/webviews/requestPanelManager';
+import { CookieManagerProvider } from './providers/webviews/cookieManagerProvider';
 import { registerAllCommands } from './commands';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -42,6 +43,9 @@ export async function activate(context: vscode.ExtensionContext) {
 		() => sidebarProvider.refreshCollections()
 	);
 
+	// Initialize cookie manager provider
+	const cookieManagerProvider = new CookieManagerProvider(context, cookieJarService);
+
 	// Register all commands
 	registerAllCommands(context, {
 		historyService,
@@ -50,7 +54,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		settingsService,
 		cookieJarService,
 		sidebarProvider,
-		requestPanelManager
+		requestPanelManager,
+		cookieManagerProvider
 	});
 }
 

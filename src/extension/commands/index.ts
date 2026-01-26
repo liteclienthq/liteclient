@@ -6,6 +6,7 @@ import { SettingsService } from '../services/settingsService';
 import { CookieJarService } from '../services/cookieJarService';
 import { SidebarProvider } from '../providers/webviews/sidebarProvider';
 import { RequestPanelManager } from '../providers/webviews/requestPanelManager';
+import { CookieManagerProvider } from '../providers/webviews/cookieManagerProvider';
 
 import { registerHistoryCommands } from './historyCommands';
 import { registerCollectionCommands } from './collectionCommands';
@@ -21,6 +22,7 @@ export interface CommandDependencies {
     cookieJarService: CookieJarService;
     sidebarProvider: SidebarProvider;
     requestPanelManager: RequestPanelManager;
+    cookieManagerProvider: CookieManagerProvider;
 }
 
 export function registerAllCommands(
@@ -52,6 +54,7 @@ export function registerAllCommands(
     });
 
     registerCookieCommands(context, {
-        cookieJarService: deps.cookieJarService
+        cookieJarService: deps.cookieJarService,
+        cookieManagerProvider: deps.cookieManagerProvider
     });
 }

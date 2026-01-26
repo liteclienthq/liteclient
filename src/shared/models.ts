@@ -88,3 +88,8 @@ export interface ParsedCookie {
     secure: boolean;
     sameSite?: string;
 }
+
+export interface DomainCookies {
+    domain: string;
+    cookies: ParsedCookie[];
+}

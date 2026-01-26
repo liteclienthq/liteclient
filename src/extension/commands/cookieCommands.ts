@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import { CookieJarService } from '../services/cookieJarService';
+import { CookieManagerProvider } from '../providers/webviews/cookieManagerProvider';
 
 interface CookieCommandDependencies {
     cookieJarService: CookieJarService;
+    cookieManagerProvider: CookieManagerProvider;
 }
 
 export function registerCookieCommands(
@@ -10,15 +12,8 @@ export function registerCookieCommands(
     deps: CookieCommandDependencies
 ): void {
     context.subscriptions.push(
-        vscode.commands.registerCommand('liteclient.toggleCookieJar', async () => {
-            const isEnabled = deps.cookieJarService.isEnabled();
-            deps.cookieJarService.setEnabled(!isEnabled);
-            
-            if (!isEnabled) {
-                vscode.window.showInformationMessage('Cookie Jar enabled. Cookies will be persisted across requests.');
-            } else {
-                vscode.window.showInformationMessage('Cookie Jar disabled.');
-            }
+        vscode.commands.registerCommand('liteclient.openCookieManager', async () => {
+            await deps.cookieManagerProvider.open();
         }),
 
         vscode.commands.registerCommand('liteclient.clearCookies', async () => {

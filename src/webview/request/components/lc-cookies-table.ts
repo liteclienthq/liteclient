@@ -89,8 +89,12 @@ export class LcCookiesTable extends LcBaseElement {
   `;
 
   private formatExpires(expires?: string): string {
-    if (!expires) return '-';
-    if (expires === 'Session') return 'Session';
+    if (!expires) {
+      return '-';
+    }
+    if (expires === 'Session') {
+      return 'Session';
+    }
     
     try {
       const date = new Date(expires);

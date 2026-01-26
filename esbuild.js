@@ -37,7 +37,8 @@ const extensionConfig = {
 const webviewConfig = {
   entryPoints: {
     request: 'src/webview/request/index.ts',
-    sidebar: 'src/webview/sidebar/index.ts'
+    sidebar: 'src/webview/sidebar/index.ts',
+    'cookie-manager': 'src/webview/cookie-manager/index.ts'
   },
   bundle: true,
   outdir: 'dist/webview',

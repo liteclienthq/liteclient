@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Request Timeout & Cancel**: Requests now have a 30-second default timeout. Cancel button appears in the response area while a request is in flight, allowing users to abort long-running requests.
-- **Cookie Jar**: Per-domain cookie persistence using `tough-cookie`. Toggle with "LiteClient: Toggle Cookie Jar" command. Clear with "LiteClient: Clear Cookie Jar" command. Cookies are automatically sent on subsequent requests to the same domain.
+- **Cookie Jar**: Per-domain cookie persistence using `tough-cookie`. Cookies are automatically sent on subsequent requests to the same domain.
+- **Cookie Manager**: New webview panel for managing stored cookies. Access via "LiteClient: Manage Cookies" command. View all cookies grouped by domain in collapsible accordions. Delete individual cookies, all cookies for a domain, or clear all cookies.
 - **Cookies Tab**: New "Cookies" tab in response area displays parsed Set-Cookie headers with Name, Value, Domain, Path, Expires, and flags (Secure, HttpOnly, SameSite) in a table format. Cookie count shown in tab label.
 
 ### Fixed

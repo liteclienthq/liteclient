@@ -171,8 +171,8 @@
         "category": "LiteClient"
       },
       {
-        "command": "liteclient.toggleCookieJar",
-        "title": "Toggle Cookie Jar",
+        "command": "liteclient.openCookieManager",
+        "title": "Manage Cookies",
         "category": "LiteClient"
       },
       {

@@ -5,10 +5,10 @@
  * Do NOT add any runtime code here — only type definitions.
  */
 
-import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie } from './models';
+import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies } from './models';
 
 // Re-export for convenience
-export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie };
+export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies };
 
 export interface Environment {
     id: string;
@@ -71,14 +71,7 @@ export interface CollectionsListMessage {
     }>;
 }
 
-/** All message types sent from extension to webview */
-export type ExtensionToWebviewMessage =
-    | ResponseMessage
-    | LoadRequestMessage
-    | EnvironmentsListMessage
-    | SetEnvironmentBroadcastMessage
-    | HistoryListMessage
-    | CollectionsListMessage;
+// ExtensionToWebviewMessage is defined in Combined Types section below
 
 // ============================================================================
 // Messages: Webview → Extension (Sidebar)
@@ -249,10 +242,60 @@ export type RequestPanelToExtensionMessage =
     | CancelRequestMessage;
 
 // ============================================================================
+// Messages: Webview → Extension (Cookie Manager)
+// ============================================================================
+
+export interface GetCookiesMessage {
+    type: 'get-cookies';
+}
+
+export interface DeleteCookieMessage {
+    type: 'delete-cookie';
+    domain: string;
+    name: string;
+}
+
+export interface DeleteDomainCookiesMessage {
+    type: 'delete-domain-cookies';
+    domain: string;
+}
+
+export interface ClearAllCookiesMessage {
+    type: 'clear-all-cookies';
+}
+
+/** Messages from cookie manager webview to extension */
+export type CookieManagerToExtensionMessage =
+    | GetCookiesMessage
+    | DeleteCookieMessage
+    | DeleteDomainCookiesMessage
+    | ClearAllCookiesMessage;
+
+// ============================================================================
+// Messages: Extension → Webview (Cookie Manager)
+// ============================================================================
+
+export interface CookiesListMessage {
+    type: 'cookies-list';
+    domains: DomainCookies[];
+}
+
+// ============================================================================
 // Combined Types
 // ============================================================================
+
+/** All message types sent from extension to webview */
+export type ExtensionToWebviewMessage =
+    | ResponseMessage
+    | LoadRequestMessage
+    | EnvironmentsListMessage
+    | SetEnvironmentBroadcastMessage
+    | HistoryListMessage
+    | CollectionsListMessage
+    | CookiesListMessage;
 
 /** All messages from any webview to extension */
 export type WebviewToExtensionMessage =
     | SidebarToExtensionMessage
-    | RequestPanelToExtensionMessage;
+    | RequestPanelToExtensionMessage
+    | CookieManagerToExtensionMessage;
