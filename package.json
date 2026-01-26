@@ -169,6 +169,16 @@
         "title": "Clear History",
         "icon": "$(trash)",
         "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.toggleCookieJar",
+        "title": "Toggle Cookie Jar",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.clearCookies",
+        "title": "Clear Cookie Jar",
+        "category": "LiteClient"
       }
     ],
     "menus": {
@@ -263,6 +273,7 @@
     "@types/form-data": "^2.2.1",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
+    "@types/tough-cookie": "^4.0.5",
     "@types/vscode": "^1.90.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
@@ -280,6 +291,7 @@
     "@codemirror/theme-one-dark": "^6.1.3",
     "codemirror": "^6.0.2",
     "form-data": "^4.0.5",
-    "lit": "^3.3.2"
+    "lit": "^3.3.2",
+    "tough-cookie": "^6.0.0"
   }
 }

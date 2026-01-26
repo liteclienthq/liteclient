@@ -22,8 +22,10 @@ import './components/lc-status-bar.js';
 import './components/lc-tabs.js';
 import './components/lc-response-view.js';
 import './components/lc-headers-table.js';
+import './components/lc-cookies-table.js';
 import './components/lc-url-bar.js';
 import './components/lc-request-meta.js';
+import type { ParsedCookie } from '../shared/messaging.js';
 
 
 
@@ -173,6 +175,7 @@ export class LcRequestPanel extends LcBaseElement {
   @state() isError = false;
   @state() responseBody = '';
   @state() responseHeaders: Record<string, string> = {};
+  @state() responseCookies: ParsedCookie[] = [];
   @state() responseContentType = '';
   @state() activeTab = 'response';
   @state() loading = false;
@@ -197,10 +200,14 @@ export class LcRequestPanel extends LcBaseElement {
 
 
 
-  private tabs: Tab[] = [
-    { id: 'response', label: 'Response' },
-    { id: 'headers', label: 'Headers' }
-  ];
+  private get tabs(): Tab[] {
+    const cookieCount = this.responseCookies.length;
+    return [
+      { id: 'response', label: 'Response' },
+      { id: 'headers', label: 'Headers' },
+      { id: 'cookies', label: cookieCount > 0 ? `Cookies (${cookieCount})` : 'Cookies' }
+    ];
+  }
 
   connectedCallback() {
     super.connectedCallback();
@@ -405,11 +412,12 @@ export class LcRequestPanel extends LcBaseElement {
   }
 
 
-  private handleResponse(message: { body: string; status: string; headers: Record<string, string>; time?: number; isError: boolean }) {
+  private handleResponse(message: { body: string; status: string; headers: Record<string, string>; cookies: ParsedCookie[]; time?: number; isError: boolean }) {
     this.loading = false;
     this.responseBody = message.body;
     this.status = message.status;
     this.responseHeaders = message.headers;
+    this.responseCookies = message.cookies || [];
     this.isError = message.isError;
     this.time = message.time ? `${message.time} ms` : '-- ms';
 
@@ -457,6 +465,7 @@ export class LcRequestPanel extends LcBaseElement {
     this.isError = false;
     this.responseBody = '';
     this.responseHeaders = {};
+    this.responseCookies = [];
 
     this.sendExtensionMessage('send-request');
   }
@@ -626,6 +635,12 @@ export class LcRequestPanel extends LcBaseElement {
                 <lc-headers-table
                   .headers=${this.responseHeaders}
                 ></lc-headers-table>
+              </div>
+
+              <div class="tab-panel ${this.activeTab === 'cookies' ? 'active' : ''}">
+                <lc-cookies-table
+                  .cookies=${this.responseCookies}
+                ></lc-cookies-table>
               </div>
             </div>
           </div>

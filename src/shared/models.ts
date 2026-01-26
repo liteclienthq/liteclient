@@ -73,3 +73,18 @@ export type RequestBody =
         mode: "x-www-form-urlencoded";
         rows: KeyValueRow[];
     };
+
+// ============================================================================
+// Cookie Types (for response display)
+// ============================================================================
+
+export interface ParsedCookie {
+    name: string;
+    value: string;
+    domain?: string;
+    path?: string;
+    expires?: string;
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite?: string;
+}

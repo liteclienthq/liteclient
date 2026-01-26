@@ -5,10 +5,10 @@
  * Do NOT add any runtime code here — only type definitions.
  */
 
-import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow } from './models';
+import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie } from './models';
 
 // Re-export for convenience
-export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow };
+export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie };
 
 export interface Environment {
     id: string;
@@ -25,6 +25,7 @@ export interface ResponseMessage {
     body: string;
     status: string;
     headers: Record<string, string>;
+    cookies: ParsedCookie[];
     time?: number;
     isError: boolean;
 }

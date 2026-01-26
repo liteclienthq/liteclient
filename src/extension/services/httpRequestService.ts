@@ -17,23 +17,26 @@ export interface ResponseData {
   time?: number;
   isError?: boolean;
   errorType?: 'network' | 'timeout' | 'invalid_url' | 'unknown' | 'unresolved_variables' | 'cancelled';
+  setCookieHeaders?: string[];
 }
 
 export interface RequestOptions {
   signal?: AbortSignal;
   timeout?: number;
+  cookieString?: string;
 }
 
 
 export class HttpRequestService {
   private static readonly DEFAULT_TIMEOUT = 30000;
+  private static readonly MAX_REDIRECTS = 20;
 
   static async sendRequest(
     payload: RequestPayload, 
     environmentVariables: Record<string, string> = {},
     options: RequestOptions = {}
   ): Promise<ResponseData> {
-    const { signal, timeout = HttpRequestService.DEFAULT_TIMEOUT } = options;
+    const { signal, timeout = HttpRequestService.DEFAULT_TIMEOUT, cookieString } = options;
     
     const timeoutController = new AbortController();
     const timeoutId = setTimeout(() => timeoutController.abort(), timeout);
@@ -112,10 +115,16 @@ Please check:
         }
       }
 
+      // Inject cookies from cookie jar if not already set by user
+      if (cookieString && !headers['Cookie'] && !headers['cookie']) {
+        headers['Cookie'] = cookieString;
+      }
+
       const fetchOptions: RequestInit = {
         method: substitutedPayload.method,
         headers,
-        signal: combinedSignal
+        signal: combinedSignal,
+        redirect: 'manual'
       };
 
       // Only add body if it exists and method allows it
@@ -179,7 +188,63 @@ Please check:
       }
 
       const startTime = Date.now();
-      const response = await fetch(parsedUrl.toString(), fetchOptions);
+      
+      // Manual redirect handling to capture Set-Cookie headers from all redirects
+      let currentUrl = parsedUrl.toString();
+      let currentOptions = { ...fetchOptions };
+      let response: Response;
+      const allSetCookieHeaders: string[] = [];
+      let redirectCount = 0;
+
+      while (true) {
+        response = await fetch(currentUrl, currentOptions);
+        
+        // Collect Set-Cookie headers from this response
+        if (typeof (response.headers as any).getSetCookie === 'function') {
+          allSetCookieHeaders.push(...(response.headers as any).getSetCookie());
+        }
+
+        // Check if this is a redirect
+        if (response.status >= 300 && response.status < 400) {
+          const location = response.headers.get('location');
+          if (!location) {
+            break; // No location header, treat as final response
+          }
+
+          redirectCount++;
+          if (redirectCount > HttpRequestService.MAX_REDIRECTS) {
+            return {
+              body: `Too many redirects (>${HttpRequestService.MAX_REDIRECTS})`,
+              status: 'Redirect Error',
+              headers: {},
+              isError: true,
+              errorType: 'network' as const
+            };
+          }
+
+          // Resolve relative URLs
+          currentUrl = new URL(location, currentUrl).toString();
+          
+          // For 303 or POST->GET redirects, switch to GET and remove body
+          if (response.status === 303 || (response.status === 301 || response.status === 302) && currentOptions.method === 'POST') {
+            currentOptions = { ...currentOptions, method: 'GET', body: undefined };
+          }
+          
+          // Update Cookie header with accumulated cookies for the new request
+          if (allSetCookieHeaders.length > 0) {
+            const existingCookies = (currentOptions.headers as Record<string, string>)?.['Cookie'] || '';
+            const newCookies = allSetCookieHeaders.map(c => c.split(';')[0]).join('; ');
+            const combinedCookies = existingCookies ? `${existingCookies}; ${newCookies}` : newCookies;
+            currentOptions = {
+              ...currentOptions,
+              headers: { ...(currentOptions.headers as Record<string, string>), Cookie: combinedCookies }
+            };
+          }
+        } else {
+          break; // Not a redirect, this is the final response
+        }
+      }
+
       clearTimeout(timeoutId);
       const text = await response.text();
       const endTime = Date.now();
@@ -195,7 +260,8 @@ Please check:
         status: `${response.status} ${response.statusText}`,
         headers: responseHeaders,
         time: duration,
-        isError: response.status >= 400
+        isError: response.status >= 400,
+        setCookieHeaders: allSetCookieHeaders
       };
 
     } catch (error) {

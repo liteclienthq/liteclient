@@ -5,6 +5,7 @@ import { HistoryService } from '../../services/historyService';
 import { CollectionService, RequestItem } from '../../services/collectionService';
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
+import { CookieJarService } from '../../services/cookieJarService';
 import type { RequestPanelToExtensionMessage, RequestExecutionSource } from '../../../shared/messages';
 import { generateId } from '../../utils/idUtils';
 
@@ -39,6 +40,7 @@ export class RequestPanelManager {
         private collectionService: CollectionService,
         private environmentService: EnvironmentService,
         private settingsService: SettingsService,
+        private cookieJarService: CookieJarService,
         private refreshHistory: () => void,
         private refreshCollections: () => void
     ) {
@@ -200,11 +202,23 @@ export class RequestPanelManager {
             }
         }
 
+        // Get cookies from cookie jar for this request
+        const cookieString = await this.cookieJarService.getCookieString(message.url);
+
         const response = await HttpRequestService.sendRequest(message, environmentVariables, {
-            signal: abortController.signal
+            signal: abortController.signal,
+            cookieString
         });
 
         this.activeRequests.delete(panel);
+
+        // Parse and store cookies from Set-Cookie headers
+        const setCookieHeaders = response.setCookieHeaders || [];
+        const parsedCookies = this.cookieJarService.parseSetCookieHeaders(setCookieHeaders);
+        
+        if (setCookieHeaders.length > 0) {
+            await this.cookieJarService.setCookiesFromResponse(message.url, setCookieHeaders);
+        }
 
         if (response.errorType !== 'cancelled') {
             let historyName = message.name;
@@ -242,6 +256,7 @@ export class RequestPanelManager {
             body: response.body,
             status: response.status,
             headers: response.headers,
+            cookies: parsedCookies,
             time: response.time,
             isError: response.isError
         });

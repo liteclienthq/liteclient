@@ -4,6 +4,7 @@ import { SettingsService } from './services/settingsService';
 import { CollectionService } from './services/collectionService';
 import { EnvironmentService } from './services/environmentService';
 import { HistoryService } from './services/historyService';
+import { CookieJarService } from './services/cookieJarService';
 import { SidebarProvider } from './providers/webviews/sidebarProvider';
 import { RequestPanelManager } from './providers/webviews/requestPanelManager';
 import { registerAllCommands } from './commands';
@@ -15,6 +16,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	const collectionService = new CollectionService(storage);
 	const environmentService = new EnvironmentService(storage);
 	const historyService = new HistoryService(storage);
+	const cookieJarService = new CookieJarService(storage);
+	await cookieJarService.initialize();
 
 	// Initialize sidebar provider
 	const sidebarProvider = new SidebarProvider(
@@ -34,6 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		collectionService,
 		environmentService,
 		settingsService,
+		cookieJarService,
 		() => sidebarProvider.refreshHistory(),
 		() => sidebarProvider.refreshCollections()
 	);
@@ -44,6 +48,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		collectionService,
 		environmentService,
 		settingsService,
+		cookieJarService,
 		sidebarProvider,
 		requestPanelManager
 	});

@@ -3,6 +3,7 @@ import { HistoryService } from '../services/historyService';
 import { CollectionService } from '../services/collectionService';
 import { EnvironmentService } from '../services/environmentService';
 import { SettingsService } from '../services/settingsService';
+import { CookieJarService } from '../services/cookieJarService';
 import { SidebarProvider } from '../providers/webviews/sidebarProvider';
 import { RequestPanelManager } from '../providers/webviews/requestPanelManager';
 
@@ -10,12 +11,14 @@ import { registerHistoryCommands } from './historyCommands';
 import { registerCollectionCommands } from './collectionCommands';
 import { registerEnvironmentCommands } from './environmentCommands';
 import { registerRequestCommands } from './requestCommands';
+import { registerCookieCommands } from './cookieCommands';
 
 export interface CommandDependencies {
     historyService: HistoryService;
     collectionService: CollectionService;
     environmentService: EnvironmentService;
     settingsService: SettingsService;
+    cookieJarService: CookieJarService;
     sidebarProvider: SidebarProvider;
     requestPanelManager: RequestPanelManager;
 }
@@ -46,5 +49,9 @@ export function registerAllCommands(
 
     registerRequestCommands(context, {
         requestPanelManager: deps.requestPanelManager
+    });
+
+    registerCookieCommands(context, {
+        cookieJarService: deps.cookieJarService
     });
 }

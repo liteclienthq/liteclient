@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Request Timeout & Cancel**: Requests now have a 30-second default timeout. Cancel button appears in the response area while a request is in flight, allowing users to abort long-running requests.
+- **Cookie Jar**: Per-domain cookie persistence using `tough-cookie`. Toggle with "LiteClient: Toggle Cookie Jar" command. Clear with "LiteClient: Clear Cookie Jar" command. Cookies are automatically sent on subsequent requests to the same domain.
+- **Cookies Tab**: New "Cookies" tab in response area displays parsed Set-Cookie headers with Name, Value, Domain, Path, Expires, and flags (Secure, HttpOnly, SameSite) in a table format. Cookie count shown in tab label.
+
+### Fixed
+- **Cookie Capture on Redirects**: Cookies set during HTTP redirects (e.g., 302 responses) are now properly captured and displayed. Previously, only cookies from the final response were visible.
 
 ### Changed
 - **Basic Auth Encoding**: Replaced deprecated `btoa` with `Buffer.from().toString('base64')` for proper Base64 encoding.
