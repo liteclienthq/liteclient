@@ -59,9 +59,29 @@ export function substituteVariablesInRequest(request: any, variables: Record<str
     substitutedRequest.headers = newHeaders;
   }
 
-  // Substitute in body (only for string bodies)
-  if (typeof substitutedRequest.body === 'string') {
-    substitutedRequest.body = substituteVariables(substitutedRequest.body, variables);
+  // Substitute in body
+  if (substitutedRequest.body) {
+    const body = substitutedRequest.body;
+    
+    if (body.mode === 'raw' && typeof body.value === 'string') {
+      body.value = substituteVariables(body.value, variables);
+    } else if (body.mode === 'form-data' && Array.isArray(body.rows)) {
+      for (const row of body.rows) {
+        if (row.active !== false) {
+          row.key = substituteVariables(row.key, variables);
+          if (row.type === 'text') {
+            row.value = substituteVariables(row.value, variables);
+          }
+        }
+      }
+    } else if (body.mode === 'x-www-form-urlencoded' && Array.isArray(body.rows)) {
+      for (const row of body.rows) {
+        if (row.active !== false) {
+          row.key = substituteVariables(row.key, variables);
+          row.value = substituteVariables(row.value, variables);
+        }
+      }
+    }
   }
 
   // Substitute in auth

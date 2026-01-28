@@ -15,7 +15,8 @@
 	},
 	"include": [
 		"src/extension/**/*",
-		"src/shared/**/*"
+		"src/shared/**/*",
+		"src/test/**/*"
 	],
 	"exclude": [
 		"src/webview/**/*"
