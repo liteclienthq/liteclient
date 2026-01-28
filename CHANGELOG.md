@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **OAuth 2.0 Authentication**: Full OAuth 2.0 support with two grant types:
+  - **Client Credentials**: For machine-to-machine authentication. Enter Token URL, Client ID, Client Secret, and optional scopes.
+  - **Authorization Code with PKCE**: For user authentication via browser. Securely authenticates through your OAuth provider and stores tokens in VS Code's secret storage.
+  - Automatic token refresh when tokens expire.
+  - "Get Token" / "Sign In" button to initiate authentication before sending requests.
+  - Token status display showing expiration time.
+
 ## [0.10.0] - 2025-01-29
 
 ### Added
