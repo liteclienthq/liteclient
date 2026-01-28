@@ -359,6 +359,89 @@ export class CollectionService {
     return false;
   }
 
+  /**
+   * Moves an item to a new location, supporting cross-collection moves.
+   * @param sourceCollectionId - The collection currently containing the item
+   * @param targetCollectionId - The destination collection
+   * @param itemId - The item to move
+   * @param targetParentId - The destination parent (folder id, or undefined for collection root)
+   * @param insertBeforeId - Insert before this item (or append at end if undefined)
+   */
+  async moveItem(
+    sourceCollectionId: string,
+    targetCollectionId: string,
+    itemId: string,
+    targetParentId: string | undefined,
+    insertBeforeId: string | undefined
+  ): Promise<void> {
+    const collections = await this.load();
+    const sourceCollection = collections.find(c => c.id === sourceCollectionId);
+    const targetCollection = collections.find(c => c.id === targetCollectionId);
+
+    if (!sourceCollection) {
+      throw new Error(`Source collection with id ${sourceCollectionId} not found`);
+    }
+    if (!targetCollection) {
+      throw new Error(`Target collection with id ${targetCollectionId} not found`);
+    }
+
+    // Find the item in the source collection
+    const item = this.findItem(sourceCollection.items, itemId);
+    if (!item) {
+      throw new Error(`Item with id ${itemId} not found in source collection`);
+    }
+
+    // Prevent moving a folder into itself or its descendants
+    if (item.type === 'folder' && targetParentId) {
+      if (item.id === targetParentId || this.isDescendant(item, targetParentId)) {
+        throw new Error('Cannot move a folder into itself or its descendants');
+      }
+    }
+
+    // Remove the item from its current location in the source collection
+    if (!this.deleteItemFromTree(sourceCollection.items, itemId)) {
+      throw new Error(`Failed to remove item ${itemId} from source collection`);
+    }
+
+    // Get the target container in the target collection
+    let targetItems: CollectionItem[];
+    if (targetParentId) {
+      const parent = this.findFolder(targetCollection.items, targetParentId);
+      if (!parent) {
+        throw new Error(`Target parent folder with id ${targetParentId} not found`);
+      }
+      targetItems = parent.items;
+    } else {
+      targetItems = targetCollection.items;
+    }
+
+    // Insert at the correct position
+    if (insertBeforeId) {
+      const insertIndex = targetItems.findIndex(i => i.id === insertBeforeId);
+      if (insertIndex >= 0) {
+        targetItems.splice(insertIndex, 0, item);
+      } else {
+        targetItems.push(item);
+      }
+    } else {
+      targetItems.push(item);
+    }
+
+    await this.save(collections);
+  }
+
+  private isDescendant(folder: FolderItem, targetId: string): boolean {
+    for (const item of folder.items) {
+      if (item.id === targetId) {
+        return true;
+      }
+      if (item.type === 'folder' && this.isDescendant(item, targetId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private generateId(): string {
     return generateId();
   }

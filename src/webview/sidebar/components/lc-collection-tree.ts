@@ -151,7 +151,42 @@ export class LcCollectionTree extends LcBaseElement {
     }
   }
 
-  private renderItems(items: CollectionItem[], collectionId: string, depth: number = 1): TemplateResult[] {
+  private handleItemDrop(e: CustomEvent, targetCollectionId: string, items: CollectionItem[], parentId?: string) {
+    const { draggedItemId, sourceCollectionId, targetItemId, targetItemType, dropPosition } = e.detail;
+
+    let targetParentId: string | undefined;
+    let insertBeforeId: string | undefined;
+
+    if (dropPosition === 'inside') {
+      targetParentId = targetItemId;
+      insertBeforeId = undefined;
+    } else if (dropPosition === 'before') {
+      targetParentId = parentId;
+      insertBeforeId = targetItemId;
+    } else if (dropPosition === 'after') {
+      targetParentId = parentId;
+      const targetIndex = items.findIndex(i => i.id === targetItemId);
+      if (targetIndex >= 0 && targetIndex < items.length - 1) {
+        insertBeforeId = items[targetIndex + 1].id;
+      } else {
+        insertBeforeId = undefined;
+      }
+    }
+
+    this.dispatchEvent(new CustomEvent('move-item', {
+      detail: {
+        sourceCollectionId,
+        targetCollectionId,
+        itemId: draggedItemId,
+        targetParentId,
+        insertBeforeId
+      },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
+  private renderItems(items: CollectionItem[], collectionId: string, depth: number = 1, parentId?: string): TemplateResult[] {
     return items.map(item => {
       const search = this.filterText.toLowerCase();
       if (this.filterText && !this.matchesFilter(item, search)) {
@@ -172,14 +207,18 @@ export class LcCollectionTree extends LcBaseElement {
             .expanded=${isOpen}
             .depth=${depth}
             .actions=${item.type === 'folder' ? this.folderActions : this.requestActions}
+            .draggable=${true}
+            .parentId=${parentId}
+            .collectionId=${collectionId}
             @select=${(e: CustomEvent) => this.handleSelect(e, collectionId, item)}
             @toggle=${() => this.toggleItem(item.id)}
             @action=${(e: CustomEvent) => this.handleAction(e, collectionId, item.id, undefined, item.name)}
+            @item-drop=${(e: CustomEvent) => this.handleItemDrop(e, collectionId, items, parentId)}
           ></lc-sidebar-item>
           
           ${item.type === 'folder' ? html`
             <div class="children-container ${isOpen ? 'open' : ''}">
-              ${this.renderItems((item as FolderItem).items, collectionId, depth + 1)}
+              ${this.renderItems((item as FolderItem).items, collectionId, depth + 1, item.id)}
             </div>
           ` : ''}
         </div>
@@ -223,13 +262,16 @@ export class LcCollectionTree extends LcBaseElement {
                 .expanded=${isOpen}
                 .depth=${0}
                 .actions=${this.collectionActions}
+                .draggable=${false}
+                .collectionId=${collection.id}
                 @select=${(e: CustomEvent) => this.handleSelect(e, collection.id, { ...collection, type: 'collection' })}
                 @toggle=${() => this.toggleItem(collection.id)}
                 @action=${(e: CustomEvent) => this.handleAction(e, collection.id)}
+                @item-drop=${(e: CustomEvent) => this.handleItemDrop(e, collection.id, collection.items, undefined)}
               ></lc-sidebar-item>
               
               <div class="children-container ${isOpen ? 'open' : ''}">
-                ${this.renderItems(collection.items, collection.id, 1)}
+                ${this.renderItems(collection.items, collection.id, 1, undefined)}
               </div>
             </div>
           `;

@@ -163,6 +163,10 @@ export class LcSidebarPanel extends LcBaseElement {
     postMessage({ type: 'collection-item-action', action, collectionId, itemId, name });
   }
 
+  private handleMoveItem(e: CustomEvent) {
+    const { sourceCollectionId, targetCollectionId, itemId, targetParentId, insertBeforeId } = e.detail;
+    postMessage({ type: 'move-collection-item', sourceCollectionId, targetCollectionId, itemId, targetParentId, insertBeforeId });
+  }
 
   private handleEnvAction(e: CustomEvent) {
     const { action, id } = e.detail;
@@ -222,6 +226,7 @@ export class LcSidebarPanel extends LcBaseElement {
             @collection-action=${this.handleCollectionAction}
             @collection-item-action=${this.handleCollectionItemAction}
             @open-request=${this.handleOpenRequest}
+            @move-item=${this.handleMoveItem}
           ></lc-collection-tree>
         </div>
         <div class="tab-content ${this.activeTab === 'env' ? 'active' : ''}">

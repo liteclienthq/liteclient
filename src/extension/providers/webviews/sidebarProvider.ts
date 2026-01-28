@@ -37,6 +37,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             'add-collection-request': (data) => this._handleAddCollectionRequest(data),
             'add-collection-folder': (data) => this._handleAddCollectionFolder(data),
             'collection-item-action': (data) => this._handleCollectionItemAction(data),
+            'move-collection-item': (data) => this._handleMoveCollectionItem(data),
             'env-action': (data) => this._handleEnvAction(data),
             'env-variable-action': (data) => this._handleEnvVariableAction(data),
             'set-environment': (data) => this._handleSetEnvironment(data),
@@ -145,6 +146,21 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     name: data.name
                 });
                 break;
+        }
+    }
+
+    private async _handleMoveCollectionItem(data: { sourceCollectionId: string; targetCollectionId: string; itemId: string; targetParentId?: string; insertBeforeId?: string }) {
+        try {
+            await this._collectionService.moveItem(
+                data.sourceCollectionId,
+                data.targetCollectionId,
+                data.itemId,
+                data.targetParentId,
+                data.insertBeforeId
+            );
+            this.refreshCollections();
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to move item: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
     }
 

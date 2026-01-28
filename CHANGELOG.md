@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-01-29
+
+### Added
+- **Drag-and-Drop Reordering**: Requests and folders can now be reordered within collections via drag-and-drop. Drag items before/after siblings to reorder, or drop onto folders to nest them inside.
+- **Cross-Collection Moves**: Items can be dragged between different collections, not just within the same collection.
+
 ## [0.9.1] - 2025-01-29
 
 ### Fixed

@@ -192,6 +192,36 @@ export class LcSidebarItem extends LcBaseElement {
     .menu-item.danger {
       color: var(--vscode-errorForeground);
     }
+
+    /* Drag and drop */
+    .item.dragging {
+      opacity: 0.5;
+    }
+
+    .item.drop-before::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--vscode-focusBorder);
+    }
+
+    .item.drop-after::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--vscode-focusBorder);
+    }
+
+    .item.drop-inside {
+      background: var(--vscode-list-dropBackground, rgba(0, 120, 215, 0.1));
+      outline: 1px dashed var(--vscode-focusBorder);
+    }
   `;
 
   @property() id = '';
@@ -203,10 +233,15 @@ export class LcSidebarItem extends LcBaseElement {
   @property({ type: Boolean }) expanded = false;
   @property({ type: Number }) depth = 0;
   @property({ type: Array }) actions: SidebarItemAction[] = [];
+  @property({ type: Boolean }) draggable = false;
+  @property() parentId: string | undefined = undefined;
+  @property() collectionId: string | undefined = undefined;
 
   @state() private menuOpen = false;
   @state() private menuTop = 0;
   @state() private menuLeft = 0;
+  @state() private dragOver = false;
+  @state() private dropPosition: 'before' | 'inside' | 'after' | null = null;
 
   private toggleMenu(e: Event) {
     e.stopPropagation();
@@ -270,6 +305,103 @@ export class LcSidebarItem extends LcBaseElement {
     }));
   }
 
+  private handleDragStart(e: DragEvent) {
+    if (!this.draggable) {
+      e.preventDefault();
+      return;
+    }
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('application/x-liteclient-item', JSON.stringify({
+        id: this.id,
+        type: this.type,
+        parentId: this.parentId,
+        collectionId: this.collectionId
+      }));
+    }
+    (e.currentTarget as HTMLElement).classList.add('dragging');
+  }
+
+  private handleDragEnd(e: DragEvent) {
+    e.stopPropagation();
+    (e.currentTarget as HTMLElement).classList.remove('dragging');
+    this.dropPosition = null;
+    this.dragOver = false;
+  }
+
+  private handleDragOver(e: DragEvent) {
+    if (!e.dataTransfer?.types.includes('application/x-liteclient-item')) {
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+    }
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const height = rect.height;
+    const isContainer = this.type === 'folder' || this.type === 'collection';
+
+    if (isContainer) {
+      if (y < height * 0.25) {
+        this.dropPosition = 'before';
+      } else if (y > height * 0.75) {
+        this.dropPosition = 'after';
+      } else {
+        this.dropPosition = 'inside';
+      }
+    } else {
+      this.dropPosition = y < height / 2 ? 'before' : 'after';
+    }
+
+    this.dragOver = true;
+  }
+
+  private handleDragLeave(e: DragEvent) {
+    e.stopPropagation();
+    this.dropPosition = null;
+    this.dragOver = false;
+  }
+
+  private handleDrop(e: DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const data = e.dataTransfer?.getData('application/x-liteclient-item');
+    if (!data) {
+      return;
+    }
+
+    const draggedItem = JSON.parse(data);
+    
+    if (draggedItem.id === this.id) {
+      this.dropPosition = null;
+      this.dragOver = false;
+      return;
+    }
+
+    this.dispatchEvent(new CustomEvent('item-drop', {
+      detail: {
+        draggedItemId: draggedItem.id,
+        draggedItemType: draggedItem.type,
+        sourceCollectionId: draggedItem.collectionId,
+        targetItemId: this.id,
+        targetItemType: this.type,
+        targetCollectionId: this.collectionId,
+        targetParentId: this.parentId,
+        dropPosition: this.dropPosition
+      },
+      bubbles: true,
+      composed: true
+    }));
+
+    this.dropPosition = null;
+    this.dragOver = false;
+  }
+
   private renderIcon() {
     switch (this.type) {
       case 'collection':
@@ -315,9 +447,22 @@ export class LcSidebarItem extends LcBaseElement {
 
   override render() {
     const showChevron = ['collection', 'folder', 'environment'].includes(this.type);
+    const dropClass = this.dropPosition ? `drop-${this.dropPosition}` : '';
 
     return html`
-      <div class="item ${this.active ? 'active' : ''} ${this.menuOpen ? 'menu-open' : ''}" @click=${this.handleClick} role="treeitem" aria-expanded=${this.expanded} aria-level=${this.depth + 1}>
+      <div 
+        class="item ${this.active ? 'active' : ''} ${this.menuOpen ? 'menu-open' : ''} ${dropClass}"
+        @click=${this.handleClick}
+        role="treeitem"
+        aria-expanded=${this.expanded}
+        aria-level=${this.depth + 1}
+        draggable=${this.draggable ? 'true' : 'false'}
+        @dragstart=${this.handleDragStart}
+        @dragend=${this.handleDragEnd}
+        @dragover=${this.handleDragOver}
+        @dragleave=${this.handleDragLeave}
+        @drop=${this.handleDrop}
+      >
         ${Array.from({ length: this.depth }).map(() => html`<div class="indent-guide"></div>`)}
         
         ${showChevron ? html`

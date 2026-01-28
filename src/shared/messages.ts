@@ -141,6 +141,15 @@ export interface CollectionItemActionMessage {
     name?: string;
 }
 
+export interface MoveCollectionItemMessage {
+    type: 'move-collection-item';
+    sourceCollectionId: string;
+    targetCollectionId: string;
+    itemId: string;
+    targetParentId?: string;
+    insertBeforeId?: string;
+}
+
 export interface EnvActionMessage {
     type: 'env-action';
     action: 'add' | 'delete' | 'rename' | 'update-vars';
@@ -175,6 +184,7 @@ export type SidebarToExtensionMessage =
     | AddCollectionRequestMessage
     | AddCollectionFolderMessage
     | CollectionItemActionMessage
+    | MoveCollectionItemMessage
     | EnvActionMessage
     | EnvVariableActionMessage
     | SetEnvironmentMessage;
