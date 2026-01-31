@@ -57,12 +57,20 @@ export class OAuth2TokenService {
     }
 
     async requestClientCredentialsToken(config: OAuth2AuthConfig): Promise<TokenRecord> {
+        if (!config.clientSecret) {
+            throw new Error('Client Secret is required for Client Credentials flow');
+        }
+
         const params = new URLSearchParams();
         params.set('grant_type', 'client_credentials');
-        params.set('client_id', config.clientId);
-        if (config.clientSecret) {
+        
+        const useBasicAuth = config.clientAuthMethod === 'basic_header';
+        
+        if (!useBasicAuth) {
+            params.set('client_id', config.clientId);
             params.set('client_secret', config.clientSecret);
         }
+        
         if (config.scopes?.length) {
             params.set('scope', config.scopes.join(' '));
         }
@@ -70,11 +78,18 @@ export class OAuth2TokenService {
             params.set('audience', config.audience);
         }
 
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        };
+        
+        if (useBasicAuth) {
+            const credentials = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64');
+            headers['Authorization'] = `Basic ${credentials}`;
+        }
+
         const response = await fetch(config.tokenUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers,
             body: params.toString(),
         });
 
@@ -322,7 +337,7 @@ export class OAuth2TokenService {
 
     private async loadTokenRecord(cacheKey: string): Promise<TokenRecord | null> {
         const stored = await this.secrets.get(OAuth2TokenService.TOKEN_PREFIX + cacheKey);
-        if (!stored) return null;
+        if (!stored) {return null;}
         try {
             return JSON.parse(stored) as TokenRecord;
         } catch {

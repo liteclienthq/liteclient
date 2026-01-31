@@ -1,5 +1,7 @@
 export type OAuth2GrantType = 'authorization_code' | 'client_credentials';
 
+export type OAuth2ClientAuthMethod = 'body' | 'basic_header';
+
 export interface OAuth2AuthConfig {
     grantType: OAuth2GrantType;
     authorizationUrl?: string;
@@ -9,6 +11,7 @@ export interface OAuth2AuthConfig {
     scopes?: string[];
     audience?: string;
     pkce?: boolean;
+    clientAuthMethod?: OAuth2ClientAuthMethod;
 }
 
 export interface AuthConfig {
