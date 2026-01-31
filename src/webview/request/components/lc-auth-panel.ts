@@ -13,8 +13,6 @@ type OAuth2GrantTypeDisplay =
 interface OAuth2TokenStatus {
   hasToken: boolean;
   expiresAt?: number;
-  error?: string;
-  errorType?: 'config' | 'network' | 'auth' | 'unknown';
 }
 
 @customElement('lc-auth-panel')
@@ -164,86 +162,6 @@ export class LcAuthPanel extends LcBaseElement {
     .oauth-actions button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-    }
-
-    .token-state {
-      margin-top: 12px;
-      border-radius: 3px;
-      overflow: hidden;
-    }
-
-    .token-state-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      font-size: 12px;
-    }
-
-    .token-state.success .token-state-header {
-      background: var(--vscode-inputValidation-infoBackground);
-      border: 1px solid var(--vscode-inputValidation-infoBorder);
-    }
-
-    .token-state.error .token-state-header {
-      background: var(--vscode-inputValidation-errorBackground);
-      border: 1px solid var(--vscode-inputValidation-errorBorder);
-    }
-
-    .token-state.pending .token-state-header {
-      background: var(--vscode-inputValidation-warningBackground);
-      border: 1px solid var(--vscode-inputValidation-warningBorder);
-    }
-
-    .token-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-
-    .token-state.success .token-indicator {
-      background: var(--vscode-testing-iconPassed, #4caf50);
-    }
-
-    .token-state.error .token-indicator {
-      background: var(--vscode-testing-iconFailed, #f44336);
-    }
-
-    .token-state.pending .token-indicator {
-      background: var(--vscode-debugIcon-pauseForeground, #ffc107);
-    }
-
-    .token-info {
-      flex: 1;
-    }
-
-    .token-label {
-      font-weight: 500;
-    }
-
-    .token-expiry {
-      font-size: 11px;
-      opacity: 0.8;
-      margin-top: 2px;
-    }
-
-    .error-details {
-      padding: 10px 12px;
-      font-size: 11px;
-      font-family: var(--vscode-editor-font-family, monospace);
-      border-top: 1px solid var(--vscode-inputValidation-errorBorder);
-      background: var(--vscode-inputValidation-errorBackground);
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .error-hint {
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px dashed var(--vscode-inputValidation-errorBorder);
-      font-family: var(--vscode-font-family);
-      font-style: italic;
-      opacity: 0.9;
     }
 
     .inline-row {
@@ -578,7 +496,7 @@ export class LcAuthPanel extends LcBaseElement {
           </div>
         </div>
 
-        <!-- Actions & Token State -->
+        <!-- Actions -->
         <div class="form-section">
           <div class="oauth-actions">
             <button
@@ -593,99 +511,9 @@ export class LcAuthPanel extends LcBaseElement {
               <button class="secondary" @click=${this._handleClearToken}>Clear Token</button>
             ` : nothing}
           </div>
-
-          ${this._renderTokenState()}
         </div>
       </div>
     `;
-  }
-
-  private _renderTokenState() {
-    if (this.isAuthenticating) {
-      return html`
-        <div class="token-state pending">
-          <div class="token-state-header">
-            <span class="token-indicator"></span>
-            <div class="token-info">
-              <div class="token-label">Authenticating...</div>
-              <div class="token-expiry">Waiting for authorization</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    if (this.tokenStatus.error) {
-      return html`
-        <div class="token-state error">
-          <div class="token-state-header">
-            <span class="token-indicator"></span>
-            <div class="token-info">
-              <div class="token-label">Authentication Failed</div>
-            </div>
-          </div>
-          <div class="error-details">
-            ${this.tokenStatus.error}
-            ${this._renderErrorHint(this.tokenStatus.error)}
-          </div>
-        </div>
-      `;
-    }
-
-    if (this.tokenStatus.hasToken) {
-      const expiresAt = this.tokenStatus.expiresAt;
-      const now = Date.now();
-      const expiresInMs = expiresAt ? expiresAt - now : null;
-      const expiresInMin = expiresInMs !== null ? Math.round(expiresInMs / 1000 / 60) : null;
-
-      let expiryText = 'Valid token';
-      if (expiresInMin !== null) {
-        if (expiresInMin > 60) {
-          const hours = Math.round(expiresInMin / 60);
-          expiryText = `Expires in ${hours} hour${hours !== 1 ? 's' : ''}`;
-        } else if (expiresInMin > 0) {
-          expiryText = `Expires in ${expiresInMin} minute${expiresInMin !== 1 ? 's' : ''}`;
-        } else {
-          expiryText = 'Token expired - will refresh on next request';
-        }
-      }
-
-      return html`
-        <div class="token-state success">
-          <div class="token-state-header">
-            <span class="token-indicator"></span>
-            <div class="token-info">
-              <div class="token-label">Token Acquired</div>
-              <div class="token-expiry">${expiryText}</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    return nothing;
-  }
-
-  private _renderErrorHint(error: string): unknown {
-    const errorLower = error.toLowerCase();
-    let hint = '';
-
-    if (errorLower.includes('audience') || errorLower.includes('bad audience')) {
-      hint = 'Check that the Audience field matches what your OAuth provider expects.';
-    } else if (errorLower.includes('invalid_client') || errorLower.includes('unauthorized_client')) {
-      hint = 'Verify Client ID and Client Secret are correct.';
-    } else if (errorLower.includes('invalid_scope') || errorLower.includes('scope')) {
-      hint = 'One or more requested scopes may be invalid or not allowed.';
-    } else if (errorLower.includes('invalid_grant')) {
-      hint = 'Authorization code may have expired. Try signing in again.';
-    } else if (errorLower.includes('timeout') || errorLower.includes('timed out')) {
-      hint = 'Authorization took too long. Try again.';
-    } else if (errorLower.includes('network') || errorLower.includes('fetch')) {
-      hint = 'Check your network connection and Token URL.';
-    }
-
-    if (!hint) {return nothing;}
-    return html`<div class="error-hint">💡 ${hint}</div>`;
   }
 
   private _isConfigValid(): boolean {
@@ -720,29 +548,6 @@ export class LcAuthPanel extends LcBaseElement {
 
   handleOAuth2TokenResult(result: { success: boolean; expiresAt?: number; error?: string }) {
     this.isAuthenticating = false;
-    if (result.success) {
-      this.tokenStatus = { hasToken: true, expiresAt: result.expiresAt };
-    } else {
-      this.tokenStatus = { 
-        hasToken: false, 
-        error: result.error || 'Failed to get token',
-        errorType: this._classifyError(result.error)
-      };
-    }
-  }
-
-  private _classifyError(error?: string): OAuth2TokenStatus['errorType'] {
-    if (!error) {return 'unknown';}
-    const errorLower = error.toLowerCase();
-    if (errorLower.includes('audience') || errorLower.includes('scope') || errorLower.includes('url')) {
-      return 'config';
-    }
-    if (errorLower.includes('network') || errorLower.includes('fetch') || errorLower.includes('timeout')) {
-      return 'network';
-    }
-    if (errorLower.includes('unauthorized') || errorLower.includes('invalid_client') || errorLower.includes('invalid_grant')) {
-      return 'auth';
-    }
-    return 'unknown';
+    this.tokenStatus = { hasToken: result.success, expiresAt: result.expiresAt };
   }
 }

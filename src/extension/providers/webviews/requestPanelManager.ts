@@ -217,9 +217,10 @@ export class RequestPanelManager {
                 resolvedOAuth2Token = await this.oauth2TokenService.getValidAccessToken(message.auth.oauth2);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to get OAuth2 token';
+                vscode.window.showErrorMessage(`OAuth2: ${errorMessage}. Please click "Get Token" in the Auth panel.`);
                 panel.webview.postMessage({
                     type: 'response',
-                    body: `OAuth2 Authentication Error\n\n${errorMessage}\n\nPlease click "Get Token" or "Sign In" in the Auth panel to authenticate.`,
+                    body: '',
                     status: 'Auth Error',
                     headers: {},
                     time: 0,
@@ -405,6 +406,7 @@ export class RequestPanelManager {
     private async _handleOAuth2GetToken(panel: vscode.WebviewPanel, message: any): Promise<void> {
         const config = message.config;
         if (!config) {
+            vscode.window.showErrorMessage('OAuth2: No configuration provided');
             panel.webview.postMessage({
                 type: 'oauth2-token-result',
                 success: false,
@@ -416,14 +418,16 @@ export class RequestPanelManager {
         try {
             if (config.grantType === 'authorization_code') {
                 const tokenRecord = await this.oauth2TokenService.startAuthorizationCodeFlow(config);
+                vscode.window.showInformationMessage('OAuth2: Token acquired successfully');
                 panel.webview.postMessage({
                     type: 'oauth2-token-result',
                     success: true,
                     expiresAt: tokenRecord.expiresAt
                 });
             } else {
-                const tokenRecord = await this.oauth2TokenService.requestClientCredentialsToken(config);
+                await this.oauth2TokenService.requestClientCredentialsToken(config);
                 const status = await this.oauth2TokenService.getTokenStatus(config);
+                vscode.window.showInformationMessage('OAuth2: Token acquired successfully');
                 panel.webview.postMessage({
                     type: 'oauth2-token-result',
                     success: true,
@@ -431,10 +435,12 @@ export class RequestPanelManager {
                 });
             }
         } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to get token';
+            vscode.window.showErrorMessage(`OAuth2: ${errorMessage}`);
             panel.webview.postMessage({
                 type: 'oauth2-token-result',
                 success: false,
-                error: error instanceof Error ? error.message : 'Failed to get token'
+                error: errorMessage
             });
         }
     }
@@ -443,6 +449,7 @@ export class RequestPanelManager {
         const config = message.config;
         if (config) {
             await this.oauth2TokenService.clearToken(config);
+            vscode.window.showInformationMessage('OAuth2: Token cleared');
         }
         panel.webview.postMessage({
             type: 'oauth2-token-result',
