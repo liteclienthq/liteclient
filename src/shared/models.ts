@@ -1,8 +1,25 @@
+export type OAuth2GrantType = 'authorization_code' | 'client_credentials';
+
+export type OAuth2ClientAuthMethod = 'body' | 'basic_header';
+
+export interface OAuth2AuthConfig {
+    grantType: OAuth2GrantType;
+    authorizationUrl?: string;
+    tokenUrl: string;
+    clientId: string;
+    clientSecret?: string;
+    scopes?: string[];
+    audience?: string;
+    pkce?: boolean;
+    clientAuthMethod?: OAuth2ClientAuthMethod;
+}
+
 export interface AuthConfig {
-    type: 'none' | 'basic' | 'bearer' | 'apikey';
+    type: 'none' | 'basic' | 'bearer' | 'apikey' | 'oauth2';
     basic?: { username: string; password: string };
     bearer?: { token: string };
     apikey?: { key: string; value: string; addTo: 'header' | 'query' };
+    oauth2?: OAuth2AuthConfig;
 }
 
 export interface KeyValueRow {

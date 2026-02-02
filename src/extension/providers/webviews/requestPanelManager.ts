@@ -6,6 +6,7 @@ import { CollectionService, RequestItem } from '../../services/collectionService
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
 import { CookieJarService } from '../../services/cookieJarService';
+import { OAuth2TokenService } from '../../services/oauth2TokenService';
 import type { RequestPanelToExtensionMessage, RequestExecutionSource } from '../../../shared/messages';
 import { generateId } from '../../utils/idUtils';
 
@@ -33,6 +34,7 @@ export class RequestPanelManager {
     private panelStates = new Map<string, PanelState>();
     private activeRequests = new Map<vscode.WebviewPanel, ActiveRequest>();
     private messageHandlers: Record<string, MessageHandler> = {};
+    private oauth2TokenService: OAuth2TokenService;
 
     constructor(
         private context: vscode.ExtensionContext,
@@ -44,6 +46,7 @@ export class RequestPanelManager {
         private refreshHistory: () => void,
         private refreshCollections: () => void
     ) {
+        this.oauth2TokenService = new OAuth2TokenService(context);
         this._initMessageHandlers();
     }
 
@@ -55,6 +58,8 @@ export class RequestPanelManager {
             'set-environment': (_panel, message) => this._handleSetEnvironment(message.environmentId),
             'save-request': (panel, message, ctx) => this._handleSaveRequest(panel, message, ctx),
             'dirty-state': (panel, message) => this._handleDirtyState(panel, message.isDirty),
+            'oauth2-get-token': (panel, message) => this._handleOAuth2GetToken(panel, message),
+            'oauth2-clear-token': (panel, message) => this._handleOAuth2ClearToken(panel, message),
         };
     }
 
@@ -205,9 +210,31 @@ export class RequestPanelManager {
         // Get cookies from cookie jar for this request
         const cookieString = await this.cookieJarService.getCookieString(message.url);
 
+        // Resolve OAuth2 token if needed
+        let resolvedOAuth2Token: string | undefined;
+        if (message.auth?.type === 'oauth2' && message.auth.oauth2) {
+            try {
+                resolvedOAuth2Token = await this.oauth2TokenService.getValidAccessToken(message.auth.oauth2);
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to get OAuth2 token';
+                vscode.window.showErrorMessage(`OAuth2: ${errorMessage}. Please click "Get Token" in the Auth panel.`);
+                panel.webview.postMessage({
+                    type: 'response',
+                    body: '',
+                    status: 'Auth Error',
+                    headers: {},
+                    time: 0,
+                    isError: true,
+                });
+                this.activeRequests.delete(panel);
+                return;
+            }
+        }
+
         const response = await HttpRequestService.sendRequest(message, environmentVariables, {
             signal: abortController.signal,
-            cookieString
+            cookieString,
+            resolvedOAuth2Token
         });
 
         this.activeRequests.delete(panel);
@@ -372,6 +399,66 @@ export class RequestPanelManager {
                 panel.title = this._getShortenedTitle(newTitle);
             }
         }
+    }
+
+    // --- OAuth2 Handlers ---
+
+    private async _handleOAuth2GetToken(panel: vscode.WebviewPanel, message: any): Promise<void> {
+        const config = message.config;
+        if (!config) {
+            vscode.window.showErrorMessage('OAuth2: No configuration provided');
+            panel.webview.postMessage({
+                type: 'oauth2-token-result',
+                success: false,
+                error: 'No OAuth2 configuration provided'
+            });
+            return;
+        }
+
+        try {
+            if (config.grantType === 'authorization_code') {
+                const tokenRecord = await this.oauth2TokenService.startAuthorizationCodeFlow(config);
+                vscode.window.showInformationMessage('OAuth2: Token acquired successfully');
+                panel.webview.postMessage({
+                    type: 'oauth2-token-result',
+                    success: true,
+                    expiresAt: tokenRecord.expiresAt
+                });
+            } else {
+                await this.oauth2TokenService.requestClientCredentialsToken(config);
+                const status = await this.oauth2TokenService.getTokenStatus(config);
+                vscode.window.showInformationMessage('OAuth2: Token acquired successfully');
+                panel.webview.postMessage({
+                    type: 'oauth2-token-result',
+                    success: true,
+                    expiresAt: status.expiresAt
+                });
+            }
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Failed to get token';
+            vscode.window.showErrorMessage(`OAuth2: ${errorMessage}`);
+            panel.webview.postMessage({
+                type: 'oauth2-token-result',
+                success: false,
+                error: errorMessage
+            });
+        }
+    }
+
+    private async _handleOAuth2ClearToken(panel: vscode.WebviewPanel, message: any): Promise<void> {
+        const config = message.config;
+        if (config) {
+            await this.oauth2TokenService.clearToken(config);
+            vscode.window.showInformationMessage('OAuth2: Token cleared');
+        }
+        panel.webview.postMessage({
+            type: 'oauth2-token-result',
+            success: false
+        });
+    }
+
+    getOAuth2TokenService(): OAuth2TokenService {
+        return this.oauth2TokenService;
     }
 
     // --- Utilities ---

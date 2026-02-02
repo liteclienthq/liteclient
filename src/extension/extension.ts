@@ -46,6 +46,18 @@ export async function activate(context: vscode.ExtensionContext) {
 	// Initialize cookie manager provider
 	const cookieManagerProvider = new CookieManagerProvider(context, cookieJarService);
 
+	// Register URI handler for OAuth2 callbacks
+	const oauth2TokenService = requestPanelManager.getOAuth2TokenService();
+	context.subscriptions.push(
+		vscode.window.registerUriHandler({
+			handleUri(uri: vscode.Uri) {
+				if (uri.path === '/oauth-callback') {
+					oauth2TokenService.handleAuthCallback(uri);
+				}
+			}
+		})
+	);
+
 	// Register all commands
 	registerAllCommands(context, {
 		historyService,

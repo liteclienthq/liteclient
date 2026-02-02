@@ -87,6 +87,28 @@ export class PostmanExporter implements Exporter {
                 { key: 'value', value: auth.apikey.value, type: 'string' },
                 { key: 'in', value: auth.apikey.addTo, type: 'string' }
             ];
+        } else if (type === 'oauth2' && auth.oauth2) {
+            const oauth2Attrs: Array<{ key: string; value: string; type: string }> = [
+                { key: 'grant_type', value: auth.oauth2.grantType || 'authorization_code', type: 'string' },
+                { key: 'accessTokenUrl', value: auth.oauth2.tokenUrl || '', type: 'string' },
+                { key: 'clientId', value: auth.oauth2.clientId || '', type: 'string' },
+                { key: 'addTokenTo', value: 'header', type: 'string' }
+            ];
+
+            if (auth.oauth2.authorizationUrl) {
+                oauth2Attrs.push({ key: 'authUrl', value: auth.oauth2.authorizationUrl, type: 'string' });
+            }
+            if (auth.oauth2.clientSecret) {
+                oauth2Attrs.push({ key: 'clientSecret', value: auth.oauth2.clientSecret, type: 'string' });
+            }
+            if (auth.oauth2.scopes && auth.oauth2.scopes.length > 0) {
+                oauth2Attrs.push({ key: 'scope', value: auth.oauth2.scopes.join(' '), type: 'string' });
+            }
+            if (auth.oauth2.audience) {
+                oauth2Attrs.push({ key: 'audience', value: auth.oauth2.audience, type: 'string' });
+            }
+
+            result.oauth2 = oauth2Attrs;
         }
 
         return result;

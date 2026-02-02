@@ -1,96 +1,208 @@
-import { html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { html, css, nothing } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
+import { postMessage } from '../../shared/messaging';
+import type { AuthConfig, OAuth2AuthConfig, OAuth2ClientAuthMethod } from '../../../shared/models';
+export type { AuthConfig };
 
-export interface AuthConfig {
-  type: 'none' | 'basic' | 'bearer' | 'apikey';
-  basic?: {
-    username: string;
-    password: string;
-  };
-  bearer?: {
-    token: string;
-  };
-  apikey?: {
-    key: string;
-    value: string;
-    addTo: 'header' | 'query';
-  };
+type OAuth2GrantTypeDisplay = 
+  | 'authorization_code' 
+  | 'authorization_code_pkce' 
+  | 'client_credentials';
+
+interface OAuth2TokenStatus {
+  hasToken: boolean;
+  expiresAt?: number;
 }
 
 @customElement('lc-auth-panel')
 export class LcAuthPanel extends LcBaseElement {
   static override styles = css`
+    :host {
+      display: block;
+      padding: 16px;
+    }
 
-      :host {
-        display: block;
-        padding: 16px;
-      }
+    .auth-selector {
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
-      .auth-selector {
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
+    .auth-selector label {
+      font-size: 12px;
+      white-space: nowrap;
+    }
 
-      .auth-selector select {
-        padding: 4px 8px;
-        background: var(--vscode-editor-background);
-        color: var(--vscode-foreground);
-        border: 1px solid var(--vscode-dropdown-border);
-        outline: none;
-        border-radius: 2px;
-      }
+    .auth-selector select {
+      padding: 4px 8px;
+      background: transparent;
+      color: var(--vscode-foreground);
+      border: 1px solid var(--vscode-input-border);
+      outline: none;
+      border-radius: 2px;
+    }
 
-      .auth-selector select:focus {
-        border-color: var(--vscode-focusBorder);
-      }
+    .auth-selector select:focus {
+      border-color: var(--vscode-focusBorder);
+    }
 
-      .auth-form {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        max-width: 400px;
-      }
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 500px;
+    }
 
-      .form-group {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
+    .form-heading {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--vscode-foreground);
+      margin-bottom: 4px;
+    }
 
-      .form-group label {
-        font-size: 11px;
-        text-transform: uppercase;
-        opacity: 0.8;
-      }
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
 
-      .form-group input, .form-group select {
-        padding: 6px 8px;
-        background: var(--vscode-editor-background);
-        color: var(--vscode-foreground);
-        border: 1px solid var(--vscode-input-border);
-        outline: none;
-        border-radius: 2px;
-      }
+    .section-header {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--vscode-widget-border);
+    }
 
-      .form-group input:focus, .form-group select:focus {
-        border-color: var(--vscode-focusBorder);
-      }
+    .form-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
+    .form-group label {
+      font-size: 12px;
+      min-width: 130px;
+      flex-shrink: 0;
+      color: var(--vscode-foreground);
+    }
 
-      .description {
-        font-size: 12px;
-        opacity: 0.7;
-        margin-bottom: 12px;
-        line-height: 1.4;
-      }
-    `;
+    .form-group input,
+    .form-group select {
+      flex: 1;
+      padding: 6px 8px;
+      background: transparent;
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      outline: none;
+      border-radius: 2px;
+    }
 
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--vscode-focusBorder);
+    }
+
+    .form-group input::placeholder {
+      color: var(--vscode-input-placeholderForeground);
+    }
+
+    .description {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .oauth-info {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      margin-left: 8px;
+    }
+
+    .oauth-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .oauth-actions button {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .oauth-actions button.primary {
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+    }
+
+    .oauth-actions button.primary:hover:not(:disabled) {
+      background: var(--vscode-button-hoverBackground);
+    }
+
+    .oauth-actions button.secondary {
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+    }
+
+    .oauth-actions button.secondary:hover:not(:disabled) {
+      background: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    .oauth-actions button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .inline-row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .inline-row .form-group {
+      flex: 1;
+    }
+
+    .optional-label {
+      font-size: 10px;
+      opacity: 0.6;
+      margin-left: 4px;
+      font-weight: normal;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--vscode-button-foreground);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+  `;
 
   @property({ type: Object })
   auth: AuthConfig = { type: 'none' };
+
+  @state()
+  private tokenStatus: OAuth2TokenStatus = { hasToken: false };
+
+  @state()
+  private isAuthenticating = false;
 
   handleTypeChange(e: Event) {
     const type = (e.target as HTMLSelectElement).value as AuthConfig['type'];
@@ -102,30 +214,75 @@ export class LcAuthPanel extends LcBaseElement {
       newAuth.bearer = { token: '' };
     } else if (type === 'apikey') {
       newAuth.apikey = { key: '', value: '', addTo: 'header' };
+    } else if (type === 'oauth2') {
+      newAuth.oauth2 = {
+        grantType: 'authorization_code',
+        pkce: false,
+        tokenUrl: '',
+        clientId: '',
+        clientSecret: '',
+        scopes: [],
+        clientAuthMethod: 'basic_header',
+      };
+      this.tokenStatus = { hasToken: false };
     }
 
     this.auth = newAuth;
-    this.dispatchEvent(new CustomEvent('auth-change', {
-      detail: { auth: this.auth },
-      bubbles: false,
-      composed: false
-    }));
+    this._dispatchAuthChange();
   }
-
 
   handleFieldChange(e: Event, section: keyof AuthConfig, field: string) {
     const value = (e.target as HTMLInputElement | HTMLSelectElement).value;
     const newAuth = { ...this.auth };
 
     if (section === 'basic') {
-      newAuth.basic = { ... (newAuth.basic || { username: '', password: '' }), [field]: value };
+      newAuth.basic = { ...(newAuth.basic || { username: '', password: '' }), [field]: value };
     } else if (section === 'bearer') {
-      newAuth.bearer = { ... (newAuth.bearer || { token: '' }), [field]: value };
+      newAuth.bearer = { ...(newAuth.bearer || { token: '' }), [field]: value };
     } else if (section === 'apikey') {
-      newAuth.apikey = { ... (newAuth.apikey || { key: '', value: '', addTo: 'header' }), [field]: value };
+      newAuth.apikey = { ...(newAuth.apikey || { key: '', value: '', addTo: 'header' }), [field]: value };
+    } else if (section === 'oauth2') {
+      this._handleOAuth2FieldChange(newAuth, field, value);
     }
 
     this.auth = newAuth;
+    this._dispatchAuthChange();
+  }
+
+  private _handleOAuth2FieldChange(newAuth: AuthConfig, field: string, value: string) {
+    const defaultOAuth2: OAuth2AuthConfig = {
+      grantType: 'authorization_code',
+      pkce: false,
+      tokenUrl: '',
+      clientId: '',
+      clientSecret: '',
+      scopes: [],
+      clientAuthMethod: 'basic_header',
+    };
+
+    if (field === 'scopes') {
+      const scopes = value.split(/[\s,]+/).filter(s => s.trim());
+      newAuth.oauth2 = { ...(newAuth.oauth2 || defaultOAuth2), scopes };
+    } else if (field === 'displayGrantType') {
+      const displayValue = value as OAuth2GrantTypeDisplay;
+      if (displayValue === 'authorization_code') {
+        newAuth.oauth2 = { ...(newAuth.oauth2 || defaultOAuth2), grantType: 'authorization_code', pkce: false };
+      } else if (displayValue === 'authorization_code_pkce') {
+        newAuth.oauth2 = { ...(newAuth.oauth2 || defaultOAuth2), grantType: 'authorization_code', pkce: true };
+      } else {
+        newAuth.oauth2 = { ...(newAuth.oauth2 || defaultOAuth2), grantType: 'client_credentials' };
+      }
+      this.tokenStatus = { hasToken: false };
+    } else {
+      newAuth.oauth2 = { ...(newAuth.oauth2 || defaultOAuth2), [field]: value };
+    }
+
+    if (field !== 'displayGrantType') {
+      this.tokenStatus = { hasToken: false };
+    }
+  }
+
+  private _dispatchAuthChange() {
     this.dispatchEvent(new CustomEvent('auth-change', {
       detail: { auth: this.auth },
       bubbles: false,
@@ -133,6 +290,14 @@ export class LcAuthPanel extends LcBaseElement {
     }));
   }
 
+  private _getDisplayGrantType(): OAuth2GrantTypeDisplay {
+    const oauth2 = this.auth.oauth2;
+    if (!oauth2) {return 'authorization_code';}
+    if (oauth2.grantType === 'authorization_code') {
+      return oauth2.pkce !== false ? 'authorization_code_pkce' : 'authorization_code';
+    }
+    return 'client_credentials';
+  }
 
   override render() {
     return html`
@@ -143,16 +308,20 @@ export class LcAuthPanel extends LcBaseElement {
           <option value="basic" ?selected=${this.auth.type === 'basic'}>Basic Auth</option>
           <option value="bearer" ?selected=${this.auth.type === 'bearer'}>Bearer Token</option>
           <option value="apikey" ?selected=${this.auth.type === 'apikey'}>API Key</option>
+          <option value="oauth2" ?selected=${this.auth.type === 'oauth2'}>OAuth 2.0</option>
         </select>
+        ${this.auth.type === 'oauth2' ? html`
+          <span class="oauth-info">Authorization header will be automatically generated when you send the request.</span>
+        ` : nothing}
       </div>
 
       <div class="auth-content">
-        ${this.renderAuthForm()}
+        ${this._renderAuthForm()}
       </div>
     `;
   }
 
-  private renderAuthForm() {
+  private _renderAuthForm() {
     switch (this.auth.type) {
       case 'none':
         return html`<p class="description">This request does not use any authentication.</p>`;
@@ -216,6 +385,169 @@ export class LcAuthPanel extends LcBaseElement {
             </div>
           </div>
         `;
+
+      case 'oauth2':
+        return this._renderOAuth2Form();
     }
+  }
+
+  private _renderOAuth2Form() {
+    const oauth2 = this.auth.oauth2;
+    const displayGrantType = this._getDisplayGrantType();
+    const isAuthCode = oauth2?.grantType === 'authorization_code';
+    const isClientCredentials = oauth2?.grantType === 'client_credentials';
+
+    return html`
+      <div class="auth-form">
+        <div class="form-heading">Generate New Token</div>
+        
+        <!-- Grant Type Section -->
+        <div class="form-section">
+          <div class="form-group">
+            <label>Grant Type</label>
+            <select @change=${(e: Event) => this.handleFieldChange(e, 'oauth2', 'displayGrantType')}>
+              <option value="authorization_code" ?selected=${displayGrantType === 'authorization_code'}>
+                Authorization Code
+              </option>
+              <option value="authorization_code_pkce" ?selected=${displayGrantType === 'authorization_code_pkce'}>
+                Authorization Code (with PKCE)
+              </option>
+              <option value="client_credentials" ?selected=${displayGrantType === 'client_credentials'}>
+                Client Credentials
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Endpoints Section -->
+        <div class="form-section">
+          <div class="section-header">Endpoints</div>
+          
+          ${isAuthCode ? html`
+            <div class="form-group">
+              <label>Auth URL</label>
+              <input type="text"
+                .value=${oauth2?.authorizationUrl || ''}
+                @input=${(e: Event) => this.handleFieldChange(e, 'oauth2', 'authorizationUrl')}
+                placeholder="Auth URL">
+            </div>
+          ` : nothing}
+
+          <div class="form-group">
+            <label>${isAuthCode ? 'Access Token URL' : 'Token URL'}</label>
+            <input type="text"
+              .value=${oauth2?.tokenUrl || ''}
+              @input=${(e: Event) => this.handleFieldChange(e, 'oauth2', 'tokenUrl')}
+              placeholder="Token URL">
+          </div>
+        </div>
+
+        <!-- Credentials Section -->
+        <div class="form-section">
+          <div class="section-header">Client Credentials</div>
+          
+          <div class="form-group">
+            <label>Client ID</label>
+            <input type="text"
+              .value=${oauth2?.clientId || ''}
+              @input=${(e: Event) => this.handleFieldChange(e, 'oauth2', 'clientId')}
+              placeholder="Client ID">
+          </div>
+
+          <div class="form-group">
+            <label>Client Secret</label>
+            <input type="password"
+              .value=${oauth2?.clientSecret || ''}
+              @input=${(e: Event) => this.handleFieldChange(e, 'oauth2', 'clientSecret')}
+              placeholder="Client Secret">
+          </div>
+
+          ${isClientCredentials ? html`
+            <div class="form-group">
+              <label>Client Authentication</label>
+              <select 
+                .value=${oauth2?.clientAuthMethod || 'basic_header'}
+                @change=${(e: Event) => this.handleFieldChange(e, 'oauth2', 'clientAuthMethod')}>
+                <option value="basic_header" ?selected=${(oauth2?.clientAuthMethod || 'basic_header') === 'basic_header'}>Send as Basic Auth Header</option>
+                <option value="body" ?selected=${oauth2?.clientAuthMethod === 'body'}>Send credentials in body</option>
+              </select>
+            </div>
+          ` : nothing}
+        </div>
+
+        <!-- Scope & Audience Section -->
+        <div class="form-section">
+          <div class="section-header">Authorization</div>
+          
+          <div class="form-group">
+            <label>Scope</label>
+            <input type="text"
+              .value=${oauth2?.scopes?.join(' ') || ''}
+              @input=${(e: Event) => this.handleFieldChange(e, 'oauth2', 'scopes')}
+              placeholder="Scope">
+          </div>
+
+          <div class="form-group">
+            <label>Audience</label>
+            <input type="text"
+              .value=${oauth2?.audience || ''}
+              @input=${(e: Event) => this.handleFieldChange(e, 'oauth2', 'audience')}
+              placeholder="Audience">
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-section">
+          <div class="oauth-actions">
+            <button
+              class="primary"
+              @click=${this._handleGetToken}
+              ?disabled=${this.isAuthenticating || !this._isConfigValid()}>
+              ${this.isAuthenticating 
+                ? html`<span class="spinner"></span>` 
+                : isAuthCode ? 'Sign In' : 'Generate Token'}
+            </button>
+            ${this.tokenStatus.hasToken ? html`
+              <button class="secondary" @click=${this._handleClearToken}>Clear Token</button>
+            ` : nothing}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _isConfigValid(): boolean {
+    const oauth2 = this.auth.oauth2;
+    if (!oauth2) {return false;}
+    if (!oauth2.tokenUrl || !oauth2.clientId) {return false;}
+    if (oauth2.grantType === 'authorization_code' && !oauth2.authorizationUrl) {return false;}
+    return true;
+  }
+
+  private _handleGetToken() {
+    if (!this.auth.oauth2) {return;}
+
+    this.isAuthenticating = true;
+    this.tokenStatus = { hasToken: false };
+
+    postMessage({
+      type: 'oauth2-get-token',
+      config: this.auth.oauth2
+    });
+  }
+
+  private _handleClearToken() {
+    if (!this.auth.oauth2) {return;}
+
+    this.tokenStatus = { hasToken: false };
+    postMessage({
+      type: 'oauth2-clear-token',
+      config: this.auth.oauth2
+    });
+  }
+
+  handleOAuth2TokenResult(result: { success: boolean; expiresAt?: number; error?: string }) {
+    this.isAuthenticating = false;
+    this.tokenStatus = { hasToken: result.success, expiresAt: result.expiresAt };
   }
 }

@@ -24,6 +24,7 @@ export interface RequestOptions {
   signal?: AbortSignal;
   timeout?: number;
   cookieString?: string;
+  resolvedOAuth2Token?: string;
 }
 
 
@@ -98,6 +99,8 @@ Please check:
       const headers: Record<string, string> = { ...(substitutedPayload.headers || {}) };
 
       // Apply authentication
+      // Note: OAuth2 tokens should be resolved before calling sendRequest
+      // The caller should get the access token and pass it via resolvedOAuth2Token option
       const auth = substitutedPayload.auth;
       if (auth && auth.type !== 'none') {
         if (auth.type === 'bearer' && auth.bearer?.token) {
@@ -109,9 +112,10 @@ Please check:
           if (auth.apikey.addTo === 'header') {
             headers[auth.apikey.key] = auth.apikey.value;
           } else if (auth.apikey.addTo === 'query') {
-            // Add API key to query params
             parsedUrl.searchParams.set(auth.apikey.key, auth.apikey.value);
           }
+        } else if (auth.type === 'oauth2' && options.resolvedOAuth2Token) {
+          headers['Authorization'] = `Bearer ${options.resolvedOAuth2Token}`;
         }
       }
 

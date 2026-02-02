@@ -239,6 +239,8 @@ export class LcRequestPanel extends LcBaseElement {
         this.handleEnvironmentsList(message);
       } else if (message.type === 'set-environment') {
         this.handleSetEnvironment(message);
+      } else if (message.type === 'oauth2-token-result') {
+        this.handleOAuth2TokenResult(message);
       }
     });
   }
@@ -371,6 +373,16 @@ export class LcRequestPanel extends LcBaseElement {
     // Reset dirty state after save (extension will show success/failure toast)
     this.storeOriginalRequest();
     this.setDirtyState(false);
+  }
+
+  private handleOAuth2TokenResult(message: any) {
+    const requestMeta = this.renderRoot?.querySelector('lc-request-meta') as any;
+    if (requestMeta) {
+      const authPanel = requestMeta.renderRoot?.querySelector('lc-auth-panel') as any;
+      if (authPanel?.handleOAuth2TokenResult) {
+        authPanel.handleOAuth2TokenResult(message);
+      }
+    }
   }
 
   private sendExtensionMessage(type: 'send-request' | 'save-request') {

@@ -5,7 +5,7 @@
  * Do NOT add any runtime code here — only type definitions.
  */
 
-import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies } from './models';
+import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies, OAuth2AuthConfig } from './models';
 
 // Re-export for convenience
 export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies };
@@ -241,6 +241,16 @@ export interface CancelRequestMessage {
     type: 'cancel-request';
 }
 
+export interface OAuth2GetTokenMessage {
+    type: 'oauth2-get-token';
+    config: OAuth2AuthConfig;
+}
+
+export interface OAuth2ClearTokenMessage {
+    type: 'oauth2-clear-token';
+    config: OAuth2AuthConfig;
+}
+
 /** Messages from request panel webview to extension */
 export type RequestPanelToExtensionMessage =
     | SendRequestMessage
@@ -249,7 +259,9 @@ export type RequestPanelToExtensionMessage =
     | SetEnvironmentFromPanelMessage
     | DirtyStateMessage
     | ShowNotificationMessage
-    | CancelRequestMessage;
+    | CancelRequestMessage
+    | OAuth2GetTokenMessage
+    | OAuth2ClearTokenMessage;
 
 // ============================================================================
 // Messages: Webview → Extension (Cookie Manager)
@@ -290,6 +302,13 @@ export interface CookiesListMessage {
     domains: DomainCookies[];
 }
 
+export interface OAuth2TokenResultMessage {
+    type: 'oauth2-token-result';
+    success: boolean;
+    expiresAt?: number;
+    error?: string;
+}
+
 // ============================================================================
 // Combined Types
 // ============================================================================
@@ -302,7 +321,8 @@ export type ExtensionToWebviewMessage =
     | SetEnvironmentBroadcastMessage
     | HistoryListMessage
     | CollectionsListMessage
-    | CookiesListMessage;
+    | CookiesListMessage
+    | OAuth2TokenResultMessage;
 
 /** All messages from any webview to extension */
 export type WebviewToExtensionMessage =
