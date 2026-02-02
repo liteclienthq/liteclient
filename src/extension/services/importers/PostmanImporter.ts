@@ -182,6 +182,24 @@ export class PostmanImporter implements Importer {
                     addTo: getAttr('in') === 'query' ? 'query' : 'header'
                 }
             };
+        } else if (type === 'oauth2') {
+            const grantType = getAttr('grant_type') || getAttr('grantType') || 'authorization_code';
+            const scopeValue = getAttr('scope') || '';
+            const scopes = scopeValue ? scopeValue.split(/[\s,]+/).filter((s: string) => s) : undefined;
+
+            return {
+                type: 'oauth2',
+                oauth2: {
+                    grantType: grantType === 'client_credentials' ? 'client_credentials' : 'authorization_code',
+                    authorizationUrl: getAttr('authUrl') || getAttr('authorizationUrl') || '',
+                    tokenUrl: getAttr('accessTokenUrl') || getAttr('tokenUrl') || '',
+                    clientId: getAttr('clientId') || '',
+                    clientSecret: getAttr('clientSecret') || '',
+                    scopes: scopes,
+                    audience: getAttr('audience') || '',
+                    pkce: grantType === 'authorization_code_with_pkce' || getAttr('useBrowser') === true
+                }
+            };
         }
 
         return undefined;
