@@ -2,6 +2,7 @@ import { html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
 import './lc-tabs.js';
+import type { Tab } from './lc-tabs.js';
 import './lc-key-value-editor.js';
 import './lc-auth-panel.js';
 import './lc-body-panel.js';
@@ -111,12 +112,18 @@ export class LcRequestMeta extends LcBaseElement {
   }
 
 
-  private tabs = [
-    { id: 'params', label: 'Params' },
-    { id: 'auth', label: 'Auth' },
-    { id: 'headers', label: 'Headers' },
-    { id: 'body', label: 'Body' }
-  ];
+  private get tabs(): Tab[] {
+    const activeParamsCount = this.params.filter(p => p.active && p.key).length;
+    const activeHeadersCount = this.headers.filter(h => h.active && h.key).length;
+    const hasBody = this.body.mode !== 'none';
+
+    return [
+      { id: 'params', label: 'Params', indicator: activeParamsCount || undefined },
+      { id: 'auth', label: 'Auth' },
+      { id: 'headers', label: 'Headers', indicator: activeHeadersCount || undefined },
+      { id: 'body', label: 'Body', indicator: hasBody ? 'dot' : undefined }
+    ];
+  }
 
   private handleTabChange(e: CustomEvent) {
     this.activeTab = e.detail.tabId;

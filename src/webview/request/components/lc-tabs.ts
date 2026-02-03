@@ -10,11 +10,12 @@ import { LcBaseElement } from '../../shared/base-element.js';
 export interface Tab {
   id: string;
   label: string;
+  indicator?: number | 'dot';
 }
 
 @customElement('lc-tabs')
 export class LcTabs extends LcBaseElement {
-  @property({ type: Array }) tabs: Array<{ id: string, label: string }> = [];
+  @property({ type: Array }) tabs: Tab[] = [];
   @property({ type: String }) activeTab = '';
 
   static styles = css`
@@ -48,6 +49,29 @@ export class LcTabs extends LcBaseElement {
       color: var(--vscode-foreground);
       border-bottom-color: var(--vscode-focusBorder);
     }
+
+    .indicator {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 8px;
+      background: var(--vscode-badge-background);
+      color: var(--vscode-badge-foreground);
+    }
+
+    .indicator.dot {
+      min-width: 6px;
+      width: 6px;
+      height: 6px;
+      padding: 0;
+      border-radius: 50%;
+    }
   `;
 
   private handleTabClick(tabId: string) {
@@ -59,6 +83,17 @@ export class LcTabs extends LcBaseElement {
     }));
   }
 
+  private renderIndicator(indicator?: number | 'dot') {
+    if (indicator === undefined) return null;
+    if (indicator === 'dot') {
+      return html`<span class="indicator dot"></span>`;
+    }
+    if (indicator > 0) {
+      return html`<span class="indicator">${indicator}</span>`;
+    }
+    return null;
+  }
+
   render() {
     return html`
       <div class="tabs">
@@ -67,7 +102,7 @@ export class LcTabs extends LcBaseElement {
             class="tab ${tab.id === this.activeTab ? 'active' : ''}"
             @click=${() => this.handleTabClick(tab.id)}
           >
-            ${tab.label}
+            ${tab.label}${this.renderIndicator(tab.indicator)}
           </button>
         `)}
       </div>

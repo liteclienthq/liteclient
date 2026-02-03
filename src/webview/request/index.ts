@@ -30,10 +30,7 @@ import type { ParsedCookie } from '../shared/messaging.js';
 
 
 
-interface Tab {
-  id: string;
-  label: string;
-}
+import type { Tab } from './components/lc-tabs.js';
 
 /**
  * Main request panel component
@@ -202,11 +199,12 @@ export class LcRequestPanel extends LcBaseElement {
 
 
   private get tabs(): Tab[] {
+    const headerCount = Object.keys(this.responseHeaders).length;
     const cookieCount = this.responseCookies.length;
     return [
       { id: 'response', label: 'Response' },
-      { id: 'headers', label: 'Headers' },
-      { id: 'cookies', label: cookieCount > 0 ? `Cookies (${cookieCount})` : 'Cookies' }
+      { id: 'headers', label: 'Headers', indicator: headerCount > 0 ? headerCount : undefined },
+      { id: 'cookies', label: 'Cookies', indicator: cookieCount > 0 ? cookieCount : undefined }
     ];
   }
 
