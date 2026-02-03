@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-02-04
+
 ### Added
 - **Variable Autocomplete**: Type `{{` in URL, params, headers, or body fields to trigger autocomplete dropdown showing available environment and global variables. Navigate with arrow keys, select with Enter/Tab.
 - **Tab Indicators**: Visual indicators on tabs show item counts (Params, Headers, Response Headers, Cookies) or a dot (Body) when content is present.
