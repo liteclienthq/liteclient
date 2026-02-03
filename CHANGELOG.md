@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Variable Autocomplete**: Type `{{` in URL, params, headers, or body fields to trigger autocomplete dropdown showing available environment and global variables. Navigate with arrow keys, select with Enter/Tab.
 - **Tab Indicators**: Visual indicators on tabs show item counts (Params, Headers, Response Headers, Cookies) or a dot (Body) when content is present.
 
+### Changed
+- **Draggable Separator**: Updated request/response separator to match VS Code's native sash styling—subtle border by default, blue highlight on hover.
+
 ### Fixed
 - **Dropdown Backgrounds on Windows**: Fixed dropdown elements in auth panel showing white backgrounds in dark mode on Windows. Dropdowns now use consistent neutral background matching the extension's styling.
 

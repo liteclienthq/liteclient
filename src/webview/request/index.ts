@@ -106,11 +106,11 @@ export class LcRequestPanel extends LcBaseElement {
     }
 
     .resizer:hover, .resizer.resizing {
-      background: var(--vscode-focusBorder);
+      background: var(--vscode-sash-hoverBorder, var(--vscode-focusBorder));
     }
 
     .request-panel.horizontal .resizer {
-      width: 1px;
+      width: 4px;
       cursor: col-resize;
     }
 
@@ -119,12 +119,12 @@ export class LcRequestPanel extends LcBaseElement {
       position: absolute;
       top: 0;
       bottom: 0;
-      left: -4px;
-      right: -4px;
+      left: -2px;
+      right: -2px;
     }
 
     .request-panel.vertical .resizer {
-      height: 1px;
+      height: 4px;
       cursor: row-resize;
     }
 
@@ -133,8 +133,8 @@ export class LcRequestPanel extends LcBaseElement {
       position: absolute;
       left: 0;
       right: 0;
-      top: -4px;
-      bottom: -4px;
+      top: -2px;
+      bottom: -2px;
     }
 
     .response-header {
