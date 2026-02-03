@@ -194,6 +194,7 @@ export class LcRequestPanel extends LcBaseElement {
   @state() collectionId: string | undefined;
   @state() requestName = 'New Request';
   @state() selectedEnvironmentId: string | null = null;
+  @state() environments: any[] = [];
 
   @state() private isDirty = false;
   private originalRequest: OriginalRequestState | null = null;
@@ -257,6 +258,8 @@ export class LcRequestPanel extends LcBaseElement {
 
   private handleEnvironmentsList(message: any) {
     const { environments, selectedEnvironmentId } = message;
+    // Store environments in local state
+    this.environments = environments;
     // Update the URL bar with the environment data
     const urlBar = this.renderRoot?.querySelector('lc-url-bar') as any;
     if (urlBar) {
@@ -593,6 +596,7 @@ export class LcRequestPanel extends LcBaseElement {
           @layout-toggle=${() => this.layout = this.layout === 'vertical' ? 'horizontal' : 'vertical'}
           @set-environment=${(e: CustomEvent) => {
         this.selectedEnvironmentId = e.detail.environmentId;
+        postMessage({ type: 'set-environment', environmentId: e.detail.environmentId });
       }}
         ></lc-url-bar>
 
@@ -603,6 +607,8 @@ export class LcRequestPanel extends LcBaseElement {
               .headers=${this.requestHeaders}
               .body=${this.requestBody}
               .auth=${this.requestAuth}
+              .environments=${this.environments}
+              .selectedEnvironmentId=${this.selectedEnvironmentId}
               @params-change=${this.handleParamsChange}
               @headers-change=${this.handleHeadersChange}
               @body-change=${(e: CustomEvent) => { this.requestBody = e.detail.body; this.updateDirtyState(); }}

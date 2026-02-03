@@ -1,3 +1,9 @@
+export interface Environment {
+  id: string;
+  name: string;
+  variables: Record<string, string>;
+}
+
 export type OAuth2GrantType = 'authorization_code' | 'client_credentials';
 
 export type OAuth2ClientAuthMethod = 'body' | 'basic_header';

@@ -10,10 +10,12 @@ import { RequestBody, KeyValueRow, FormDataRow } from '../../shared/messaging.js
 import '../../shared/lc-code-editor.js';
 import './lc-key-value-editor.js';
 import './lc-form-data-editor.js';
+import type { VariableItem } from './lc-variable-autocomplete.js';
 
 @customElement('lc-body-panel')
 export class LcBodyPanel extends LcBaseElement {
   @property({ type: Object }) body: RequestBody = { mode: 'none' };
+  @property({ type: Array }) variables: VariableItem[] = [];
 
   static styles = css`
     :host {
@@ -342,12 +344,14 @@ export class LcBodyPanel extends LcBaseElement {
             ? html`
               <lc-form-data-editor
                 .items=${this.body.rows}
+                .variables=${this.variables}
                 @change=${this.handleRowsChange}
               ></lc-form-data-editor>
             `
             : html`
               <lc-key-value-editor
                 .items=${this.body.rows}
+                .variables=${this.variables}
                 @change=${this.handleRowsChange}
               ></lc-key-value-editor>
             `

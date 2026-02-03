@@ -1,7 +1,10 @@
 import { html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state, query } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
 import { postMessage } from '../../shared/messaging.js';
+import type { Environment } from '../../../shared/models.js';
+import './lc-variable-autocomplete.js';
+import type { LcVariableAutocomplete, VariableItem } from './lc-variable-autocomplete.js';
 
 @customElement('lc-url-bar')
 export class LcUrlBar extends LcBaseElement {
@@ -203,13 +206,35 @@ export class LcUrlBar extends LcBaseElement {
       height: 10px;
       fill: var(--vscode-foreground);
     }
+
+    .url-input-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      min-width: 0;
+    }
+
+    lc-variable-autocomplete {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 4px;
+    }
   `;
 
   @property({ type: String }) method = 'GET';
   @property({ type: String }) url = '';
   @property({ type: Boolean }) loading = false;
-  @property({ type: Array }) environments: Array<{ id: string; name: string }> = [];
+  @property({ type: Array }) environments: Environment[] = [];
   @property({ type: String }) selectedEnvironmentId: string | null = null;
+
+  @state() private showAutocomplete = false;
+  @state() private autocompleteFilter = '';
+  @state() private triggerStartPosition = -1;
+
+  @query('lc-variable-autocomplete') private autocompleteEl?: LcVariableAutocomplete;
+  @query('.url-input-wrapper input') private urlInput?: HTMLInputElement;
 
   connectedCallback() {
     super.connectedCallback();
@@ -240,6 +265,98 @@ export class LcUrlBar extends LcBaseElement {
     }));
   }
 
+  private get variableItems(): VariableItem[] {
+    const items: VariableItem[] = [];
+    
+    const globals = this.environments.find(env => env.id === 'globals');
+    if (globals?.variables) {
+      for (const [name, value] of Object.entries(globals.variables)) {
+        items.push({ name, value, type: 'global' });
+      }
+    }
+
+    if (this.selectedEnvironmentId) {
+      const selectedEnv = this.environments.find(env => env.id === this.selectedEnvironmentId);
+      if (selectedEnv?.variables) {
+        for (const [name, value] of Object.entries(selectedEnv.variables)) {
+          items.push({ name, value, type: 'environment' });
+        }
+      }
+    }
+
+    items.sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === 'environment' ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return items;
+  }
+
+  private handleUrlInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const value = input.value;
+    const cursorPos = input.selectionStart || 0;
+
+    this.dispatchEvent(new CustomEvent('url-change', { detail: { url: value } }));
+
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const triggerMatch = textBeforeCursor.match(/\{\{([^{}]*)$/);
+
+    if (triggerMatch) {
+      this.showAutocomplete = true;
+      this.triggerStartPosition = cursorPos - triggerMatch[1].length - 2;
+      this.autocompleteFilter = triggerMatch[1];
+    } else {
+      this.showAutocomplete = false;
+      this.triggerStartPosition = -1;
+      this.autocompleteFilter = '';
+    }
+  }
+
+  private handleUrlKeydown(e: KeyboardEvent) {
+    if (this.showAutocomplete && this.autocompleteEl) {
+      const handled = this.autocompleteEl.handleKeyDown(e);
+      if (handled) {return;}
+    }
+
+    if (e.key === 'Enter') {
+      this.dispatchEvent(new CustomEvent('send-request'));
+    }
+  }
+
+  private handleVariableSelect(e: CustomEvent<{ variable: VariableItem }>) {
+    const { variable } = e.detail;
+    const input = this.urlInput;
+    if (!input) {return;}
+
+    const beforeTrigger = this.url.substring(0, this.triggerStartPosition);
+    const cursorPos = input.selectionStart || 0;
+    const afterCursor = this.url.substring(cursorPos);
+
+    const newUrl = `${beforeTrigger}{{${variable.name}}}${afterCursor}`;
+    this.dispatchEvent(new CustomEvent('url-change', { detail: { url: newUrl } }));
+
+    this.showAutocomplete = false;
+    this.triggerStartPosition = -1;
+    this.autocompleteFilter = '';
+
+    requestAnimationFrame(() => {
+      if (input) {
+        const newCursorPos = beforeTrigger.length + variable.name.length + 4;
+        input.focus();
+        input.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    });
+  }
+
+  private handleAutocompleteClose() {
+    this.showAutocomplete = false;
+    this.triggerStartPosition = -1;
+    this.autocompleteFilter = '';
+  }
+
   override render() {
     return html`
       <div class="url-bar-container">
@@ -256,14 +373,22 @@ export class LcUrlBar extends LcBaseElement {
               </svg>
             </div>
           </div>
-          <div class="url-input">
+          <div class="url-input-wrapper">
             <input
               type="text"
               .value=${this.url}
-              @input=${(e: Event) => this.dispatchEvent(new CustomEvent('url-change', { detail: { url: (e.target as HTMLInputElement).value } }))}
-              @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter') { this.dispatchEvent(new CustomEvent('send-request')); } }}
+              @input=${this.handleUrlInput}
+              @keydown=${this.handleUrlKeydown}
+              @blur=${() => setTimeout(() => this.handleAutocompleteClose(), 150)}
               placeholder="Enter URL or paste text"
             />
+            <lc-variable-autocomplete
+              .variables=${this.variableItems}
+              .filter=${this.autocompleteFilter}
+              .visible=${this.showAutocomplete}
+              @select=${this.handleVariableSelect}
+              @close=${this.handleAutocompleteClose}
+            ></lc-variable-autocomplete>
           </div>
           <button class="send-btn" @click=${() => this.dispatchEvent(new CustomEvent('send-request'))}>
             Send

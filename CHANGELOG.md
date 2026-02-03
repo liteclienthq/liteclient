@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Variable Autocomplete**: Type `{{` in URL, params, headers, or body fields to trigger autocomplete dropdown showing available environment and global variables. Navigate with arrow keys, select with Enter/Tab.
+
 ## [0.11.0] - 2026-02-02
 
 ### Added

@@ -7,6 +7,8 @@ import './lc-auth-panel.js';
 import './lc-body-panel.js';
 import type { KeyValueItem } from './lc-key-value-editor.js';
 import type { AuthConfig, RequestBody } from '../../shared/messaging.js';
+import type { VariableItem } from './lc-variable-autocomplete.js';
+import type { Environment } from '../../../shared/models.js';
 
 
 @customElement('lc-request-meta')
@@ -74,8 +76,39 @@ export class LcRequestMeta extends LcBaseElement {
   @property({ type: Array }) headers: KeyValueItem[] = [];
   @property({ type: Object }) body: RequestBody = { mode: 'none' };
   @property({ type: Object }) auth: AuthConfig = { type: 'none' };
+  @property({ type: Array }) environments: Environment[] = [];
+  @property({ type: String }) selectedEnvironmentId: string | null = null;
 
   @state() private activeTab = 'params';
+
+  private get variableItems(): VariableItem[] {
+    const items: VariableItem[] = [];
+    
+    const globals = this.environments.find(env => env.id === 'globals');
+    if (globals?.variables) {
+      for (const [name, value] of Object.entries(globals.variables)) {
+        items.push({ name, value, type: 'global' });
+      }
+    }
+
+    if (this.selectedEnvironmentId) {
+      const selectedEnv = this.environments.find(env => env.id === this.selectedEnvironmentId);
+      if (selectedEnv?.variables) {
+        for (const [name, value] of Object.entries(selectedEnv.variables)) {
+          items.push({ name, value, type: 'environment' });
+        }
+      }
+    }
+
+    items.sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === 'environment' ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+
+    return items;
+  }
 
 
   private tabs = [
@@ -117,7 +150,8 @@ export class LcRequestMeta extends LcBaseElement {
       <div class="content-container">
         <div class="tab-content ${this.activeTab === 'params' ? 'active' : ''}">
           <lc-key-value-editor 
-            .items=${this.params} 
+            .items=${this.params}
+            .variables=${this.variableItems}
             @change=${this.handleParamsChange}
           ></lc-key-value-editor>
         </div>
@@ -136,7 +170,8 @@ export class LcRequestMeta extends LcBaseElement {
 
         <div class="tab-content ${this.activeTab === 'headers' ? 'active' : ''}">
           <lc-key-value-editor 
-            .items=${this.headers} 
+            .items=${this.headers}
+            .variables=${this.variableItems}
             @change=${this.handleHeadersChange}
           ></lc-key-value-editor>
         </div>
@@ -144,6 +179,7 @@ export class LcRequestMeta extends LcBaseElement {
         <div class="tab-content ${this.activeTab === 'body' ? 'active' : ''}">
            <lc-body-panel
              .body=${this.body}
+             .variables=${this.variableItems}
              @body-change=${this.handleBodyChange}
            ></lc-body-panel>
         </div>

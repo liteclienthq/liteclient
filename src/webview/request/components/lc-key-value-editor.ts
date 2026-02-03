@@ -1,6 +1,8 @@
 import { html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state, query } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
+import './lc-variable-autocomplete.js';
+import type { LcVariableAutocomplete, VariableItem } from './lc-variable-autocomplete.js';
 
 export interface KeyValueItem {
   id: string;
@@ -120,9 +122,37 @@ export class LcKeyValueEditor extends LcBaseElement {
     .row:focus-within .delete-btn {
         opacity: 0.5;
     }
+
+    .input-wrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      min-width: 0;
+    }
+
+    .input-wrapper input[type="text"] {
+      width: 100%;
+    }
+
+    lc-variable-autocomplete {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 4px;
+    }
   `;
 
   @property({ type: Array }) items: KeyValueItem[] = [];
+  @property({ type: Array }) variables: VariableItem[] = [];
+
+  @state() private activeRowId: string | null = null;
+  @state() private activeField: 'key' | 'value' | null = null;
+  @state() private showAutocomplete = false;
+  @state() private autocompleteFilter = '';
+  @state() private triggerStartPosition = -1;
+
+  @query('lc-variable-autocomplete') private autocompleteEl?: LcVariableAutocomplete;
 
   private handleToggle(id: string) {
     this.items = this.items.map(item => {
@@ -136,9 +166,12 @@ export class LcKeyValueEditor extends LcBaseElement {
 
   private handleInput(e: Event, id: string, field: 'key' | 'value') {
     const target = e.target as HTMLInputElement;
+    const value = target.value;
+    const cursorPos = target.selectionStart || 0;
+
     const newItems = this.items.map(item => {
       if (item.id === id) {
-        return { ...item, [field]: target.value };
+        return { ...item, [field]: value };
       }
       return item;
     });
@@ -151,6 +184,77 @@ export class LcKeyValueEditor extends LcBaseElement {
 
     this.items = newItems;
     this.dispatchChange();
+
+    // Check for {{ trigger
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const triggerMatch = textBeforeCursor.match(/\{\{([^{}]*)$/);
+
+    if (triggerMatch) {
+      this.activeRowId = id;
+      this.activeField = field;
+      this.showAutocomplete = true;
+      this.triggerStartPosition = cursorPos - triggerMatch[1].length - 2;
+      this.autocompleteFilter = triggerMatch[1];
+    } else {
+      this.showAutocomplete = false;
+      this.triggerStartPosition = -1;
+      this.autocompleteFilter = '';
+    }
+  }
+
+  private handleKeydown(e: KeyboardEvent, id: string, field: 'key' | 'value') {
+    if (this.showAutocomplete && this.autocompleteEl && this.activeRowId === id && this.activeField === field) {
+      const handled = this.autocompleteEl.handleKeyDown(e);
+      if (handled) { return; }
+    }
+  }
+
+  private handleVariableSelect(e: CustomEvent<{ variable: VariableItem }>) {
+    const { variable } = e.detail;
+    if (!this.activeRowId || !this.activeField) { return; }
+
+    const item = this.items.find(i => i.id === this.activeRowId);
+    if (!item) { return; }
+
+    const currentValue = item[this.activeField];
+    const beforeTrigger = currentValue.substring(0, this.triggerStartPosition);
+    const input = this.shadowRoot?.querySelector(
+      `input[data-row-id="${this.activeRowId}"][data-field="${this.activeField}"]`
+    ) as HTMLInputElement | null;
+    const cursorPos = input?.selectionStart || currentValue.length;
+    const afterCursor = currentValue.substring(cursorPos);
+
+    const newValue = `${beforeTrigger}{{${variable.name}}}${afterCursor}`;
+    
+    this.items = this.items.map(i => {
+      if (i.id === this.activeRowId) {
+        return { ...i, [this.activeField!]: newValue };
+      }
+      return i;
+    });
+    this.dispatchChange();
+
+    this.showAutocomplete = false;
+    this.triggerStartPosition = -1;
+    this.autocompleteFilter = '';
+
+    requestAnimationFrame(() => {
+      if (input) {
+        const newCursorPos = beforeTrigger.length + variable.name.length + 4;
+        input.focus();
+        input.setSelectionRange(newCursorPos, newCursorPos);
+      }
+    });
+  }
+
+  private handleAutocompleteClose() {
+    this.showAutocomplete = false;
+    this.triggerStartPosition = -1;
+    this.autocompleteFilter = '';
+  }
+
+  private handleBlur() {
+    setTimeout(() => this.handleAutocompleteClose(), 150);
   }
 
   private handleDelete(id: string) {
@@ -207,18 +311,48 @@ export class LcKeyValueEditor extends LcBaseElement {
               @change=${() => this.handleToggle(item.id)}
             >
           </div>
-          <input 
-            type="text" 
-            placeholder="Key" 
-            .value=${item.key} 
-            @input=${(e: Event) => this.handleInput(e, item.id, 'key')}
-          >
-          <input 
-            type="text" 
-            placeholder="Value" 
-            .value=${item.value} 
-            @input=${(e: Event) => this.handleInput(e, item.id, 'value')}
-          >
+          <div class="input-wrapper">
+            <input 
+              type="text" 
+              placeholder="Key" 
+              .value=${item.key}
+              data-row-id=${item.id}
+              data-field="key"
+              @input=${(e: Event) => this.handleInput(e, item.id, 'key')}
+              @keydown=${(e: KeyboardEvent) => this.handleKeydown(e, item.id, 'key')}
+              @blur=${this.handleBlur}
+            >
+            ${this.activeRowId === item.id && this.activeField === 'key' ? html`
+              <lc-variable-autocomplete
+                .variables=${this.variables}
+                .filter=${this.autocompleteFilter}
+                .visible=${this.showAutocomplete}
+                @select=${this.handleVariableSelect}
+                @close=${this.handleAutocompleteClose}
+              ></lc-variable-autocomplete>
+            ` : ''}
+          </div>
+          <div class="input-wrapper">
+            <input 
+              type="text" 
+              placeholder="Value" 
+              .value=${item.value}
+              data-row-id=${item.id}
+              data-field="value"
+              @input=${(e: Event) => this.handleInput(e, item.id, 'value')}
+              @keydown=${(e: KeyboardEvent) => this.handleKeydown(e, item.id, 'value')}
+              @blur=${this.handleBlur}
+            >
+            ${this.activeRowId === item.id && this.activeField === 'value' ? html`
+              <lc-variable-autocomplete
+                .variables=${this.variables}
+                .filter=${this.autocompleteFilter}
+                .visible=${this.showAutocomplete}
+                @select=${this.handleVariableSelect}
+                @close=${this.handleAutocompleteClose}
+              ></lc-variable-autocomplete>
+            ` : ''}
+          </div>
 
           <button 
             class="delete-btn" 
