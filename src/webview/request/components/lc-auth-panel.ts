@@ -37,11 +37,12 @@ export class LcAuthPanel extends LcBaseElement {
 
     .auth-selector select {
       padding: 4px 8px;
-      background: transparent;
+      background: var(--vscode-editor-background);
       color: var(--vscode-foreground);
-      border: 1px solid var(--vscode-input-border);
+      border: 1px solid var(--vscode-dropdown-border);
       outline: none;
       border-radius: 2px;
+      cursor: pointer;
     }
 
     .auth-selector select:focus {
@@ -92,8 +93,7 @@ export class LcAuthPanel extends LcBaseElement {
       color: var(--vscode-foreground);
     }
 
-    .form-group input,
-    .form-group select {
+    .form-group input {
       flex: 1;
       padding: 6px 8px;
       background: transparent;
@@ -101,6 +101,17 @@ export class LcAuthPanel extends LcBaseElement {
       border: 1px solid var(--vscode-input-border);
       outline: none;
       border-radius: 2px;
+    }
+
+    .form-group select {
+      flex: 1;
+      padding: 6px 8px;
+      background: var(--vscode-editor-background);
+      color: var(--vscode-foreground);
+      border: 1px solid var(--vscode-dropdown-border);
+      outline: none;
+      border-radius: 2px;
+      cursor: pointer;
     }
 
     .form-group input:focus,
