@@ -1,159 +1,255 @@
-# Agent Guidelines
+# LiteClient Development Guide
 
-This file provides context for AI coding assistants working on LiteClient.
+This document provides architectural context and workflow guidance for AI coding assistants working on LiteClient, a VS Code REST API client extension.
 
 ## Project Overview
 
-LiteClient is a VS Code extension providing a lightweight REST API client. It uses:
-- **Extension host**: TypeScript, VS Code Extension API
-- **Webview UI**: Lit web components, CodeMirror for code editing
-- **Storage**: JSON files in VS Code's globalStorage
+LiteClient is a native VS Code extension that provides a lightweight REST API client. All data persists locally in VS Code's global storage. The extension prioritizes performance, privacy, and native IDE integration.
 
-## Commands
+## Architecture Overview
 
-```bash
-# Install dependencies
-npm install
+### Three-Tier Architecture
 
-# Build for production
-npm run build
+The extension follows a three-tier architecture:
 
-# Watch mode (development)
-npm run watch
+1. **Extension Module** - Handles business logic, file I/O, HTTP requests
+2. **Message Protocol** - Typed communication between extension and webview
+3. **Webview Module** - UI built with Lit web components
 
-# Type check (run before committing)
-npm run check
+### Extension Module
 
-# Lint
-npm run lint
+Runs in the VS Code extension host process (Node.js).
 
-# Run tests
-npm test
-```
+**Components:**
+- **Commands** - User-invokable actions registered in package.json
+- **Services** - Business logic for collections, environments, history, HTTP, cookies, OAuth2
+- **Providers** - Bridge between extension and webview UIs
+- **Storage** - JSON file persistence in globalStorageUri
 
-## Project Structure
+### Webview Module
 
-```
-src/
-├── extension/                 # VS Code extension (Node.js)
-│   ├── commands/              # Command handlers
-│   │   ├── index.ts           # Registers all commands
-│   │   ├── historyCommands.ts
-│   │   ├── collectionCommands.ts
-│   │   ├── environmentCommands.ts
-│   │   └── requestCommands.ts
-│   ├── providers/webviews/    # Webview providers
-│   │   ├── requestPanelManager.ts   # Manages request editor panels
-│   │   ├── sidebarProvider.ts       # Sidebar webview provider
-│   │   ├── requestWebView.ts        # Request panel HTML generator
-│   │   └── sidebarWebView.ts        # Sidebar HTML generator
-│   ├── services/              # Business logic
-│   │   ├── collectionService.ts     # Collection CRUD
-│   │   ├── environmentService.ts    # Environment CRUD
-│   │   ├── historyService.ts        # Request history
-│   │   ├── httpRequestService.ts    # HTTP client
-│   │   ├── settingsService.ts       # User settings
-│   │   ├── importers/               # Import formats (Postman)
-│   │   └── exporters/               # Export formats (Postman)
-│   ├── storage/
-│   │   └── storageService.ts        # JSON file I/O wrapper
-│   ├── utils/                       # Shared utilities
-│   └── extension.ts                 # Entry point, command registration
-├── webview/                   # Webview UI (Lit components)
-│   ├── request/               # Request editor panel
-│   │   └── components/        # lc-url-bar, lc-body-panel, etc.
-│   ├── sidebar/               # Sidebar panel
-│   │   └── components/        # lc-history-list, lc-collection-tree, etc.
-│   └── shared/                # Shared webview utilities
-├── shared/                    # Shared types (extension + webview)
-│   ├── models.ts              # AuthConfig, RequestBody, etc.
-│   └── messages.ts            # Typed message protocol
-└── test/                      # Tests
-```
+Runs in the webview context (browser-like environment).
 
-## Architecture Notes
+**Components:**
+- **Request Panel** - URL bar, headers, body, auth, response views
+- **Sidebar** - Collections, environments, history tabs
+- **Cookie Manager** - Cookie management interface
+- **Shared** - Base elements, CodeMirror editor, messaging utilities
 
-### Extension ↔ Webview Communication
-- Uses `postMessage` API for bidirectional communication
-- Messages are typed in `src/shared/messages.ts`
-- Sidebar: `SidebarProvider` ↔ `lc-sidebar-panel`
-- Request panels: `RequestPanelManager` ↔ request webview
+## Module Responsibilities
 
-### Data Storage
-- All data stored as JSON in VS Code's `globalStorageUri`
-- Files: `collections.json`, `environments.json`, `history.json`, `settings.json`
-- `StorageService` handles all file I/O
+### Extension Module
 
-### Services Pattern
-- Each domain has a service: `CollectionService`, `EnvironmentService`, `HistoryService`
-- Services receive `StorageService` via constructor injection
-- Services are instantiated once in `extension.ts`
+The extension module handles backend operations.
+
+**Entry Point**
+- extension.ts initializes all services and registers providers
+- Services are instantiated once and injected into commands and providers
+- URI handler receives OAuth2 callbacks
+- Providers manage webview lifecycle and message routing
+
+### Services Layer
+
+| Service | File | Responsibility |
+|---------|------|----------------|
+| CollectionService | collectionService.ts | CRUD for collections, folders, requests, Postman import/export |
+| EnvironmentService | environmentService.ts | Environment and variable management, includes globals |
+| HistoryService | historyService.ts | Request execution history with day-grouped organization |
+| HttpRequestService | httpRequestService.ts | HTTP client with variable substitution, timeout, redirects |
+| CookieJarService | cookieJarService.ts | Cookie persistence per domain using tough-cookie |
+| OAuth2TokenService | oauth2TokenService.ts | OAuth2 token acquisition, caching, and refresh |
+| SettingsService | settingsService.ts | User preferences in workspace state |
+
+**Service Patterns:**
+- All services receive StorageService via constructor injection
+- Follow async/await patterns for I/O
+- Throw descriptive errors for invalid operations
+
+### Providers Layer
+
+| Provider | Purpose |
+|----------|---------|
+| SidebarProvider | Sidebar webview (Collections, Environments, History) |
+| RequestPanelManager | Creates/manages request editor panels, handles OAuth2 flows |
+| CookieManagerProvider | Cookie management webview panel |
+
+### Commands Layer
+
+| File | Commands |
+|------|----------|
+| collectionCommands.ts | Collection CRUD, import/export |
+| environmentCommands.ts | Environment and variable operations |
+| historyCommands.ts | History access and management |
+| requestCommands.ts | New request creation |
+| cookieCommands.ts | Cookie management commands |
+
+### Webview Components
+
+**Request Editor:**
+- lc-url-bar - URL input with method selector
+- lc-tabs - Tab navigation
+- lc-headers-table - Header editor
+- lc-body-panel - Body editor
+- lc-auth-panel - Authentication configuration
+- lc-form-data-editor - Form-data with file uploads
+- lc-variable-autocomplete - Environment variable autocomplete
+- lc-response-view - Response display
+- lc-cookies-table - Response cookies
+- lc-status-bar - Response status/timing
+- lc-request-meta - Request metadata
+
+**Sidebar:**
+- lc-sidebar-panel - Main container with tabs
+- lc-collection-tree - Hierarchical collection browser
+- lc-env-switcher - Environment selector
+- lc-environment-list - Environment management
+- lc-history-list - Day-grouped history
+- lc-cookie-manager - Cookie management UI
+
+### Shared Module
+
+**models.ts** - Data types: AuthConfig, RequestBody, Environment, cookies
+**messages.ts** - Typed message definitions for IPC
+**variableSubstitution.ts** - {{variableName}} substitution logic
+
+## Data Storage
+
+### Storage Files
+
+| File | Contents |
+|------|----------|
+| collections.json | Collections, folders, requests |
+| environments.json | Environments and variables |
+| history.json | Request execution history |
+| cookies.json | Serialized cookie jar |
+| settings.json | User preferences |
+
+### Storage Service
+
+StorageService provides atomic file writes with backup on corruption.
+
+## Feature Implementation Details
+
+### Variable Substitution
+
+Environment variables use {{variableName}} syntax. Substitution occurs in:
+- URL
+- Headers (keys and values)
+- Request body (all modes)
+- Authentication credentials
+
+### OAuth 2.0 Authentication
+
+Three grant types supported:
+1. Authorization Code - Traditional flow with browser authentication
+2. Authorization Code with PKCE - Enhanced security for public clients
+3. Client Credentials - Machine-to-machine authentication
+
+Tokens stored in VS Code's SecretStorage.
+
+### Cookie Management
+
+Cookies persisted per domain using tough-cookie. Automatically:
+- Sends relevant cookies on requests
+- Captures Set-Cookie headers
+- Persists across sessions
+
+### Postman Compatibility
+
+- Import: Postman Collection v2.1 with nested folders
+- Export: Full collection with metadata
+
+### Request Execution Flow
+
+User clicks Send → lc-url-bar sends 'send-request' message → RequestPanelManager receives → HttpRequestService.substitutes variables → Fetch API executes → Response returned → 'response' message sent to webview → lc-response-view displays → HistoryService records → Sidebar refreshes
+
+## Development Setup
+
+### Build Commands
+
+| Command | Purpose |
+|---------|---------|
+| npm install | Install dependencies |
+| npm run build | Production build |
+| npm run watch | Development watch mode |
+| npm run check | TypeScript type checking |
+| npm run lint | ESLint validation |
+| npm test | Run tests |
+
+### Testing
+
+Press F5 in VS Code to launch Extension Development Host.
+
+## Contribution Workflow
+
+### Adding a New Command
+
+1. Define command in package.json under contributes.commands
+2. Create handler in commands/ directory
+3. Register in commands/index.ts
+4. Add to CommandDependencies interface
+
+### Adding a New Service
+
+1. Create service class in services/
+2. Accept StorageService in constructor
+3. Add async CRUD methods
+4. Instantiate in extension.ts
+5. Add to CommandDependencies if needed
+
+### Adding a Webview Component
+
+1. Create lc-component-name.ts in appropriate folder
+2. Extend LcBaseElement
+3. Use @customElement decorator
+4. Import in parent component
+5. Add message handler if extension communication needed
+
+### Adding a Message Type
+
+1. Define interface in messages.ts
+2. Add handler in provider
+3. Send from webview using postMessage()
+4. Update union types
 
 ## Code Conventions
 
 ### General
-- No comments unless code is complex and requires context
-- Use existing patterns — look at neighboring code before writing new code
-- Prefer VS Code's native UI (QuickPick, InputBox) over custom webview dialogs
+- No comments unless complex logic requires explanation
+- Follow existing patterns in neighboring code
+- Prefer VS Code native UI over custom dialogs
 
 ### TypeScript
 - Strict mode enabled
-- Avoid `any` — use proper types or `unknown`
-- Shared types go in `src/shared/`
+- Avoid any - use proper types or unknown
+- Shared types in src/shared/
 
 ### Lit Components
-- Prefix all components with `lc-` (e.g., `lc-url-bar`)
-- Use `@customElement` decorator
-- Extend `LcBaseElement` for shared styles
+- Prefix with lc-
+- Use @customElement decorator
+- Extend LcBaseElement
 
 ### Naming
-- Files: kebab-case (`collection-service.ts` style, though current files use camelCase)
-- Classes: PascalCase (`CollectionService`)
-- Functions/variables: camelCase (`loadCollections`)
-- Commands: `liteclient.verbNoun` (e.g., `liteclient.newRequest`)
+- Files: camelCase (current convention)
+- Classes: PascalCase
+- Functions/variables: camelCase
+- Commands: liteclient.verbNoun
 
-## Testing
+## Quick Reference
 
-```bash
-# Run all tests
-npm test
+### Extension Initialization
 
-# Tests use @vscode/test-electron
-# Test files: src/test/*.test.ts
-```
+extension.activate() → Create StorageService → Instantiate all services → Register SidebarProvider → Register RequestPanelManager → Register CookieManagerProvider → Register URI handler for OAuth → Register all commands
 
-## Manual Testing
+### Message Flow Examples
 
-1. Press `F5` in VS Code to launch Extension Development Host
-2. Open the LiteClient sidebar from the Activity Bar
-3. Test the feature you're working on
+**Webview → Extension (Request Send):**
+{ type: 'send-request', method, url, headers, body, auth, environmentId }
 
-## Before Committing
+**Extension → Webview (Response):**
+{ type: 'response', body, status, headers, cookies, time, isError }
 
-Always run:
-```bash
-npm run check
-```
-
-This runs TypeScript type checking for both extension and webview code.
-
-## Common Tasks
-
-### Adding a new command
-1. Define command in `package.json` under `contributes.commands`
-2. Register handler in `extension.ts` (or future `commands/` folder)
-3. Add to `context.subscriptions`
-
-### Adding a new webview component
-1. Create `lc-component-name.ts` in appropriate `components/` folder
-2. Extend `LcBaseElement`
-3. Import in parent component
-
-### Adding a new service method
-1. Add method to relevant service in `src/extension/services/`
-2. Follow existing async/await patterns
-3. Use `StorageService` for persistence
-
-### Adding a new message type
-1. Add handler in `sidebarProvider.ts` or `requestPanelManager.ts`
-2. Send from webview using `postMessage({ type: 'your-type', ... })`
+**Extension → Webview (State Sync):**
+{ type: 'history-list', items }
+{ type: 'collections-list', collections }
+{ type: 'environments-list', environments, selectedEnvironmentId }
