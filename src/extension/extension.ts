@@ -11,7 +11,6 @@ import { CookieManagerProvider } from './providers/webviews/cookieManagerProvide
 import { registerAllCommands } from './commands';
 
 export async function activate(context: vscode.ExtensionContext) {
-	// Initialize storage and services
 	const storage = new StorageService(context);
 	const settingsService = new SettingsService(context);
 	const collectionService = new CollectionService(storage);
@@ -20,7 +19,6 @@ export async function activate(context: vscode.ExtensionContext) {
 	const cookieJarService = new CookieJarService(storage);
 	await cookieJarService.initialize();
 
-	// Initialize sidebar provider
 	const sidebarProvider = new SidebarProvider(
 		context.extensionUri,
 		historyService,
@@ -31,7 +29,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider);
 
-	// Initialize request panel manager
 	const requestPanelManager = new RequestPanelManager(
 		context,
 		historyService,
@@ -43,10 +40,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		() => sidebarProvider.refreshCollections()
 	);
 
-	// Initialize cookie manager provider
 	const cookieManagerProvider = new CookieManagerProvider(context, cookieJarService);
 
-	// Register URI handler for OAuth2 callbacks
 	const oauth2TokenService = requestPanelManager.getOAuth2TokenService();
 	context.subscriptions.push(
 		vscode.window.registerUriHandler({
@@ -58,8 +53,54 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
-	// Register all commands
+	const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
+	statusBarItem.command = 'liteclient.switchStorageScope';
+	const updateStatusBar = () => {
+		const label = storage.scope === 'workspace' ? 'Workspace' : 'Global';
+		statusBarItem.text = `$(database) LiteClient: ${label}`;
+		statusBarItem.tooltip = `LiteClient storage scope: ${label}. Click to switch.`;
+	};
+	updateStatusBar();
+	statusBarItem.show();
+	context.subscriptions.push(statusBarItem);
+
+	if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+		const pattern = new vscode.RelativePattern(
+			vscode.workspace.workspaceFolders[0],
+			'.liteclient/*.json'
+		);
+		const watcher = vscode.workspace.createFileSystemWatcher(pattern);
+
+		const refreshAll = async () => {
+			if (storage.scope === 'workspace') {
+				await sidebarProvider.refreshCollections();
+				await sidebarProvider.refreshEnvironments();
+				await sidebarProvider.refreshHistory();
+			}
+		};
+
+		watcher.onDidChange(refreshAll);
+		watcher.onDidCreate(refreshAll);
+		watcher.onDidDelete(refreshAll);
+		context.subscriptions.push(watcher);
+	}
+
+	context.subscriptions.push(
+		vscode.workspace.onDidChangeConfiguration(e => {
+			if (e.affectsConfiguration('liteclient.storageScope')) {
+				const config = vscode.workspace.getConfiguration('liteclient');
+				const newScope = config.get<'global' | 'workspace'>('storageScope') ?? 'global';
+				storage.setScope(newScope);
+				updateStatusBar();
+				sidebarProvider.refreshCollections();
+				sidebarProvider.refreshEnvironments();
+				sidebarProvider.refreshHistory();
+			}
+		})
+	);
+
 	registerAllCommands(context, {
+		storageService: storage,
 		historyService,
 		collectionService,
 		environmentService,

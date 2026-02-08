@@ -3,16 +3,58 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as crypto from 'crypto';
 
+export type StorageScope = 'global' | 'workspace';
 
 export class StorageService {
   private storagePath: string;
   private writeLocks = new Map<string, Promise<void>>();
+  private _scope: StorageScope = 'global';
+  private _workspacePath: string | undefined;
 
   constructor(private context: vscode.ExtensionContext) {
     this.storagePath = context.globalStorageUri.fsPath;
+
+    const config = vscode.workspace.getConfiguration('liteclient');
+    const configuredScope = config.get<StorageScope>('storageScope');
+
+    if (configuredScope === 'workspace' && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+      this._workspacePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.liteclient');
+      this._scope = 'workspace';
+    }
+  }
+
+  get scope(): StorageScope {
+    return this._scope;
+  }
+
+  get globalStoragePath(): string {
+    return this.storagePath;
+  }
+
+  get workspaceStoragePath(): string | undefined {
+    if (this._workspacePath) {
+      return this._workspacePath;
+    }
+    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+      return path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.liteclient');
+    }
+    return undefined;
+  }
+
+  setScope(scope: StorageScope): void {
+    this._scope = scope;
+    if (scope === 'workspace' && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+      this._workspacePath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, '.liteclient');
+    } else {
+      this._scope = 'global';
+      this._workspacePath = undefined;
+    }
   }
 
   getFilePath(fileName: string): string {
+    if (this._scope === 'workspace' && this._workspacePath) {
+      return path.join(this._workspacePath, fileName);
+    }
     return path.join(this.storagePath, fileName);
   }
 
@@ -22,7 +64,6 @@ export class StorageService {
     try {
       await fs.access(filePath);
     } catch {
-      // File doesn't exist, create the directory if needed and write default content
       await fs.mkdir(path.dirname(filePath), { recursive: true });
       await this.writeJson(fileName, defaultContent);
     }
@@ -36,11 +77,9 @@ export class StorageService {
       return JSON.parse(content);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-        // File doesn't exist, return default value
         return defaultValue ?? ({} as T);
       }
       if (error instanceof SyntaxError) {
-        // JSON parse error - file is corrupted
         const backupPath = `${filePath}.backup.${Date.now()}`;
         let backupSucceeded = false;
 
@@ -48,7 +87,6 @@ export class StorageService {
           await fs.rename(filePath, backupPath);
           backupSucceeded = true;
         } catch {
-          // Ignore backup errors
         }
 
         const friendlyName = fileName.replace('.json', '');

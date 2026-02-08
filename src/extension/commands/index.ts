@@ -13,8 +13,11 @@ import { registerCollectionCommands } from './collectionCommands';
 import { registerEnvironmentCommands } from './environmentCommands';
 import { registerRequestCommands } from './requestCommands';
 import { registerCookieCommands } from './cookieCommands';
+import { registerStorageCommands } from './storageCommands';
+import { StorageService } from '../storage/storageService';
 
 export interface CommandDependencies {
+    storageService: StorageService;
     historyService: HistoryService;
     collectionService: CollectionService;
     environmentService: EnvironmentService;
@@ -56,5 +59,15 @@ export function registerAllCommands(
     registerCookieCommands(context, {
         cookieJarService: deps.cookieJarService,
         cookieManagerProvider: deps.cookieManagerProvider
+    });
+
+    registerStorageCommands(context, {
+        storageService: deps.storageService,
+        sidebarProvider: deps.sidebarProvider,
+        onScopeChanged: async () => {
+            await deps.sidebarProvider.refreshCollections();
+            await deps.sidebarProvider.refreshEnvironments();
+            await deps.sidebarProvider.refreshHistory();
+        }
     });
 }

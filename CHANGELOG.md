@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Workspace-Scoped Storage**: Store collections, environments, and history in a `.liteclient/` folder in your workspace root for team sharing via Git. Configurable via `liteclient.storageScope` setting.
+- **Storage Scope Switcher**: Status bar indicator shows current storage scope (Global/Workspace). Click to switch.
+- **Migrate to Workspace Command**: `LiteClient: Migrate Data to Workspace` copies existing global data into the workspace `.liteclient/` folder.
+- **File System Watcher**: Automatically refreshes sidebar when `.liteclient/*.json` files change externally (e.g., after `git pull`).
+
 ## [0.12.1] - 2026-02-07
 
 ### Documentation

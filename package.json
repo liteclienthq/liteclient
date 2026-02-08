@@ -179,6 +179,16 @@
         "command": "liteclient.clearCookies",
         "title": "Clear Cookie Jar",
         "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.migrateToWorkspace",
+        "title": "Migrate Data to Workspace",
+        "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.switchStorageScope",
+        "title": "Switch Storage Scope",
+        "category": "LiteClient"
       }
     ],
     "menus": {
@@ -255,6 +265,17 @@
           "group": "1_modification"
         }
       ]
+    },
+    "configuration": {
+      "title": "LiteClient",
+      "properties": {
+        "liteclient.storageScope": {
+          "type": "string",
+          "enum": ["global", "workspace"],
+          "default": "global",
+          "description": "Where to store collections, environments, and history. 'global' stores in VS Code's global storage (private, not in repo). 'workspace' stores in a .liteclient/ folder in your workspace root (shareable via Git)."
+        }
+      }
     }
   },
   "scripts": {

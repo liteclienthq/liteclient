@@ -135,6 +135,16 @@ Built-in cookie jar for session management.
 - Delete individual cookies or entire domains
 - Clear all cookies option
 
+### Storage Scopes
+
+Choose where your data lives — globally or per workspace.
+
+- **Global Storage** (default) - Collections, environments, and history stored in VS Code's global storage, available across all workspaces
+- **Workspace Storage** - Data stored in a `.liteclient/` folder in your project root, ideal for sharing API collections via version control
+- Click the **LiteClient: Global/Workspace** indicator in the status bar to switch scopes
+- Workspace scope requires an open folder
+- Each scope maintains independent collections, environments, and history
+
 ### Multi-Tab Editing
 
 Work on multiple requests simultaneously.
@@ -293,7 +303,7 @@ If variables appear unchanged in requests:
 
 LiteClient is designed with privacy as a core principle.
 
-- **Local Storage Only** - All data stored in VS Code's global storage
+- **Local Storage Only** - All data stored in VS Code's global storage or optionally in your workspace's `.liteclient/` folder
 - **No Telemetry** - No analytics, tracking, or usage data collection
 - **No Cloud Sync** - Your data never leaves your machine
 - **Secure Token Storage** - OAuth tokens stored in VS Code's SecretStorage
