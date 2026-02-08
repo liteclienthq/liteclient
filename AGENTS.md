@@ -163,24 +163,7 @@ Cookies persisted per domain using tough-cookie. Automatically:
 
 User clicks Send → lc-url-bar sends 'send-request' message → RequestPanelManager receives → HttpRequestService.substitutes variables → Fetch API executes → Response returned → 'response' message sent to webview → lc-response-view displays → HistoryService records → Sidebar refreshes
 
-## Development Setup
-
-### Build Commands
-
-| Command | Purpose |
-|---------|---------|
-| npm install | Install dependencies |
-| npm run build | Production build |
-| npm run watch | Development watch mode |
-| npm run check | TypeScript type checking |
-| npm run lint | ESLint validation |
-| npm test | Run tests |
-
-### Testing
-
-Press F5 in VS Code to launch Extension Development Host.
-
-## Contribution Workflow
+## Implementation Patterns
 
 ### Adding a New Command
 
@@ -253,3 +236,8 @@ extension.activate() → Create StorageService → Instantiate all services → 
 { type: 'history-list', items }
 { type: 'collections-list', collections }
 { type: 'environments-list', environments, selectedEnvironmentId }
+
+## Related Documentation
+
+- [CONTRIBUTING.md](./CONTRIBUTING.md) - General contributor workflow
+- [MAINTAINING.md](./MAINTAINING.md) - Release and maintainer guide

@@ -1,8 +1,16 @@
 # Contributing to LiteClient
 
-Thank you for your interest in contributing to LiteClient! This guide will help you get started.
+Thank you for your interest in contributing to LiteClient! This guide covers everything you need to know to contribute effectively.
 
 ## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- VS Code (for development)
+- Git
+
+### Setup
 
 1. Fork the repository
 2. Clone your fork: `git clone https://github.com/liteclienthq/liteclient.git`
@@ -13,12 +21,15 @@ Thank you for your interest in contributing to LiteClient! This guide will help 
 
 ### Branch Naming
 
-Create a branch from `main` using one of these prefixes:
+Create a branch from `main` using these prefixes:
 
-- `feature/` — New features (e.g., `feature/oauth-support`)
-- `fix/` — Bug fixes (e.g., `fix/response-scroll-issue`)
-- `docs/` — Documentation only (e.g., `docs/update-readme`)
-- `refactor/` — Code refactoring (e.g., `refactor/extract-commands`)
+| Prefix | Purpose | Example |
+|--------|---------|---------|
+| `feature/` | New features | `feature/oauth-support` |
+| `fix/` | Bug fixes | `fix/response-scroll-issue` |
+| `docs/` | Documentation | `docs/update-readme` |
+| `refactor/` | Code refactoring | `refactor/extract-commands` |
+| `chore/` | Maintenance | `chore/update-dependencies` |
 
 ### Making Changes
 
@@ -28,10 +39,29 @@ Create a branch from `main` using one of these prefixes:
 4. Run checks: `npm run check`
 5. Commit with clear messages (see below)
 
-### Commit Messages
+### Before Submitting
 
-Use clear, descriptive commit messages:
+- [ ] Run `npm run check` (must pass with no errors)
+- [ ] Test the feature manually
+- [ ] Update documentation if needed
 
+## Commit Messages
+
+Use conventional commit messages:
+
+```
+<type>: <description>
+
+Types:
+- feat: A new feature
+- fix: A bug fix
+- docs: Documentation only changes
+- refactor: Code refactoring (no behavior change)
+- chore: Maintenance tasks
+- test: Adding or updating tests
+```
+
+Examples:
 ```
 feat: add OAuth 2.0 authentication support
 fix: resolve scroll position reset in response panel
@@ -40,38 +70,62 @@ refactor: extract command handlers to separate files
 chore: update dependencies
 ```
 
-Prefix format:
-- `feat:` — New feature
-- `fix:` — Bug fix
-- `docs:` — Documentation
-- `refactor:` — Code refactoring
-- `chore:` — Maintenance tasks
-- `test:` — Adding or updating tests
-
-### Before Submitting
-
-- [ ] Run `npm run check` (must pass)
-- [ ] Test the feature manually
-- [ ] Update documentation if needed
-
 ## Pull Request Process
 
 1. Push your branch to your fork
 2. Open a Pull Request against `main`
-3. Describe what your PR does and why
-4. Link any related issues
+3. Ensure all CI checks pass
+4. Describe what your PR does and why
+5. Link any related issues
 
 ## Code Style
 
-- TypeScript with strict mode
-- No `any` types — use proper types or `unknown`
-- Follow existing patterns in the codebase
-- See [AGENTS.md](./AGENTS.md) for detailed conventions
+### TypeScript
+
+- Strict mode enabled
+- Avoid `any` — use proper types or `unknown`
+- Shared types in `src/shared/`
+
+### Lit Components
+
+- Prefix with `lc-`
+- Extend `LcBaseElement`
+- Use `@customElement` decorator
+
+### Naming Conventions
+
+| Type | Convention | Example |
+|------|------------|---------|
+| Files | camelCase | `collectionService.ts` |
+| Classes | PascalCase | `CollectionService` |
+| Functions/variables | camelCase | `getCollection()` |
+| Commands | `liteclient.verbNoun` | `liteclient.sendRequest` |
+
+### General
+
+- No comments unless complex logic requires explanation
+- Follow existing patterns in neighboring code
+- Prefer VS Code native UI over custom dialogs
+
+## Testing
+
+### Manual Testing
+
+Press `F5` in VS Code to launch the Extension Development Host.
+
+### Automated Testing
+
+```bash
+npm test          # Run all tests
+npm run check     # TypeScript type checking
+npm run lint      # ESLint validation
+```
 
 ## Questions?
 
 - Open an issue for bugs or feature requests
 - Check existing issues before creating new ones
+- See [AGENTS.md](./AGENTS.md) for AI coding conventions
 
 ## License
 
