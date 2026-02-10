@@ -9,6 +9,7 @@ import { CookieJarService } from '../../services/cookieJarService';
 import { OAuth2TokenService } from '../../services/oauth2TokenService';
 import type { RequestPanelToExtensionMessage, RequestExecutionSource } from '../../../shared/messages';
 import { generateId } from '../../utils/idUtils';
+import { resolveVariables } from '../../utils/variableResolver';
 
 type MessageHandler = (panel: vscode.WebviewPanel, message: any, context: RequestContext) => Promise<void>;
 
@@ -189,23 +190,20 @@ export class RequestPanelManager {
         const abortController = new AbortController();
         this.activeRequests.set(panel, { abortController });
 
-        let environmentVariables: Record<string, string> = {};
-
         const messageEnvironmentId = message.environmentId;
         const globalSelectedEnvironmentId = await this.settingsService.getSelectedEnvironmentId();
         const selectedEnvironmentId = messageEnvironmentId !== undefined ? messageEnvironmentId : globalSelectedEnvironmentId;
 
         const globals = await this.environmentService.getEnvironmentById('globals');
-        if (globals) {
-            environmentVariables = { ...globals.variables };
+        let selectedEnvironment;
+        if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
+            selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
         }
 
-        if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
-            const selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
-            if (selectedEnvironment) {
-                environmentVariables = { ...environmentVariables, ...selectedEnvironment.variables };
-            }
-        }
+        const environmentVariables = resolveVariables({
+            globals: globals,
+            environment: selectedEnvironment,
+        });
 
         // Get cookies from cookie jar for this request
         const cookieString = await this.cookieJarService.getCookieString(message.url);

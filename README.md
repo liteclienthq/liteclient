@@ -46,11 +46,12 @@ Organize your API requests in a hierarchical structure that grows with your proj
 
 Manage different configurations for local, staging, and production environments.
 
-- Create named environments with custom variables
-- Global variables available in all environments
+- Create named environments with structured variables (name, value, type, enabled)
+- Global variables available across all environments
+- Layered variable resolution: Globals → Collection → Environment
 - Quick-switch between environments via the sidebar
 - Variables work everywhere: URL, headers, body, auth
-- Protected storage for sensitive values
+- Auto-migration from legacy key-value format
 
 ### HTTP Request Building
 

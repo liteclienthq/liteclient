@@ -270,16 +270,20 @@ export class LcUrlBar extends LcBaseElement {
     
     const globals = this.environments.find(env => env.id === 'globals');
     if (globals?.variables) {
-      for (const [name, value] of Object.entries(globals.variables)) {
-        items.push({ name, value, type: 'global' });
+      for (const v of globals.variables) {
+        if (v.enabled) {
+          items.push({ name: v.name, value: v.initialValue, type: 'global' });
+        }
       }
     }
 
     if (this.selectedEnvironmentId) {
       const selectedEnv = this.environments.find(env => env.id === this.selectedEnvironmentId);
       if (selectedEnv?.variables) {
-        for (const [name, value] of Object.entries(selectedEnv.variables)) {
-          items.push({ name, value, type: 'environment' });
+        for (const v of selectedEnv.variables) {
+          if (v.enabled) {
+            items.push({ name: v.name, value: v.initialValue, type: 'environment' });
+          }
         }
       }
     }

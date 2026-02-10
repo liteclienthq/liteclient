@@ -5,6 +5,8 @@ import { CollectionService } from '../../services/collectionService';
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
 import type { SidebarToExtensionMessage } from '../../../shared/messages';
+import type { EnvironmentVariable } from '../../../shared/models';
+import { generateId } from '../../utils/idUtils';
 
 type MessageHandler = (data: any) => void | Promise<void> | Thenable<unknown>;
 
@@ -164,7 +166,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _handleEnvAction(data: { action: string; id?: string; variables?: Record<string, string> }) {
+    private async _handleEnvAction(data: { action: string; id?: string; variables?: EnvironmentVariable[] }) {
         switch (data.action) {
             case 'add':
                 vscode.commands.executeCommand('liteclient.newEnvironment');
@@ -201,7 +203,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         switch (data.action) {
             case 'add-variable':
                 if (data.varName && data.newValue !== undefined) {
-                    env.variables[data.varName] = data.newValue;
+                    env.variables.push({ id: generateId(), name: data.varName, initialValue: data.newValue, type: 'default', enabled: true });
                     await this._environmentService.updateEnvironment(env);
                     this.refreshEnvironments();
                 } else {
@@ -211,14 +213,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             case 'edit-variable':
                 if (data.varName) {
                     if (data.newValue !== undefined) {
-                        env.variables[data.varName] = data.newValue;
+                        const envVar = env.variables.find(v => v.name === data.varName);
+                        if (envVar) { envVar.initialValue = data.newValue; }
                         await this._environmentService.updateEnvironment(env);
                         this.refreshEnvironments();
                     } else {
                         vscode.commands.executeCommand('liteclient.editVariable', {
                             environmentId: data.envId,
                             variableName: data.varName,
-                            variableValue: env.variables[data.varName]
+                            variableValue: env.variables.find(v => v.name === data.varName)?.initialValue
                         });
                     }
                 }

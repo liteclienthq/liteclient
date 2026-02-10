@@ -5,16 +5,12 @@
  * Do NOT add any runtime code here — only type definitions.
  */
 
-import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies, OAuth2AuthConfig } from './models';
+import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies, OAuth2AuthConfig, Environment, EnvironmentVariable } from './models';
 
 // Re-export for convenience
-export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies };
+export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies, EnvironmentVariable };
 
-export interface Environment {
-    id: string;
-    name: string;
-    variables: Record<string, string>;
-}
+export type { Environment };
 
 // ============================================================================
 // Messages: Extension → Webview
@@ -154,7 +150,7 @@ export interface EnvActionMessage {
     type: 'env-action';
     action: 'add' | 'delete' | 'rename' | 'update-vars';
     id?: string;
-    variables?: Record<string, string>;
+    variables?: EnvironmentVariable[];
 }
 
 export interface EnvVariableActionMessage {

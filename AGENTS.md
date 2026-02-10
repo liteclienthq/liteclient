@@ -108,9 +108,10 @@ The extension module handles backend operations.
 
 ### Shared Module
 
-**models.ts** - Data types: AuthConfig, RequestBody, Environment, cookies
+**models.ts** - Data types: EnvironmentVariable, Environment, AuthConfig, RequestBody, cookies
 **messages.ts** - Typed message definitions for IPC
 **variableSubstitution.ts** - {{variableName}} substitution logic
+**variableResolver.ts** - Centralized variable resolution with layered precedence
 
 ## Data Storage
 
@@ -132,7 +133,11 @@ StorageService provides atomic file writes with backup on corruption.
 
 ### Variable Substitution
 
-Environment variables use {{variableName}} syntax. Substitution occurs in:
+Environment variables use {{variableName}} syntax. Variables are `EnvironmentVariable` objects with `id`, `name`, `initialValue`, `type` (default/secret), and `enabled` fields.
+
+**Resolution order** (narrowest wins): Globals → Collection → Environment. Only `enabled` variables are resolved. The `variableResolver.ts` utility centralizes this logic.
+
+Substitution occurs in:
 - URL
 - Headers (keys and values)
 - Request body (all modes)
@@ -161,7 +166,7 @@ Cookies persisted per domain using tough-cookie. Automatically:
 
 ### Request Execution Flow
 
-User clicks Send → lc-url-bar sends 'send-request' message → RequestPanelManager receives → HttpRequestService.substitutes variables → Fetch API executes → Response returned → 'response' message sent to webview → lc-response-view displays → HistoryService records → Sidebar refreshes
+User clicks Send → lc-url-bar sends 'send-request' message → RequestPanelManager receives → variableResolver resolves variables (globals → collection → environment) → HttpRequestService substitutes variables → Fetch API executes → Response returned → 'response' message sent to webview → lc-response-view displays → HistoryService records → Sidebar refreshes
 
 ## Implementation Patterns
 

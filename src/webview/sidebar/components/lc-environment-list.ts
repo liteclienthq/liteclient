@@ -114,8 +114,8 @@ export class LcEnvironmentList extends LcBaseElement {
 
   private matchesFilter(env: Environment, search: string): boolean {
     if (env.name.toLowerCase().includes(search)) { return true; }
-    return Object.keys(env.variables).some(key =>
-      key.toLowerCase().includes(search) || env.variables[key].toLowerCase().includes(search)
+    return env.variables.some(v =>
+      v.name.toLowerCase().includes(search) || v.initialValue.toLowerCase().includes(search)
     );
   }
 
@@ -167,18 +167,18 @@ export class LcEnvironmentList extends LcBaseElement {
         ></lc-sidebar-item>
         
         <div class="vars-container ${isOpen ? 'open' : ''}">
-          ${Object.entries(env.variables).length === 0 ?
+          ${env.variables.length === 0 ?
         html`<div class="empty-state" style="padding-left: ${(depth + 2) * 12}px">No variables</div>` :
-        Object.entries(env.variables).map(([key, value]) => html`
+        env.variables.map(v => html`
               <lc-sidebar-item
-                .id="${env.id}-${key}"
-                .name=${key}
-                .details=${value}
+                .id="${env.id}-${v.name}"
+                .name=${v.name}
+                .details=${v.initialValue}
                 type="variable"
                 .depth=${depth + 1}
                 .actions=${this.variableActions}
-                @select=${() => this.handleVariableAction(new CustomEvent('action', { detail: { actionId: 'edit-variable' } }), env.id, key)}
-                @action=${(e: CustomEvent) => this.handleVariableAction(e, env.id, key)}
+                @select=${() => this.handleVariableAction(new CustomEvent('action', { detail: { actionId: 'edit-variable' } }), env.id, v.name)}
+                @action=${(e: CustomEvent) => this.handleVariableAction(e, env.id, v.name)}
               ></lc-sidebar-item>
             `)
       }

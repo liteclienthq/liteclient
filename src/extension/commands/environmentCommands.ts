@@ -3,6 +3,8 @@ import { EnvironmentService } from '../services/environmentService';
 import { SettingsService } from '../services/settingsService';
 import { SidebarProvider } from '../providers/webviews/sidebarProvider';
 import { RequestPanelManager } from '../providers/webviews/requestPanelManager';
+import { generateId } from '../utils/idUtils';
+import type { EnvironmentVariable } from '../../shared/models';
 
 export interface EnvironmentCommandDeps {
     environmentService: EnvironmentService;
@@ -64,7 +66,8 @@ export function registerEnvironmentCommands(
             if (key) {
                 const value = await vscode.window.showInputBox({ prompt: 'Variable value' });
                 if (value !== undefined) {
-                    node.env.variables[key] = value;
+                    const newVar: EnvironmentVariable = { id: generateId(), name: key, initialValue: value, type: 'default', enabled: true };
+                    node.env.variables.push(newVar);
                     await environmentService.updateEnvironment(node.env);
                     sidebarProvider.refreshEnvironments();
                     requestPanelManager.broadcastEnvironments();
@@ -85,10 +88,13 @@ export function registerEnvironmentCommands(
                 const envs = await environmentService.load();
                 const env = envs.find(e => e.id === environmentId);
                 if (env) {
-                    env.variables[variableName] = newValue;
-                    await environmentService.updateEnvironment(env);
-                    sidebarProvider.refreshEnvironments();
-                    requestPanelManager.broadcastEnvironments();
+                    const envVar = env.variables.find(v => v.name === variableName);
+                    if (envVar) {
+                        envVar.initialValue = newValue;
+                        await environmentService.updateEnvironment(env);
+                        sidebarProvider.refreshEnvironments();
+                        requestPanelManager.broadcastEnvironments();
+                    }
                 }
             }
         }),
@@ -104,7 +110,7 @@ export function registerEnvironmentCommands(
                 const envs = await environmentService.load();
                 const env = envs.find(e => e.id === node.environmentId);
                 if (env) {
-                    delete env.variables[node.variableName];
+                    env.variables = env.variables.filter(v => v.name !== node.variableName);
                     await environmentService.updateEnvironment(env);
                     sidebarProvider.refreshEnvironments();
                     requestPanelManager.broadcastEnvironments();

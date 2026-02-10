@@ -1,7 +1,17 @@
+export type VariableType = 'default' | 'secret';
+
+export interface EnvironmentVariable {
+  id: string;
+  name: string;
+  initialValue: string;
+  type: VariableType;
+  enabled: boolean;
+}
+
 export interface Environment {
   id: string;
   name: string;
-  variables: Record<string, string>;
+  variables: EnvironmentVariable[];
 }
 
 export type OAuth2GrantType = 'authorization_code' | 'client_credentials';

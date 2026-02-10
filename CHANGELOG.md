@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Environment Variables Data Model**: Variables now use structured `EnvironmentVariable` objects with `id`, `name`, `initialValue`, `type` (default/secret), and `enabled` fields instead of plain key-value pairs
+- **Variable Resolution**: New centralized `variableResolver` with layered resolution order: Globals → Collection → Environment
+- **Auto-Migration**: Existing environments using the legacy format are automatically migrated on load
+- **Type Consolidation**: Single `Environment` interface in `models.ts`, removing duplicates from `messages.ts` and `variableSubstitution.ts`
 - **Documentation**: Reorganized CONTRIBUTING.md, MAINTAINING.md, and AGENTS.md with clear separation of concerns
 
 ## [0.13.0] - 2026-02-09

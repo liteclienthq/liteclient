@@ -3,11 +3,8 @@ import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
 import './lc-environment-list';
 
-export interface Environment {
-  id: string;
-  name: string;
-  variables: Record<string, string>;
-}
+import type { Environment } from '../../../shared/models.js';
+export type { Environment };
 
 @customElement('lc-env-switcher')
 export class LcEnvSwitcher extends LcBaseElement {

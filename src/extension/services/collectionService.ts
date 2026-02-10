@@ -2,7 +2,7 @@ import { StorageService } from '../storage/storageService';
 import { PostmanImporter } from './importers/PostmanImporter';
 import { PostmanExporter } from './exporters/PostmanExporter';
 import { generateId } from '../utils/idUtils';
-import { AuthConfig, RequestBody } from '../../shared/models';
+import { AuthConfig, RequestBody, EnvironmentVariable } from '../../shared/models';
 
 export interface RequestItem {
   id: string;
@@ -31,6 +31,7 @@ export interface Collection {
   id: string;
   name: string;
   description?: string; // New
+  variables?: EnvironmentVariable[];
   items: CollectionItem[];
 }
 

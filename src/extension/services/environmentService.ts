@@ -1,11 +1,6 @@
 import { StorageService } from '../storage/storageService';
+import { Environment, EnvironmentVariable } from '../../shared/models';
 import { generateId } from '../utils/idUtils';
-
-export interface Environment {
-  id: string;
-  name: string;
-  variables: Record<string, string>;
-}
 
 export class EnvironmentService {
   private static readonly ENVIRONMENTS_FILE = 'environments.json';
@@ -14,11 +9,34 @@ export class EnvironmentService {
 
   async load(): Promise<Environment[]> {
     await this.storage.ensureExists(EnvironmentService.ENVIRONMENTS_FILE, []);
-    const environments = await this.storage.readJson<Environment[]>(EnvironmentService.ENVIRONMENTS_FILE, []);
+    const raw = await this.storage.readJson<any[]>(EnvironmentService.ENVIRONMENTS_FILE, []);
+
+    let needsMigration = false;
+    const environments: Environment[] = raw.map(env => {
+      if (Array.isArray(env.variables)) {
+        return env as Environment;
+      }
+      needsMigration = true;
+      const variables: EnvironmentVariable[] = Object.entries(env.variables || {}).map(([name, value]) => ({
+        id: generateId(),
+        name,
+        initialValue: value as string,
+        type: 'default' as const,
+        enabled: true
+      }));
+      return { id: env.id, name: env.name, variables };
+    });
 
     let globals = environments.find(env => env.id === 'globals');
     if (!globals) {
-      globals = { id: 'globals', name: 'Globals', variables: {} };
+      globals = { id: 'globals', name: 'Globals', variables: [] };
+      environments.unshift(globals);
+      needsMigration = true;
+    }
+
+    if (needsMigration) {
+      const others = environments.filter(env => env.id !== 'globals');
+      await this.save([globals, ...others]);
     }
 
     const others = environments.filter(env => env.id !== 'globals');
@@ -34,7 +52,7 @@ export class EnvironmentService {
     const newEnvironment: Environment = {
       id: generateId(),
       name,
-      variables: {}
+      variables: []
     };
     environments.push(newEnvironment);
     await this.save(environments);
@@ -67,5 +85,4 @@ export class EnvironmentService {
     const environments = await this.load();
     return environments.find(env => env.id === id);
   }
-
 }

@@ -2,12 +2,6 @@
  * Utility for substituting environment variables in strings using {{variableName}} syntax
  */
 
-export interface Environment {
-  id: string;
-  name: string;
-  variables: Record<string, string>;
-}
-
 /**
  * Performs environment variable substitution on a string
  * @param input The input string with {{variableName}} placeholders
