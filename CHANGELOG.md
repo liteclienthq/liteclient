@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-02-19
+
 ### Added
 - **Environment Manager**: Full webview panel for managing environments and variables in a table UI (similar to Postman). Open via command palette (`LiteClient: Manage Environments`) or the "Manage" action on any environment in the sidebar. Supports inline editing of variable name, initial value, current value, type (default/secret), and enabled state.
 - **Current Value Overrides**: Set workspace-local "current values" for environment variables that override initial values during request execution. Current values are stored in VS Code's `workspaceState` and never committed to Git.
