@@ -4,9 +4,11 @@ import { CollectionService } from '../services/collectionService';
 import { EnvironmentService } from '../services/environmentService';
 import { SettingsService } from '../services/settingsService';
 import { CookieJarService } from '../services/cookieJarService';
+import { CurrentValuesService } from '../services/currentValuesService';
 import { SidebarProvider } from '../providers/webviews/sidebarProvider';
 import { RequestPanelManager } from '../providers/webviews/requestPanelManager';
 import { CookieManagerProvider } from '../providers/webviews/cookieManagerProvider';
+import { EnvironmentManagerProvider } from '../providers/webviews/environmentManagerProvider';
 
 import { registerHistoryCommands } from './historyCommands';
 import { registerCollectionCommands } from './collectionCommands';
@@ -23,9 +25,11 @@ export interface CommandDependencies {
     environmentService: EnvironmentService;
     settingsService: SettingsService;
     cookieJarService: CookieJarService;
+    currentValuesService: CurrentValuesService;
     sidebarProvider: SidebarProvider;
     requestPanelManager: RequestPanelManager;
     cookieManagerProvider: CookieManagerProvider;
+    environmentManagerProvider: EnvironmentManagerProvider;
 }
 
 export function registerAllCommands(
@@ -70,4 +74,10 @@ export function registerAllCommands(
             await deps.sidebarProvider.refreshHistory();
         }
     });
+
+    context.subscriptions.push(
+        vscode.commands.registerCommand('liteclient.openEnvironmentManager', async (args?: { environmentId?: string }) => {
+            await deps.environmentManagerProvider.open(args);
+        })
+    );
 }

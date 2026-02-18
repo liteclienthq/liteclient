@@ -166,6 +166,19 @@ export interface SetEnvironmentMessage {
     environmentId: string | undefined;
 }
 
+export interface EnvCurrentValueMessage {
+    type: 'env-current-value';
+    action: 'set' | 'clear';
+    envId: string;
+    varId: string;
+    value?: string;
+}
+
+export interface OpenEnvironmentManagerMessage {
+    type: 'open-environment-manager';
+    environmentId?: string;
+}
+
 /** Messages from sidebar webview to extension */
 export type SidebarToExtensionMessage =
     | GetHistoryMessage
@@ -183,7 +196,9 @@ export type SidebarToExtensionMessage =
     | MoveCollectionItemMessage
     | EnvActionMessage
     | EnvVariableActionMessage
-    | SetEnvironmentMessage;
+    | SetEnvironmentMessage
+    | EnvCurrentValueMessage
+    | OpenEnvironmentManagerMessage;
 
 // ============================================================================
 // Messages: Webview → Extension (Request Panel)
@@ -306,6 +321,74 @@ export interface OAuth2TokenResultMessage {
 }
 
 // ============================================================================
+// Messages: Webview → Extension (Environment Manager)
+// ============================================================================
+
+export interface EnvmgrGetStateMessage {
+    type: 'envmgr-get-state';
+}
+
+export interface EnvmgrAddEnvironmentMessage {
+    type: 'envmgr-add-environment';
+    name: string;
+}
+
+export interface EnvmgrRenameEnvironmentMessage {
+    type: 'envmgr-rename-environment';
+    id: string;
+    name: string;
+}
+
+export interface EnvmgrDeleteEnvironmentMessage {
+    type: 'envmgr-delete-environment';
+    id: string;
+}
+
+export interface EnvmgrDuplicateEnvironmentMessage {
+    type: 'envmgr-duplicate-environment';
+    id: string;
+}
+
+export interface EnvmgrUpdateVariablesMessage {
+    type: 'envmgr-update-variables';
+    envId: string;
+    variables: EnvironmentVariable[];
+}
+
+export interface EnvmgrSetCurrentValueMessage {
+    type: 'envmgr-set-current-value';
+    envId: string;
+    varId: string;
+    value: string;
+}
+
+export interface EnvmgrClearCurrentValueMessage {
+    type: 'envmgr-clear-current-value';
+    envId: string;
+    varId: string;
+}
+
+export type EnvironmentManagerToExtensionMessage =
+    | EnvmgrGetStateMessage
+    | EnvmgrAddEnvironmentMessage
+    | EnvmgrDuplicateEnvironmentMessage
+    | EnvmgrRenameEnvironmentMessage
+    | EnvmgrDeleteEnvironmentMessage
+    | EnvmgrUpdateVariablesMessage
+    | EnvmgrSetCurrentValueMessage
+    | EnvmgrClearCurrentValueMessage;
+
+// ============================================================================
+// Messages: Extension → Webview (Environment Manager)
+// ============================================================================
+
+export interface EnvmgrStateMessage {
+    type: 'envmgr-state';
+    environment: Environment;
+    selectedEnvironmentId: string | null | undefined;
+}
+
+// ============================================================================
 // Combined Types
 // ============================================================================
 
@@ -318,10 +401,12 @@ export type ExtensionToWebviewMessage =
     | HistoryListMessage
     | CollectionsListMessage
     | CookiesListMessage
-    | OAuth2TokenResultMessage;
+    | OAuth2TokenResultMessage
+    | EnvmgrStateMessage;
 
 /** All messages from any webview to extension */
 export type WebviewToExtensionMessage =
     | SidebarToExtensionMessage
     | RequestPanelToExtensionMessage
-    | CookieManagerToExtensionMessage;
+    | CookieManagerToExtensionMessage
+    | EnvironmentManagerToExtensionMessage;

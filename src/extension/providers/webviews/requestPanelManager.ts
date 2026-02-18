@@ -6,8 +6,9 @@ import { CollectionService, RequestItem } from '../../services/collectionService
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
 import { CookieJarService } from '../../services/cookieJarService';
+import { CurrentValuesService } from '../../services/currentValuesService';
 import { OAuth2TokenService } from '../../services/oauth2TokenService';
-import type { RequestPanelToExtensionMessage, RequestExecutionSource } from '../../../shared/messages';
+import type { RequestPanelToExtensionMessage, RequestExecutionSource, Environment } from '../../../shared/messages';
 import { generateId } from '../../utils/idUtils';
 import { resolveVariables } from '../../utils/variableResolver';
 
@@ -44,6 +45,7 @@ export class RequestPanelManager {
         private environmentService: EnvironmentService,
         private settingsService: SettingsService,
         private cookieJarService: CookieJarService,
+        private currentValuesService: CurrentValuesService,
         private refreshHistory: () => void,
         private refreshCollections: () => void
     ) {
@@ -200,9 +202,14 @@ export class RequestPanelManager {
             selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
         }
 
+        const envsToMerge = [globals, selectedEnvironment].filter(Boolean) as Environment[];
+        const mergedEnvs = this.currentValuesService.mergeIntoEnvironments(envsToMerge);
+        const mergedGlobals = mergedEnvs.find(e => e.id === 'globals');
+        const mergedSelectedEnv = mergedEnvs.find(e => e.id !== 'globals');
+
         const environmentVariables = resolveVariables({
-            globals: globals,
-            environment: selectedEnvironment,
+            globals: mergedGlobals,
+            environment: mergedSelectedEnv,
         });
 
         // Get cookies from cookie jar for this request
@@ -312,10 +319,11 @@ export class RequestPanelManager {
 
     private async _handleGetEnvironments(panel: vscode.WebviewPanel) {
         const environments = await this.environmentService.load();
+        const merged = this.currentValuesService.mergeIntoEnvironments(environments);
         const selectedEnvironmentId = await this.settingsService.getSelectedEnvironmentId();
         panel.webview.postMessage({
             type: 'environments-list',
-            environments,
+            environments: merged,
             selectedEnvironmentId
         });
     }
@@ -330,8 +338,10 @@ export class RequestPanelManager {
         } else {
             vscode.window.showInformationMessage('Environment cleared');
         }
+        const envs = await this.environmentService.load();
+        const merged = this.currentValuesService.mergeIntoEnvironments(envs);
         this._broadcastToPanels('environments-list', {
-            environments: await this.environmentService.load(),
+            environments: merged,
             selectedEnvironmentId: environmentId
         });
     }
@@ -379,8 +389,10 @@ export class RequestPanelManager {
     }
 
     public async broadcastEnvironments() {
+        const environments = await this.environmentService.load();
+        const merged = this.currentValuesService.mergeIntoEnvironments(environments);
         this._broadcastToPanels('environments-list', {
-            environments: await this.environmentService.load(),
+            environments: merged,
             selectedEnvironmentId: await this.settingsService.getSelectedEnvironmentId()
         });
     }

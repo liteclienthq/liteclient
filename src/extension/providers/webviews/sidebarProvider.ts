@@ -4,6 +4,7 @@ import { HistoryService } from '../../services/historyService';
 import { CollectionService } from '../../services/collectionService';
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
+import { CurrentValuesService } from '../../services/currentValuesService';
 import type { SidebarToExtensionMessage } from '../../../shared/messages';
 import type { EnvironmentVariable } from '../../../shared/models';
 import { generateId } from '../../utils/idUtils';
@@ -20,7 +21,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         private readonly _historyService: HistoryService,
         private readonly _collectionService: CollectionService,
         private readonly _environmentService: EnvironmentService,
-        private readonly _settingsService: SettingsService
+        private readonly _settingsService: SettingsService,
+        private readonly _currentValuesService: CurrentValuesService
     ) {
         this._initMessageHandlers();
     }
@@ -43,7 +45,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             'env-action': (data) => this._handleEnvAction(data),
             'env-variable-action': (data) => this._handleEnvVariableAction(data),
             'set-environment': (data) => this._handleSetEnvironment(data),
-        };
+            'env-current-value': (data) => this._handleEnvCurrentValue(data),
+            'open-environment-manager': (data) => vscode.commands.executeCommand('liteclient.openEnvironmentManager', { environmentId: data.environmentId }),
+            };
     }
 
     public resolveWebviewView(
@@ -174,14 +178,20 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             case 'delete':
                 vscode.commands.executeCommand('liteclient.deleteEnvironment', { env: { id: data.id } });
                 break;
-            case 'rename':
+            case 'rename': {
                 const envs = await this._environmentService.load();
                 const env = envs.find(e => e.id === data.id);
                 if (env) {
                     vscode.commands.executeCommand('liteclient.renameEnvironment', { env });
                 }
                 break;
-            case 'update-vars':
+            }
+            case 'duplicate':
+                if (data.id) {
+                    vscode.commands.executeCommand('liteclient.duplicateEnvironment', { environmentId: data.id });
+                }
+                break;
+            case 'update-vars': {
                 const allEnvs = await this._environmentService.load();
                 const targetEnv = allEnvs.find(e => e.id === data.id);
                 if (targetEnv && data.variables) {
@@ -192,6 +202,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                     this.refreshEnvironments();
                 }
                 break;
+            }
         }
     }
 
@@ -242,6 +253,28 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this.refreshEnvironments();
     }
 
+    private async _handleEnvCurrentValue(data: { action: string; envId: string; varId: string; value?: string }) {
+        if (data.action === 'set') {
+            const envs = await this._environmentService.load();
+            const env = envs.find(e => e.id === data.envId);
+            const variable = env?.variables.find(v => v.id === data.varId);
+            const isSecret = variable?.type === 'secret';
+
+            const value = await vscode.window.showInputBox({
+                prompt: `Current value for ${variable?.name ?? 'variable'}`,
+                value: this._currentValuesService.getCurrentValue(data.envId, data.varId) ?? variable?.initialValue ?? '',
+                password: isSecret
+            });
+            if (value !== undefined) {
+                await this._currentValuesService.setCurrentValue(data.envId, data.varId, value);
+                this.refreshEnvironments();
+            }
+        } else if (data.action === 'clear') {
+            await this._currentValuesService.clearCurrentValue(data.envId, data.varId);
+            this.refreshEnvironments();
+        }
+    }
+
     // --- Refresh Methods ---
 
     public async refreshHistory() {
@@ -261,10 +294,11 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     public async refreshEnvironments() {
         if (this._view) {
             const environments = await this._environmentService.load();
+            const merged = this._currentValuesService.mergeIntoEnvironments(environments);
             const selectedEnvironmentId = await this._settingsService.getSelectedEnvironmentId();
             this._view.webview.postMessage({
                 type: 'environments-list',
-                environments,
+                environments: merged,
                 selectedEnvironmentId
             });
         }

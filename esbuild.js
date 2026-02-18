@@ -38,7 +38,8 @@ const webviewConfig = {
   entryPoints: {
     request: 'src/webview/request/index.ts',
     sidebar: 'src/webview/sidebar/index.ts',
-    'cookie-manager': 'src/webview/cookie-manager/index.ts'
+    'cookie-manager': 'src/webview/cookie-manager/index.ts',
+    'environment-manager': 'src/webview/environment-manager/index.ts'
   },
   bundle: true,
   outdir: 'dist/webview',

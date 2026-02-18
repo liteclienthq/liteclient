@@ -6,6 +6,7 @@ export interface EnvironmentVariable {
   initialValue: string;
   type: VariableType;
   enabled: boolean;
+  currentValue?: string;
 }
 
 export interface Environment {

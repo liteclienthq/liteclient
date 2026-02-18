@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Environment Manager**: Full webview panel for managing environments and variables in a table UI (similar to Postman). Open via command palette (`LiteClient: Manage Environments`) or the "Manage" action on any environment in the sidebar. Supports inline editing of variable name, initial value, current value, type (default/secret), and enabled state.
+- **Current Value Overrides**: Set workspace-local "current values" for environment variables that override initial values during request execution. Current values are stored in VS Code's `workspaceState` and never committed to Git.
+- **Secret Variable Masking**: Variables with type `secret` display masked values (`••••••••`) in the sidebar, URL bar autocomplete, and request metadata views. Secret fields use password inputs in the Environment Manager.
+- **Current Value Actions**: Context menu on variables includes "Set Current Value" and "Clear Current Value" options. Secret variables use a password input when setting current values.
+
 ### Changed
 - **Environment Variables Data Model**: Variables now use structured `EnvironmentVariable` objects with `id`, `name`, `initialValue`, `type` (default/secret), and `enabled` fields instead of plain key-value pairs
-- **Variable Resolution**: New centralized `variableResolver` with layered resolution order: Globals → Collection → Environment
+- **Variable Resolution**: New centralized `variableResolver` with layered resolution order: Globals → Collection → Environment. Resolution precedence: overrides → currentValue → initialValue.
 - **Auto-Migration**: Existing environments using the legacy format are automatically migrated on load
 - **Type Consolidation**: Single `Environment` interface in `models.ts`, removing duplicates from `messages.ts` and `variableSubstitution.ts`
 - **Documentation**: Reorganized CONTRIBUTING.md, MAINTAINING.md, and AGENTS.md with clear separation of concerns

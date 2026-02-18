@@ -19,20 +19,6 @@ export class LcEnvironmentList extends LcBaseElement {
       padding-top: 4px;
     }
 
-    .env-container {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .vars-container {
-      display: none;
-    }
-
-    .vars-container.open {
-      display: flex;
-      flex-direction: column;
-    }
-
     .empty-state {
       display: flex;
       flex-direction: column;
@@ -52,71 +38,39 @@ export class LcEnvironmentList extends LcBaseElement {
   @property() filterText = '';
   @property({ type: String }) selectedEnvironmentId: string | null = null;
 
-  @state() private openItems = new Set<string>();
   @state() private selectedId: string | null = null;
 
   private environmentActions: SidebarItemAction[] = [
-    { id: 'add-variable', label: 'Add Variable' },
     { id: 'rename', label: 'Rename' },
+    { id: 'duplicate', label: 'Duplicate' },
     { id: 'delete', label: 'Delete', danger: true }
   ];
 
   private globalsActions: SidebarItemAction[] = [
-    { id: 'add-variable', label: 'Add Variable' }
+    { id: 'duplicate', label: 'Duplicate' }
   ];
-
-  private variableActions: SidebarItemAction[] = [
-    { id: 'edit-variable', label: 'Edit' },
-    { id: 'delete-variable', label: 'Delete', danger: true }
-  ];
-
-  private toggleEnvVariables(id: string) {
-    const newOpen = new Set(this.openItems);
-    if (newOpen.has(id)) {
-      newOpen.delete(id);
-    } else {
-      newOpen.add(id);
-    }
-    this.openItems = newOpen;
-  }
 
   private selectEnvironment(id: string) {
     this.selectedId = id;
-    this.toggleEnvVariables(id);
+    this.dispatchEvent(new CustomEvent('open-environment-manager', {
+      detail: { environmentId: id },
+      bubbles: true,
+      composed: true
+    }));
   }
 
   private handleEnvAction(e: CustomEvent, envId: string) {
     const { actionId } = e.detail;
 
-    if (actionId === 'add-variable') {
-      this.dispatchEvent(new CustomEvent('env-variable-action', {
-        detail: { action: 'add-variable', envId },
-        bubbles: true,
-        composed: true
-      }));
-    } else {
-      this.dispatchEvent(new CustomEvent('env-action', {
-        detail: { action: actionId, id: envId },
-        bubbles: true,
-        composed: true
-      }));
-    }
-  }
-
-  private handleVariableAction(e: CustomEvent, envId: string, varName: string) {
-    const { actionId } = e.detail;
-    this.dispatchEvent(new CustomEvent('env-variable-action', {
-      detail: { action: actionId, envId, varName },
+    this.dispatchEvent(new CustomEvent('env-action', {
+      detail: { action: actionId, id: envId },
       bubbles: true,
       composed: true
     }));
   }
 
   private matchesFilter(env: Environment, search: string): boolean {
-    if (env.name.toLowerCase().includes(search)) { return true; }
-    return env.variables.some(v =>
-      v.name.toLowerCase().includes(search) || v.initialValue.toLowerCase().includes(search)
-    );
+    return env.name.toLowerCase().includes(search);
   }
 
   override willUpdate(changedProperties: Map<string, any>) {
@@ -147,43 +101,20 @@ export class LcEnvironmentList extends LcBaseElement {
   }
 
   private renderEnvironment(env: Environment, depth: number): TemplateResult {
-    const isOpen = this.openItems.has(env.id) || !!this.filterText;
     const isSelected = this.selectedId === env.id;
     const isGlobals = env.id === 'globals';
 
     return html`
-      <div class="env-container">
-        <lc-sidebar-item
-          .id=${env.id}
-          .name=${env.name}
-          type="environment"
-          .active=${isSelected}
-          .expanded=${isOpen}
-          .depth=${depth}
-          .actions=${isGlobals ? this.globalsActions : this.environmentActions}
-          @select=${() => this.selectEnvironment(env.id)}
-          @toggle=${() => this.toggleEnvVariables(env.id)}
-          @action=${(e: CustomEvent) => this.handleEnvAction(e, env.id)}
-        ></lc-sidebar-item>
-        
-        <div class="vars-container ${isOpen ? 'open' : ''}">
-          ${env.variables.length === 0 ?
-        html`<div class="empty-state" style="padding-left: ${(depth + 2) * 12}px">No variables</div>` :
-        env.variables.map(v => html`
-              <lc-sidebar-item
-                .id="${env.id}-${v.name}"
-                .name=${v.name}
-                .details=${v.initialValue}
-                type="variable"
-                .depth=${depth + 1}
-                .actions=${this.variableActions}
-                @select=${() => this.handleVariableAction(new CustomEvent('action', { detail: { actionId: 'edit-variable' } }), env.id, v.name)}
-                @action=${(e: CustomEvent) => this.handleVariableAction(e, env.id, v.name)}
-              ></lc-sidebar-item>
-            `)
-      }
-        </div>
-      </div>
+      <lc-sidebar-item
+        .id=${env.id}
+        .name=${env.name}
+        type="environment"
+        .active=${isSelected}
+        .depth=${depth}
+        .actions=${isGlobals ? this.globalsActions : this.environmentActions}
+        @select=${() => this.selectEnvironment(env.id)}
+        @action=${(e: CustomEvent) => this.handleEnvAction(e, env.id)}
+      ></lc-sidebar-item>
     `;
   }
 }

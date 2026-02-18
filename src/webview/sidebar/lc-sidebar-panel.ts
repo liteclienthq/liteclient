@@ -173,19 +173,12 @@ export class LcSidebarPanel extends LcBaseElement {
     postMessage({ type: 'env-action', action, id });
   }
 
-  private handleEnvVariableAction(e: CustomEvent) {
-    const { action, envId, varName } = e.detail;
-    // Handle variable-specific actions
-    if (action === 'add-variable') {
-      // For adding variables, we'll need to prompt for key and value
-      // This will be handled in the extension
-      postMessage({ type: 'env-variable-action', action, envId, varName });
-    } else if (action === 'edit-variable') {
-      postMessage({ type: 'env-variable-action', action, envId, varName });
-    } else if (action === 'delete-variable') {
-      postMessage({ type: 'env-variable-action', action, envId, varName });
-    }
+  private handleOpenEnvironmentManager(e: CustomEvent) {
+    const { environmentId } = e.detail;
+    postMessage({ type: 'open-environment-manager', environmentId } as any);
   }
+
+
 
 
 
@@ -233,7 +226,7 @@ export class LcSidebarPanel extends LcBaseElement {
           <lc-env-switcher
             .filterText=${this.filterText}
             @env-action=${this.handleEnvAction}
-            @env-variable-action=${this.handleEnvVariableAction}
+            @open-environment-manager=${this.handleOpenEnvironmentManager}
           ></lc-env-switcher>
         </div>
       </div>

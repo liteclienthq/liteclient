@@ -34,6 +34,8 @@ export type {
     CollectionItemActionMessage,
     EnvActionMessage,
     EnvVariableActionMessage,
+    EnvCurrentValueMessage,
+    OpenEnvironmentManagerMessage,
     SetEnvironmentMessage,
     SidebarToExtensionMessage,
     // Webview → Extension (Request Panel)

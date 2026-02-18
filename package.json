@@ -176,6 +176,11 @@
         "category": "LiteClient"
       },
       {
+        "command": "liteclient.openEnvironmentManager",
+        "title": "Manage Environments",
+        "category": "LiteClient"
+      },
+      {
         "command": "liteclient.clearCookies",
         "title": "Clear Cookie Jar",
         "category": "LiteClient"

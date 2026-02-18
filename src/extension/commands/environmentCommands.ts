@@ -99,6 +99,27 @@ export function registerEnvironmentCommands(
             }
         }),
 
+        vscode.commands.registerCommand('liteclient.duplicateEnvironment', async (node: any) => {
+            const envs = await environmentService.load();
+            const source = envs.find(e => e.id === node.environmentId);
+            if (!source) { return; }
+
+            const copyName = `${source.name} (Copy)`;
+            await environmentService.addEnvironment(copyName);
+            const updatedEnvs = await environmentService.load();
+            const newEnv = updatedEnvs.find(e => e.name === copyName);
+            if (newEnv) {
+                newEnv.variables = source.variables.map(v => ({
+                    ...v,
+                    id: generateId()
+                }));
+                await environmentService.updateEnvironment(newEnv);
+                sidebarProvider.refreshEnvironments();
+                requestPanelManager.broadcastEnvironments();
+                vscode.commands.executeCommand('liteclient.openEnvironmentManager', { environmentId: newEnv.id });
+            }
+        }),
+
         vscode.commands.registerCommand('liteclient.deleteVariable', async (node: any) => {
             const confirmation = await vscode.window.showInformationMessage(
                 `Delete variable "${node.variableName}"?`,

@@ -5,9 +5,11 @@ import { CollectionService } from './services/collectionService';
 import { EnvironmentService } from './services/environmentService';
 import { HistoryService } from './services/historyService';
 import { CookieJarService } from './services/cookieJarService';
+import { CurrentValuesService } from './services/currentValuesService';
 import { SidebarProvider } from './providers/webviews/sidebarProvider';
 import { RequestPanelManager } from './providers/webviews/requestPanelManager';
 import { CookieManagerProvider } from './providers/webviews/cookieManagerProvider';
+import { EnvironmentManagerProvider } from './providers/webviews/environmentManagerProvider';
 import { registerAllCommands } from './commands';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -18,13 +20,15 @@ export async function activate(context: vscode.ExtensionContext) {
 	const historyService = new HistoryService(storage);
 	const cookieJarService = new CookieJarService(storage);
 	await cookieJarService.initialize();
+	const currentValuesService = new CurrentValuesService(context);
 
 	const sidebarProvider = new SidebarProvider(
 		context.extensionUri,
 		historyService,
 		collectionService,
 		environmentService,
-		settingsService
+		settingsService,
+		currentValuesService
 	);
 
 	vscode.window.registerWebviewViewProvider(SidebarProvider.viewType, sidebarProvider);
@@ -36,11 +40,23 @@ export async function activate(context: vscode.ExtensionContext) {
 		environmentService,
 		settingsService,
 		cookieJarService,
+		currentValuesService,
 		() => sidebarProvider.refreshHistory(),
 		() => sidebarProvider.refreshCollections()
 	);
 
 	const cookieManagerProvider = new CookieManagerProvider(context, cookieJarService);
+
+	const environmentManagerProvider = new EnvironmentManagerProvider(
+		context,
+		environmentService,
+		settingsService,
+		currentValuesService,
+		async () => {
+			await sidebarProvider.refreshEnvironments();
+			await requestPanelManager.broadcastEnvironments();
+		}
+	);
 
 	const oauth2TokenService = requestPanelManager.getOAuth2TokenService();
 	context.subscriptions.push(
@@ -106,9 +122,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		environmentService,
 		settingsService,
 		cookieJarService,
+		currentValuesService,
 		sidebarProvider,
 		requestPanelManager,
-		cookieManagerProvider
+		cookieManagerProvider,
+		environmentManagerProvider
 	});
 }
 

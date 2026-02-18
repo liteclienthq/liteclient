@@ -21,7 +21,7 @@ export function resolveVariables(input: ResolverInput): Record<string, string> {
             if (!variable.enabled) {
                 continue;
             }
-            result[variable.name] = input.overrides?.[variable.name] ?? variable.initialValue;
+            result[variable.name] = input.overrides?.[variable.name] ?? variable.currentValue ?? variable.initialValue;
         }
     }
 

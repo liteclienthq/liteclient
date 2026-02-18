@@ -44,7 +44,13 @@ export class EnvironmentService {
   }
 
   async save(envs: Environment[]): Promise<void> {
-    await this.storage.writeJson(EnvironmentService.ENVIRONMENTS_FILE, envs);
+    const sanitized = envs.map(env => ({
+      ...env,
+      variables: env.variables.map(({ id, name, initialValue, type, enabled }) => ({
+        id, name, initialValue, type, enabled
+      }))
+    }));
+    await this.storage.writeJson(EnvironmentService.ENVIRONMENTS_FILE, sanitized);
   }
 
   async addEnvironment(name: string): Promise<void> {

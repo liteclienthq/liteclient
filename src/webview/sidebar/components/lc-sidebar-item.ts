@@ -446,7 +446,7 @@ export class LcSidebarItem extends LcBaseElement {
   }
 
   override render() {
-    const showChevron = ['collection', 'folder', 'environment'].includes(this.type);
+    const showChevron = ['collection', 'folder'].includes(this.type);
     const dropClass = this.dropPosition ? `drop-${this.dropPosition}` : '';
 
     return html`

@@ -89,7 +89,8 @@ export class LcRequestMeta extends LcBaseElement {
     if (globals?.variables) {
       for (const v of globals.variables) {
         if (v.enabled) {
-          items.push({ name: v.name, value: v.initialValue, type: 'global' });
+          const displayValue = v.type === 'secret' ? '••••••••' : (v.currentValue ?? v.initialValue);
+          items.push({ name: v.name, value: displayValue, type: 'global' });
         }
       }
     }
@@ -99,7 +100,8 @@ export class LcRequestMeta extends LcBaseElement {
       if (selectedEnv?.variables) {
         for (const v of selectedEnv.variables) {
           if (v.enabled) {
-            items.push({ name: v.name, value: v.initialValue, type: 'environment' });
+            const displayValue = v.type === 'secret' ? '••••••••' : (v.currentValue ?? v.initialValue);
+            items.push({ name: v.name, value: displayValue, type: 'environment' });
           }
         }
       }
