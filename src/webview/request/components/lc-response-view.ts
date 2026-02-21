@@ -1,11 +1,12 @@
 /**
  * Response View Component
- * Displays formatted response body with Monaco Editor syntax highlighting
+ * Displays formatted response body with syntax highlighting
  */
 
 import { html, css } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
+import { html_beautify } from 'js-beautify';
 import '../../shared/lc-code-editor.js';
 
 @customElement('lc-response-view')
@@ -13,6 +14,8 @@ export class LcResponseView extends LcBaseElement {
   @property({ type: String }) body = '';
   @property({ type: String }) contentType = 'text/plain';
   @property({ type: Boolean }) loading = false;
+
+  @state() private formattedBody = '';
 
   static styles = css`
     :host {
@@ -84,7 +87,7 @@ export class LcResponseView extends LcBaseElement {
       background: var(--vscode-button-secondaryHoverBackground);
     }
 
-    .copy-btn-floating {
+    .toolbar-floating {
       position: absolute;
       top: 8px;
       right: 16px;
@@ -92,19 +95,23 @@ export class LcResponseView extends LcBaseElement {
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    .toolbar-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
       padding: 4px 8px;
       background: var(--vscode-button-secondaryBackground);
       color: var(--vscode-button-secondaryForeground);
-      border: 1px solid transparent;
+      border: 1px solid var(--vscode-editorWidget-border, var(--vscode-contrastBorder, transparent));
       border-radius: 2px;
       font-size: 11px;
       cursor: pointer;
-      opacity: 0.8;
-      transition: opacity 0.2s;
+      transition: background 0.2s;
     }
 
-    .copy-btn-floating:hover {
-      opacity: 1;
+    .toolbar-btn:hover {
       background: var(--vscode-button-secondaryHoverBackground);
     }
   `;
@@ -127,14 +134,49 @@ export class LcResponseView extends LcBaseElement {
     return 'plaintext';
   }
 
+  updated(changedProperties: Map<string | number | symbol, unknown>) {
+    super.updated(changedProperties);
+    if (changedProperties.has('body') || changedProperties.has('contentType')) {
+      this.formattedBody = this.formatBody(this.body);
+    }
+  }
+
+  private formatBody(text: string): string {
+    if (!text) { return text; }
+
+    const lang = this.language;
+
+    if (lang === 'json') {
+      try {
+        return JSON.stringify(JSON.parse(text), null, 2);
+      } catch {
+        return text;
+      }
+    }
+
+    if (lang === 'html') {
+      try {
+        return html_beautify(text, { indent_size: 2, wrap_line_length: 0 });
+      } catch {
+        return text;
+      }
+    }
+
+    return text;
+  }
+
   private handleCancel() {
     this.dispatchEvent(new CustomEvent('cancel-request', { bubbles: true, composed: true }));
   }
 
+  private formatResponse() {
+    this.formattedBody = this.formatBody(this.body);
+  }
+
   private async copyBody() {
     try {
-      await navigator.clipboard.writeText(this.body);
-      const btn = this.shadowRoot?.querySelector('.copy-btn-floating') as HTMLButtonElement;
+      await navigator.clipboard.writeText(this.formattedBody || this.body);
+      const btn = this.shadowRoot?.querySelector('.copy-btn') as HTMLButtonElement;
       if (btn) {
         const originalText = btn.textContent || 'Copy';
         btn.textContent = 'Copied!';
@@ -142,7 +184,7 @@ export class LcResponseView extends LcBaseElement {
           btn.textContent = originalText;
         }, 2000);
       }
-    } catch (err) {
+    } catch {
       // Silently fail for copy operations
     }
   }
@@ -159,12 +201,17 @@ export class LcResponseView extends LcBaseElement {
         ` : ''}
 
         ${this.body ? html`
-          <button class="copy-btn-floating" @click=${this.copyBody} title="Copy Response Body">
-            Copy
-          </button>
+          <div class="toolbar-floating">
+            <button class="toolbar-btn" @click=${this.formatResponse} title="Format Response Body">
+              Format
+            </button>
+            <button class="toolbar-btn copy-btn" @click=${this.copyBody} title="Copy Response Body">
+              Copy
+            </button>
+          </div>
 
           <lc-code-editor
-            .value=${this.body}
+            .value=${this.formattedBody || this.body}
             .language=${this.language}
             .readOnly=${true}
             .wordWrap=${true}

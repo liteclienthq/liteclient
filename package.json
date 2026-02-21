@@ -276,7 +276,10 @@
       "properties": {
         "liteclient.storageScope": {
           "type": "string",
-          "enum": ["global", "workspace"],
+          "enum": [
+            "global",
+            "workspace"
+          ],
           "default": "global",
           "description": "Where to store collections, environments, and history. 'global' stores in VS Code's global storage (private, not in repo). 'workspace' stores in a .liteclient/ folder in your workspace root (shareable via Git)."
         }
@@ -297,6 +300,7 @@
   },
   "devDependencies": {
     "@types/form-data": "^2.2.1",
+    "@types/js-beautify": "^1.14.3",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "@types/tough-cookie": "^4.0.5",
@@ -317,6 +321,7 @@
     "@codemirror/theme-one-dark": "^6.1.3",
     "codemirror": "^6.0.2",
     "form-data": "^4.0.5",
+    "js-beautify": "^1.15.4",
     "lit": "^3.3.2",
     "tough-cookie": "^6.0.0"
   }
