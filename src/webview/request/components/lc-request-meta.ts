@@ -6,6 +6,7 @@ import type { Tab } from './lc-tabs.js';
 import './lc-key-value-editor.js';
 import './lc-auth-panel.js';
 import './lc-body-panel.js';
+import './lc-scripts-panel.js';
 import type { KeyValueItem } from './lc-key-value-editor.js';
 import type { AuthConfig, RequestBody } from '../../shared/messaging.js';
 import type { VariableItem } from './lc-variable-autocomplete.js';
@@ -77,6 +78,8 @@ export class LcRequestMeta extends LcBaseElement {
   @property({ type: Array }) headers: KeyValueItem[] = [];
   @property({ type: Object }) body: RequestBody = { mode: 'none' };
   @property({ type: Object }) auth: AuthConfig = { type: 'none' };
+  @property({ type: String }) preRequestScript = '';
+  @property({ type: String }) postResponseScript = '';
   @property({ type: Array }) environments: Environment[] = [];
   @property({ type: String }) selectedEnvironmentId: string | null = null;
 
@@ -122,12 +125,14 @@ export class LcRequestMeta extends LcBaseElement {
     const activeParamsCount = this.params.filter(p => p.active && p.key).length;
     const activeHeadersCount = this.headers.filter(h => h.active && h.key).length;
     const hasBody = this.body.mode !== 'none';
+    const hasScripts = !!(this.preRequestScript || this.postResponseScript);
 
     return [
       { id: 'params', label: 'Params', indicator: activeParamsCount || undefined },
       { id: 'auth', label: 'Auth' },
       { id: 'headers', label: 'Headers', indicator: activeHeadersCount || undefined },
-      { id: 'body', label: 'Body', indicator: hasBody ? 'dot' : undefined }
+      { id: 'body', label: 'Body', indicator: hasBody ? 'dot' : undefined },
+      { id: 'scripts', label: 'Scripts', indicator: hasScripts ? 'dot' : undefined }
     ];
   }
 
@@ -148,6 +153,12 @@ export class LcRequestMeta extends LcBaseElement {
   private handleHeadersChange(e: CustomEvent) {
     this.headers = e.detail.items;
     this.dispatchEvent(new CustomEvent('headers-change', { detail: { items: this.headers } }));
+  }
+
+  private handleScriptsChange(e: CustomEvent) {
+    this.preRequestScript = e.detail.preRequestScript;
+    this.postResponseScript = e.detail.postResponseScript;
+    this.dispatchEvent(new CustomEvent('scripts-change', { detail: e.detail }));
   }
 
   render() {
@@ -195,6 +206,14 @@ export class LcRequestMeta extends LcBaseElement {
              .variables=${this.variableItems}
              @body-change=${this.handleBodyChange}
            ></lc-body-panel>
+        </div>
+
+        <div class="tab-content ${this.activeTab === 'scripts' ? 'active' : ''}">
+          <lc-scripts-panel
+            .preRequestScript=${this.preRequestScript}
+            .postResponseScript=${this.postResponseScript}
+            @scripts-change=${this.handleScriptsChange}
+          ></lc-scripts-panel>
         </div>
       </div>
     `;

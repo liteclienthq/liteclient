@@ -7,14 +7,16 @@ import { AuthConfig, RequestBody, EnvironmentVariable } from '../../shared/model
 export interface RequestItem {
   id: string;
   name: string;
-  description?: string; // New: Support for Postman description
+  description?: string;
   type: 'request';
   method: string;
   url: string;
   headers: Record<string, string>;
-  params?: Record<string, string>; // New: Support for query params map
+  params?: Record<string, string>;
   body: RequestBody;
   auth?: AuthConfig;
+  preRequestScript?: string;
+  postResponseScript?: string;
 }
 
 export interface FolderItem {

@@ -5,10 +5,10 @@
  * Do NOT add any runtime code here — only type definitions.
  */
 
-import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies, OAuth2AuthConfig, Environment, EnvironmentVariable } from './models';
+import { AuthConfig, RequestBody, RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies, OAuth2AuthConfig, Environment, EnvironmentVariable, ScriptTestResult, ScriptConsoleEntry } from './models';
 
 // Re-export for convenience
-export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies, EnvironmentVariable };
+export type { RequestExecution, RequestExecutionSource, KeyValueRow, FormDataRow, ParsedCookie, DomainCookies, EnvironmentVariable, ScriptTestResult, ScriptConsoleEntry };
 
 export type { Environment };
 
@@ -24,6 +24,9 @@ export interface ResponseMessage {
     cookies: ParsedCookie[];
     time?: number;
     isError: boolean;
+    testResults?: ScriptTestResult[];
+    consoleLogs?: ScriptConsoleEntry[];
+    scriptError?: string;
 }
 
 export interface LoadRequestMessage {
@@ -39,6 +42,8 @@ export interface LoadRequestMessage {
         source: 'history' | 'collection' | 'new';
         collectionId?: string;
         collectionPath?: string[];
+        preRequestScript?: string;
+        postResponseScript?: string;
     };
 }
 
@@ -213,6 +218,8 @@ export interface SendRequestMessage {
     name?: string;
     auth?: AuthConfig;
     environmentId?: string | null;
+    preRequestScript?: string;
+    postResponseScript?: string;
 }
 
 export interface SaveRequestMessage {
@@ -225,6 +232,8 @@ export interface SaveRequestMessage {
         headers: Record<string, string>;
         body: RequestBody;
         auth?: AuthConfig;
+        preRequestScript?: string;
+        postResponseScript?: string;
     };
 }
 

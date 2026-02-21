@@ -130,6 +130,8 @@ export class PostmanImporter implements Importer {
             }
         }
 
+        const scripts = this.parseScripts(item.event);
+
         return {
             id: this.generateId(),
             name: item.name,
@@ -140,7 +142,9 @@ export class PostmanImporter implements Importer {
             headers: headers,
             params: Object.keys(params).length > 0 ? params : undefined,
             body: body,
-            auth: this.mapAuth(request.auth)
+            auth: this.mapAuth(request.auth),
+            preRequestScript: scripts.preRequestScript,
+            postResponseScript: scripts.postResponseScript
         };
     }
 
@@ -203,6 +207,30 @@ export class PostmanImporter implements Importer {
         }
 
         return undefined;
+    }
+
+    private parseScripts(events: any[]): { preRequestScript?: string; postResponseScript?: string } {
+        if (!Array.isArray(events)) {
+            return {};
+        }
+
+        let preRequestScript: string | undefined;
+        let postResponseScript: string | undefined;
+
+        for (const event of events) {
+            const scriptLines = event?.script?.exec;
+            if (!Array.isArray(scriptLines) || scriptLines.length === 0) {
+                continue;
+            }
+            const script = scriptLines.join('\n');
+            if (event.listen === 'prerequest') {
+                preRequestScript = script;
+            } else if (event.listen === 'test') {
+                postResponseScript = script;
+            }
+        }
+
+        return { preRequestScript, postResponseScript };
     }
 
     private generateId(): string {

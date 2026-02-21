@@ -77,6 +77,33 @@ export interface RequestSnapshot {
     headers: Record<string, string>;
     body: RequestBody;
     auth?: AuthConfig;
+    preRequestScript?: string;
+    postResponseScript?: string;
+}
+
+// ============================================================================
+// Script Execution Types
+// ============================================================================
+
+export interface ScriptTestResult {
+    name: string;
+    passed: boolean;
+    error?: string;
+}
+
+export interface ScriptConsoleEntry {
+    level: 'log' | 'warn' | 'error' | 'info';
+    args: string[];
+}
+
+export interface ScriptResult {
+    testResults: ScriptTestResult[];
+    consoleLogs: ScriptConsoleEntry[];
+    error?: string;
+    variableUpdates?: {
+        environment: Record<string, string>;
+        globals: Record<string, string>;
+    };
 }
 
 export interface RequestExecution {

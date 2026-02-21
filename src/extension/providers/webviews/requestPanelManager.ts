@@ -8,7 +8,9 @@ import { SettingsService } from '../../services/settingsService';
 import { CookieJarService } from '../../services/cookieJarService';
 import { CurrentValuesService } from '../../services/currentValuesService';
 import { OAuth2TokenService } from '../../services/oauth2TokenService';
+import { ScriptRunner } from '../../services/scriptRunner';
 import type { RequestPanelToExtensionMessage, RequestExecutionSource, Environment } from '../../../shared/messages';
+import type { ScriptResult, ScriptTestResult, ScriptConsoleEntry } from '../../../shared/models';
 import { generateId } from '../../utils/idUtils';
 import { resolveVariables } from '../../utils/variableResolver';
 
@@ -37,6 +39,7 @@ export class RequestPanelManager {
     private activeRequests = new Map<vscode.WebviewPanel, ActiveRequest>();
     private messageHandlers: Record<string, MessageHandler> = {};
     private oauth2TokenService: OAuth2TokenService;
+    private scriptRunner: ScriptRunner;
 
     constructor(
         private context: vscode.ExtensionContext,
@@ -50,6 +53,7 @@ export class RequestPanelManager {
         private refreshCollections: () => void
     ) {
         this.oauth2TokenService = new OAuth2TokenService(context);
+        this.scriptRunner = new ScriptRunner();
         this._initMessageHandlers();
     }
 
@@ -212,6 +216,58 @@ export class RequestPanelManager {
             environment: mergedSelectedEnv,
         });
 
+        // Build separate variable maps for script context
+        const globalVariables: Record<string, string> = {};
+        if (mergedGlobals) {
+            for (const v of mergedGlobals.variables) {
+                if (v.enabled) {
+                    globalVariables[v.name] = v.currentValue ?? v.initialValue;
+                }
+            }
+        }
+
+        const envOnlyVariables: Record<string, string> = {};
+        if (mergedSelectedEnv) {
+            for (const v of mergedSelectedEnv.variables) {
+                if (v.enabled) {
+                    envOnlyVariables[v.name] = v.currentValue ?? v.initialValue;
+                }
+            }
+        }
+
+        const allTestResults: ScriptTestResult[] = [];
+        const allConsoleLogs: ScriptConsoleEntry[] = [];
+        let scriptError: string | undefined;
+
+        // Run pre-request script
+        if (message.preRequestScript) {
+            const preResult = this.scriptRunner.runPreRequestScript(message.preRequestScript, {
+                request: {
+                    method: message.method,
+                    url: message.url,
+                    headers: message.headers || {},
+                    body: message.body,
+                },
+                environmentVariables: envOnlyVariables,
+                globalVariables,
+            });
+
+            allTestResults.push(...preResult.testResults);
+            allConsoleLogs.push(...preResult.consoleLogs);
+            if (preResult.error) {
+                scriptError = preResult.error;
+            }
+
+            if (preResult.variableUpdates) {
+                for (const [key, value] of Object.entries(preResult.variableUpdates.environment)) {
+                    environmentVariables[key] = value;
+                }
+                for (const [key, value] of Object.entries(preResult.variableUpdates.globals)) {
+                    environmentVariables[key] = value;
+                }
+            }
+        }
+
         // Get cookies from cookie jar for this request
         const cookieString = await this.cookieJarService.getCookieString(message.url);
 
@@ -252,6 +308,34 @@ export class RequestPanelManager {
             await this.cookieJarService.setCookiesFromResponse(message.url, setCookieHeaders);
         }
 
+        // Run post-response script
+        if (message.postResponseScript) {
+            const statusCode = parseInt(response.status, 10) || 0;
+
+            const postResult = this.scriptRunner.runPostResponseScript(message.postResponseScript, {
+                request: {
+                    method: message.method,
+                    url: message.url,
+                    headers: message.headers || {},
+                    body: message.body,
+                },
+                response: {
+                    code: statusCode,
+                    status: response.status,
+                    headers: response.headers,
+                    body: response.body,
+                },
+                environmentVariables: envOnlyVariables,
+                globalVariables,
+            });
+
+            allTestResults.push(...postResult.testResults);
+            allConsoleLogs.push(...postResult.consoleLogs);
+            if (postResult.error) {
+                scriptError = scriptError ? `${scriptError}; ${postResult.error}` : postResult.error;
+            }
+        }
+
         if (response.errorType !== 'cancelled') {
             let historyName = message.name;
             if (!historyName || historyName === 'New Request') {
@@ -272,7 +356,9 @@ export class RequestPanelManager {
                     url: message.url,
                     headers: message.headers || {},
                     body: message.body || { mode: 'none' },
-                    auth: message.auth
+                    auth: message.auth,
+                    preRequestScript: message.preRequestScript,
+                    postResponseScript: message.postResponseScript,
                 },
                 executionSource,
                 response.status,
@@ -290,7 +376,10 @@ export class RequestPanelManager {
             headers: response.headers,
             cookies: parsedCookies,
             time: response.time,
-            isError: response.isError
+            isError: response.isError,
+            testResults: allTestResults,
+            consoleLogs: allConsoleLogs,
+            scriptError,
         });
     }
 

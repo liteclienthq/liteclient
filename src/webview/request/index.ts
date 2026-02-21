@@ -6,7 +6,7 @@
 import { html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../shared/base-element.js';
-import { onMessage, postMessage, type ExtensionMessage, type RequestBody, type AuthConfig } from '../shared/messaging.js';
+import { onMessage, postMessage, type ExtensionMessage, type RequestBody, type AuthConfig, type ScriptTestResult, type ScriptConsoleEntry } from '../shared/messaging.js';
 
 interface OriginalRequestState {
   method: string;
@@ -15,6 +15,8 @@ interface OriginalRequestState {
   body: RequestBody;
   auth: AuthConfig;
   params: Array<{ key: string; value: string; active: boolean }>;
+  preRequestScript: string;
+  postResponseScript: string;
 }
 
 // Import components
@@ -25,6 +27,7 @@ import './components/lc-headers-table.js';
 import './components/lc-cookies-table.js';
 import './components/lc-url-bar.js';
 import './components/lc-request-meta.js';
+import './components/lc-test-results.js';
 import type { ParsedCookie } from '../shared/messaging.js';
 
 
@@ -182,12 +185,18 @@ export class LcRequestPanel extends LcBaseElement {
 
 
 
+  @state() testResults: ScriptTestResult[] = [];
+  @state() consoleLogs: ScriptConsoleEntry[] = [];
+  @state() scriptError = '';
+
   @state() requestMethod = 'GET';
   @state() requestUrl = '';
   @state() requestParams: any[] = [];
   @state() requestHeaders: any[] = [];
   @state() requestBody: RequestBody = { mode: 'none' };
   @state() requestAuth: any = { type: 'none' };
+  @state() preRequestScript = '';
+  @state() postResponseScript = '';
   @state() collectionId: string | undefined;
   @state() requestName = 'New Request';
   @state() selectedEnvironmentId: string | null = null;
@@ -201,10 +210,12 @@ export class LcRequestPanel extends LcBaseElement {
   private get tabs(): Tab[] {
     const headerCount = Object.keys(this.responseHeaders).length;
     const cookieCount = this.responseCookies.length;
+    const testCount = this.testResults.length;
     return [
       { id: 'response', label: 'Response' },
       { id: 'headers', label: 'Headers', indicator: headerCount > 0 ? headerCount : undefined },
-      { id: 'cookies', label: 'Cookies', indicator: cookieCount > 0 ? cookieCount : undefined }
+      { id: 'cookies', label: 'Cookies', indicator: cookieCount > 0 ? cookieCount : undefined },
+      { id: 'tests', label: 'Tests', indicator: testCount > 0 ? testCount : undefined }
     ];
   }
 
@@ -287,6 +298,8 @@ export class LcRequestPanel extends LcBaseElement {
     }
 
     this.requestAuth = payload.auth || { type: 'none' };
+    this.preRequestScript = payload.preRequestScript || '';
+    this.postResponseScript = payload.postResponseScript || '';
     this.collectionId = payload.collectionId;
     this.requestName = payload.name || 'New Request';
 
@@ -319,7 +332,9 @@ export class LcRequestPanel extends LcBaseElement {
       headers: JSON.parse(JSON.stringify(this.requestHeaders)),
       body: JSON.parse(JSON.stringify(this.requestBody)),
       auth: JSON.parse(JSON.stringify(this.requestAuth)),
-      params: JSON.parse(JSON.stringify(this.requestParams))
+      params: JSON.parse(JSON.stringify(this.requestParams)),
+      preRequestScript: this.preRequestScript,
+      postResponseScript: this.postResponseScript
     };
   }
 
@@ -354,6 +369,9 @@ export class LcRequestPanel extends LcBaseElement {
     if (JSON.stringify(currentParams) !== JSON.stringify(originalParams)) {
       return true;
     }
+
+    if (this.preRequestScript !== this.originalRequest.preRequestScript) return true;
+    if (this.postResponseScript !== this.originalRequest.postResponseScript) return true;
 
     return false;
   }
@@ -404,7 +422,9 @@ export class LcRequestPanel extends LcBaseElement {
           url: this.requestUrl,
           headers: headersRecord,
           body: this.requestBody,
-          auth: this.requestAuth
+          auth: this.requestAuth,
+          preRequestScript: this.preRequestScript,
+          postResponseScript: this.postResponseScript
         }
       });
     } else {
@@ -419,13 +439,15 @@ export class LcRequestPanel extends LcBaseElement {
         body: this.requestBody,
         auth: this.requestAuth,
         name: this.requestName,
-        environmentId: selectedEnvironmentId // Add environment ID to the request
+        environmentId: selectedEnvironmentId,
+        preRequestScript: this.preRequestScript,
+        postResponseScript: this.postResponseScript
       });
     }
   }
 
 
-  private handleResponse(message: { body: string; status: string; headers: Record<string, string>; cookies: ParsedCookie[]; time?: number; isError: boolean }) {
+  private handleResponse(message: { body: string; status: string; headers: Record<string, string>; cookies: ParsedCookie[]; time?: number; isError: boolean; testResults?: ScriptTestResult[]; consoleLogs?: ScriptConsoleEntry[]; scriptError?: string }) {
     this.loading = false;
     this.responseBody = message.body;
     this.status = message.status;
@@ -433,6 +455,9 @@ export class LcRequestPanel extends LcBaseElement {
     this.responseCookies = message.cookies || [];
     this.isError = message.isError;
     this.time = message.time ? `${message.time} ms` : '-- ms';
+    this.testResults = message.testResults || [];
+    this.consoleLogs = message.consoleLogs || [];
+    this.scriptError = message.scriptError || '';
 
     // Find content type
     this.responseContentType = '';
@@ -479,6 +504,9 @@ export class LcRequestPanel extends LcBaseElement {
     this.responseBody = '';
     this.responseHeaders = {};
     this.responseCookies = [];
+    this.testResults = [];
+    this.consoleLogs = [];
+    this.scriptError = '';
 
     this.sendExtensionMessage('send-request');
   }
@@ -607,10 +635,13 @@ export class LcRequestPanel extends LcBaseElement {
               .auth=${this.requestAuth}
               .environments=${this.environments}
               .selectedEnvironmentId=${this.selectedEnvironmentId}
+              .preRequestScript=${this.preRequestScript}
+              .postResponseScript=${this.postResponseScript}
               @params-change=${this.handleParamsChange}
               @headers-change=${this.handleHeadersChange}
               @body-change=${(e: CustomEvent) => { this.requestBody = e.detail.body; this.updateDirtyState(); }}
               @auth-change=${(e: CustomEvent) => { this.requestAuth = e.detail.auth; this.updateDirtyState(); }}
+              @scripts-change=${(e: CustomEvent) => { this.preRequestScript = e.detail.preRequestScript; this.postResponseScript = e.detail.postResponseScript; this.updateDirtyState(); }}
             ></lc-request-meta>
           </div>
 
@@ -658,10 +689,17 @@ export class LcRequestPanel extends LcBaseElement {
                   .cookies=${this.responseCookies}
                 ></lc-cookies-table>
               </div>
+
+              <div class="tab-panel ${this.activeTab === 'tests' ? 'active' : ''}">
+                <lc-test-results
+                  .testResults=${this.testResults}
+                  .consoleLogs=${this.consoleLogs}
+                  .scriptError=${this.scriptError}
+                ></lc-test-results>
+              </div>
             </div>
           </div>
         </div>
-      </div>
     `;
   }
 

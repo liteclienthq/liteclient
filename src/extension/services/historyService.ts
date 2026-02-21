@@ -61,7 +61,7 @@ export class HistoryService {
   }
 
   createExecution(
-    request: { name?: string; method: string; url: string; headers: Record<string, string>; body: any; auth?: any },
+    request: { name?: string; method: string; url: string; headers: Record<string, string>; body: any; auth?: any; preRequestScript?: string; postResponseScript?: string },
     source: RequestExecutionSource,
     status: string,
     durationMs?: number
@@ -76,7 +76,9 @@ export class HistoryService {
         url: request.url,
         headers: request.headers,
         body: request.body,
-        auth: request.auth
+        auth: request.auth,
+        preRequestScript: request.preRequestScript,
+        postResponseScript: request.postResponseScript,
       },
       result: { status, durationMs }
     };

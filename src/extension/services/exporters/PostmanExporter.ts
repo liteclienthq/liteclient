@@ -30,11 +30,17 @@ export class PostmanExporter implements Exporter {
                 item: item.items.map(child => this.convertItem(child))
             };
         } else if (item.type === 'request') {
-            return {
-                name: item.name,
-                request: this.convertRequest(item as RequestItem),
+            const req = item as RequestItem;
+            const result: any = {
+                name: req.name,
+                request: this.convertRequest(req),
                 response: []
             };
+            const events = this.convertScripts(req);
+            if (events.length > 0) {
+                result.event = events;
+            }
+            return result;
         }
     }
 
@@ -174,6 +180,32 @@ export class PostmanExporter implements Exporter {
         } catch (e) {
             return { protocol: 'http', host: '', port: '', path: '' };
         }
+    }
+
+    private convertScripts(item: RequestItem): any[] {
+        const events: any[] = [];
+
+        if (item.preRequestScript) {
+            events.push({
+                listen: 'prerequest',
+                script: {
+                    exec: item.preRequestScript.split('\n'),
+                    type: 'text/javascript'
+                }
+            });
+        }
+
+        if (item.postResponseScript) {
+            events.push({
+                listen: 'test',
+                script: {
+                    exec: item.postResponseScript.split('\n'),
+                    type: 'text/javascript'
+                }
+            });
+        }
+
+        return events;
     }
 
     private generateId(): string {
