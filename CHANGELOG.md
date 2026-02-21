@@ -5,7 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.15.0] - 2026-02-21
+
+### Added
+- **Response Body Formatting**: JSON and HTML/XML responses are now automatically pretty-printed for readability
+- **Format Button**: Manual "Format" button in the response toolbar to re-trigger formatting on demand
+- **js-beautify Integration**: HTML/XML formatting powered by `js-beautify` for reliable, industry-standard output
 
 ## [0.14.0] - 2026-02-19
 
