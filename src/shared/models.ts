@@ -101,8 +101,8 @@ export interface ScriptResult {
     consoleLogs: ScriptConsoleEntry[];
     error?: string;
     variableUpdates?: {
-        environment: Record<string, string>;
-        globals: Record<string, string>;
+        environment: Record<string, string | null>;
+        globals: Record<string, string | null>;
     };
 }
 

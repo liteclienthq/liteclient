@@ -218,9 +218,10 @@ export class CollectionService {
 
   // --- Import / Export ---
 
-  async importCollections(content: any): Promise<void> {
+  async importCollections(content: any): Promise<string[]> {
     const importers = [new PostmanImporter()];
     let processedCollections: Collection[] = [];
+    let warnings: string[] = [];
 
     // Try to find a matching importer
     // For now, naive check, but robust architecture allows trying multiple
@@ -229,6 +230,9 @@ export class CollectionService {
     if (importer) {
       console.log(`Using importer: ${importer.name}`);
       processedCollections = await importer.import(content);
+      if (importer instanceof PostmanImporter && importer.warnings.length > 0) {
+        warnings = importer.warnings;
+      }
     } else {
       // Fallback: Assume it's our native/internal JSON format (canonical)
       // We still map it through sanitize to ensure IDs are fresh
@@ -240,6 +244,7 @@ export class CollectionService {
     const currentCollections = await this.load();
     const newCollections = [...currentCollections, ...processedCollections];
     await this.save(newCollections);
+    return warnings;
   }
 
   async exportCollection(collection: Collection, format: string = 'postman-v2.1'): Promise<string> {

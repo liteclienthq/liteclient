@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Pre-request & Post-response Scripts**: Write JavaScript scripts that run before a request is sent or after a response is received. Access a Postman-compatible `pm` API including `pm.environment`, `pm.globals`, `pm.variables`, `pm.test()`, `pm.expect()`, `pm.request`, `pm.response`, and `console` logging.
+- **Test Results Panel**: New "Tests" tab in the response section displays test pass/fail results, console output, and script errors with line numbers.
+- **Scripts Tab**: New "Scripts" tab in the request section with a CodeMirror editor for writing pre-request and test scripts.
+- **Script Variable Persistence**: Variables set via `pm.environment.set()` and `pm.globals.set()` are persisted back to storage and broadcast to all open panels. New variables are created automatically if they don't exist.
+- **Sandboxed Execution**: Scripts run in a Node.js `vm` sandbox with a 2-second timeout, capped console output (200 entries), capped test results (200), and 100KB script size limit.
+- **Postman Script Import/Export**: Pre-request and test scripts are preserved when importing/exporting Postman Collection v2.1 files. Warnings are shown when collection-level or folder-level scripts are detected (not supported).
+
 ## [0.15.0] - 2026-02-21
 
 ### Added

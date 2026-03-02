@@ -23,6 +23,9 @@ interface ScriptContext {
 }
 
 const SCRIPT_TIMEOUT_MS = 2000;
+const MAX_CONSOLE_ENTRIES = 200;
+const MAX_TEST_RESULTS = 200;
+const MAX_SCRIPT_SIZE = 100_000;
 
 export class ScriptRunner {
     runPreRequestScript(script: string, context: ScriptContext): ScriptResult {
@@ -34,13 +37,22 @@ export class ScriptRunner {
     }
 
     private executeScript(script: string, context: ScriptContext, phase: string): ScriptResult {
+        if (script.length > MAX_SCRIPT_SIZE) {
+            return {
+                testResults: [],
+                consoleLogs: [],
+                error: `${phase === 'pre-request' ? 'Pre-request' : 'Tests'}: Script too large (${Math.round(script.length / 1024)}KB). Maximum allowed is ${MAX_SCRIPT_SIZE / 1000}KB.`,
+            };
+        }
+
         const testResults: ScriptTestResult[] = [];
         const consoleLogs: ScriptConsoleEntry[] = [];
-        const envUpdates: Record<string, string> = {};
-        const globalUpdates: Record<string, string> = {};
+        const envUpdates: Record<string, string | null> = {};
+        const globalUpdates: Record<string, string | null> = {};
 
         const makeConsoleMethod = (level: ScriptConsoleEntry['level']) => {
             return (...args: any[]) => {
+                if (consoleLogs.length >= MAX_CONSOLE_ENTRIES) { return; }
                 consoleLogs.push({
                     level,
                     args: args.map(a => {
@@ -63,7 +75,7 @@ export class ScriptRunner {
                 },
                 unset: (key: string) => {
                     delete envVars[key];
-                    envUpdates[key] = '';
+                    envUpdates[key] = null;
                 },
                 toObject: () => ({ ...envVars })
             },
@@ -75,7 +87,7 @@ export class ScriptRunner {
                 },
                 unset: (key: string) => {
                     delete globalVars[key];
-                    globalUpdates[key] = '';
+                    globalUpdates[key] = null;
                 },
                 toObject: () => ({ ...globalVars })
             },
@@ -89,6 +101,7 @@ export class ScriptRunner {
                 body: context.request.body
             },
             test: (name: string, fn: () => void) => {
+                if (testResults.length >= MAX_TEST_RESULTS) { return; }
                 try {
                     fn();
                     testResults.push({ name, passed: true });
@@ -148,9 +161,15 @@ export class ScriptRunner {
         } catch (err) {
             let errorMsg: string;
             if (err instanceof Error && err.message.includes('Script execution timed out')) {
-                errorMsg = `Script timed out after ${SCRIPT_TIMEOUT_MS}ms`;
+                errorMsg = `${phase === 'pre-request' ? 'Pre-request' : 'Tests'}: Script timed out after ${SCRIPT_TIMEOUT_MS}ms`;
+            } else if (err instanceof Error) {
+                errorMsg = `${phase === 'pre-request' ? 'Pre-request' : 'Tests'}: ${err.message}`;
+                if (err.stack) {
+                    const stackLines = err.stack.split('\n').slice(1, 4).map(l => l.trim()).join('\n');
+                    errorMsg += '\n' + stackLines;
+                }
             } else {
-                errorMsg = err instanceof Error ? err.message : String(err);
+                errorMsg = `${phase === 'pre-request' ? 'Pre-request' : 'Tests'}: ${String(err)}`;
             }
             return {
                 testResults,
@@ -217,7 +236,7 @@ function createExpect(actual: any) {
             },
             have: {
                 property: (prop: string, value?: any) => {
-                    assert(actual != null && prop in actual, `Expected object to have property "${prop}"`);
+                    assert(actual !== null && prop in actual, `Expected object to have property "${prop}"`);
                     if (value !== undefined) {
                         assert(actual[prop] === value, `Expected property "${prop}" to equal ${JSON.stringify(value)} but got ${JSON.stringify(actual[prop])}`);
                     }

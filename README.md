@@ -125,6 +125,19 @@ Never lose track of what you've tried.
 - Bulk delete by day or individual items
 - Clear all history option
 
+### Scripting
+
+Automate your workflow with pre-request and post-response scripts.
+
+- **Pre-request scripts** run before the request is sent — set variables, generate tokens, or modify state
+- **Post-response (test) scripts** run after the response — write assertions and log results
+- Postman-compatible `pm` API: `pm.environment`, `pm.globals`, `pm.test()`, `pm.expect()`, `pm.request`, `pm.response`
+- Console logging with `console.log/info/warn/error`
+- Variables set in scripts persist to environments automatically
+- Test results displayed in a dedicated "Tests" response tab
+- Sandboxed execution with 2-second timeout
+- Scripts preserved in Postman import/export
+
 ### Cookie Management
 
 Built-in cookie jar for session management.

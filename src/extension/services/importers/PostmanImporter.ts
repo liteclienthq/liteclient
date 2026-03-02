@@ -7,6 +7,7 @@ export class PostmanImporter implements Importer {
     id = 'postman-v2.1';
     name = 'Postman Collection v2.1';
     description = 'Imports Postman Collection v2.1 format';
+    warnings: string[] = [];
 
     canImport(content: any): boolean {
         try {
@@ -21,6 +22,9 @@ export class PostmanImporter implements Importer {
     }
 
     async import(content: any): Promise<Collection[]> {
+        this.warnings = [];
+        this.detectUnsupportedScripts(content);
+
         const collection: Collection = {
             id: this.generateId(),
             name: content.info?.name || 'Imported Collection',
@@ -28,6 +32,24 @@ export class PostmanImporter implements Importer {
             items: this.parseItems(content.item || [])
         };
         return [collection];
+    }
+
+    private detectUnsupportedScripts(content: any): void {
+        if (Array.isArray(content.event) && content.event.some((e: any) => e?.script?.exec?.length > 0)) {
+            this.warnings.push('Collection-level scripts were found but are not supported and will not run.');
+        }
+        this.detectFolderScripts(content.item || []);
+    }
+
+    private detectFolderScripts(items: any[]): void {
+        for (const item of items) {
+            if (Array.isArray(item.item)) {
+                if (Array.isArray(item.event) && item.event.some((e: any) => e?.script?.exec?.length > 0)) {
+                    this.warnings.push(`Folder-level scripts in "${item.name}" are not supported and will not run.`);
+                }
+                this.detectFolderScripts(item.item);
+            }
+        }
     }
 
     private parseItems(items: any[]): CollectionItem[] {

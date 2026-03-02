@@ -370,8 +370,8 @@ export class LcRequestPanel extends LcBaseElement {
       return true;
     }
 
-    if (this.preRequestScript !== this.originalRequest.preRequestScript) return true;
-    if (this.postResponseScript !== this.originalRequest.postResponseScript) return true;
+    if (this.preRequestScript !== this.originalRequest.preRequestScript) {return true;}
+    if (this.postResponseScript !== this.originalRequest.postResponseScript) {return true;}
 
     return false;
   }
@@ -700,6 +700,7 @@ export class LcRequestPanel extends LcBaseElement {
             </div>
           </div>
         </div>
+      </div>
     `;
   }
 

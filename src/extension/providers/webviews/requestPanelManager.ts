@@ -10,7 +10,7 @@ import { CurrentValuesService } from '../../services/currentValuesService';
 import { OAuth2TokenService } from '../../services/oauth2TokenService';
 import { ScriptRunner } from '../../services/scriptRunner';
 import type { RequestPanelToExtensionMessage, RequestExecutionSource, Environment } from '../../../shared/messages';
-import type { ScriptResult, ScriptTestResult, ScriptConsoleEntry } from '../../../shared/models';
+import type { ScriptResult, ScriptTestResult, ScriptConsoleEntry, EnvironmentVariable } from '../../../shared/models';
 import { generateId } from '../../utils/idUtils';
 import { resolveVariables } from '../../utils/variableResolver';
 
@@ -238,6 +238,8 @@ export class RequestPanelManager {
         const allTestResults: ScriptTestResult[] = [];
         const allConsoleLogs: ScriptConsoleEntry[] = [];
         let scriptError: string | undefined;
+        const allEnvUpdates: Record<string, string | null> = {};
+        const allGlobalUpdates: Record<string, string | null> = {};
 
         // Run pre-request script
         if (message.preRequestScript) {
@@ -260,10 +262,20 @@ export class RequestPanelManager {
 
             if (preResult.variableUpdates) {
                 for (const [key, value] of Object.entries(preResult.variableUpdates.environment)) {
-                    environmentVariables[key] = value;
+                    allEnvUpdates[key] = value;
+                    if (value !== null) {
+                        environmentVariables[key] = value;
+                    } else {
+                        delete environmentVariables[key];
+                    }
                 }
                 for (const [key, value] of Object.entries(preResult.variableUpdates.globals)) {
-                    environmentVariables[key] = value;
+                    allGlobalUpdates[key] = value;
+                    if (value !== null) {
+                        environmentVariables[key] = value;
+                    } else {
+                        delete environmentVariables[key];
+                    }
                 }
             }
         }
@@ -334,7 +346,19 @@ export class RequestPanelManager {
             if (postResult.error) {
                 scriptError = scriptError ? `${scriptError}; ${postResult.error}` : postResult.error;
             }
+
+            if (postResult.variableUpdates) {
+                for (const [key, value] of Object.entries(postResult.variableUpdates.environment)) {
+                    allEnvUpdates[key] = value;
+                }
+                for (const [key, value] of Object.entries(postResult.variableUpdates.globals)) {
+                    allGlobalUpdates[key] = value;
+                }
+            }
         }
+
+        // Persist variable updates from scripts
+        await this._persistScriptVariableUpdates(allEnvUpdates, allGlobalUpdates, selectedEnvironmentId);
 
         if (response.errorType !== 'cancelled') {
             let historyName = message.name;
@@ -466,6 +490,70 @@ export class RequestPanelManager {
                 this.refreshCollections();
                 vscode.window.showInformationMessage('Saved to collection!');
             }
+        }
+    }
+
+    // --- Script Variable Persistence ---
+
+    private async _persistScriptVariableUpdates(
+        envUpdates: Record<string, string | null>,
+        globalUpdates: Record<string, string | null>,
+        selectedEnvironmentId: string | undefined | null
+    ): Promise<void> {
+        const hasEnvUpdates = Object.keys(envUpdates).length > 0;
+        const hasGlobalUpdates = Object.keys(globalUpdates).length > 0;
+        if (!hasEnvUpdates && !hasGlobalUpdates) {
+            return;
+        }
+
+        if (hasGlobalUpdates) {
+            await this._applyVariableUpdates('globals', globalUpdates);
+        }
+
+        if (hasEnvUpdates && selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
+            await this._applyVariableUpdates(selectedEnvironmentId, envUpdates);
+        }
+
+        await this.broadcastEnvironments();
+    }
+
+    private async _applyVariableUpdates(envId: string, updates: Record<string, string | null>): Promise<void> {
+        const env = await this.environmentService.getEnvironmentById(envId);
+        if (!env) {
+            return;
+        }
+
+        let modified = false;
+        for (const [name, value] of Object.entries(updates)) {
+            if (value === null) {
+                const idx = env.variables.findIndex(v => v.name === name);
+                if (idx !== -1) {
+                    const removedVar = env.variables[idx];
+                    env.variables.splice(idx, 1);
+                    await this.currentValuesService.clearCurrentValue(envId, removedVar.id);
+                    modified = true;
+                }
+            } else {
+                const existing = env.variables.find(v => v.name === name);
+                if (existing) {
+                    await this.currentValuesService.setCurrentValue(envId, existing.id, value);
+                    modified = true;
+                } else {
+                    const newVar: EnvironmentVariable = {
+                        id: generateId(),
+                        name,
+                        initialValue: value,
+                        type: 'default',
+                        enabled: true,
+                    };
+                    env.variables.push(newVar);
+                    modified = true;
+                }
+            }
+        }
+
+        if (modified) {
+            await this.environmentService.updateEnvironment(env);
         }
     }
 

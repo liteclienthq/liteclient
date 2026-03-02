@@ -70,9 +70,12 @@ export function registerCollectionCommands(
                     const content = Buffer.from(fileData).toString('utf8');
                     const data = JSON.parse(content);
 
-                    await collectionService.importCollections(data);
+                    const warnings = await collectionService.importCollections(data);
 
                     vscode.window.showInformationMessage(`Successfully imported collection(s)`);
+                    if (warnings.length > 0) {
+                        vscode.window.showWarningMessage(warnings.join(' '));
+                    }
                     sidebarProvider.refreshCollections();
                     requestPanelManager.broadcastCollections();
                 } catch (error: any) {
