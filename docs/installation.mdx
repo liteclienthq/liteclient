@@ -1,0 +1,100 @@
+---
+title: Installation
+description: Install LiteClient from the VS Code Marketplace, Open VSX, or from source
+---
+
+LiteClient is available through multiple installation methods. The VS Code Marketplace is recommended for most users.
+
+## VS Code Marketplace
+
+The easiest way to install LiteClient is through the VS Code Marketplace.
+
+<Steps>
+  <Step title="Open the Extensions view">
+    Press `Ctrl+Shift+X` (Windows/Linux) or `Cmd+Shift+X` (macOS) to open the Extensions view in VS Code.
+  </Step>
+  <Step title="Search for LiteClient">
+    Type "LiteClient" in the search box at the top of the Extensions view.
+  </Step>
+  <Step title="Install the extension">
+    Click the **Install** button on the LiteClient extension by liteclienthq.
+  </Step>
+  <Step title="Start using LiteClient">
+    Click the LiteClient icon in the Activity Bar to open the sidebar and start making requests.
+  </Step>
+</Steps>
+
+<Tip>
+  You can also install LiteClient by opening the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`) and running **Extensions: Install Extensions**, then searching for "LiteClient".
+</Tip>
+
+## Open VSX Registry
+
+If you're using VS Codium or another VS Code compatible editor that uses Open VSX, you can install LiteClient from the Open VSX Registry.
+
+<Steps>
+  <Step title="Visit the Open VSX page">
+    Go to [open-vsx.org/extension/liteclienthq/liteclient](https://open-vsx.org/extension/liteclienthq/liteclient) in your browser.
+  </Step>
+  <Step title="Download the VSIX file">
+    Click the download button to get the latest `.vsix` file for your platform.
+  </Step>
+  <Step title="Install from VSIX">
+    Run the following command in your terminal, replacing `{version}` with the downloaded version:
+    ```bash
+    code --install-extension liteclienthq.liteclient-{version}.vsix
+    ```
+  </Step>
+</Steps>
+
+## Install from source
+
+Developers who want to contribute or customize LiteClient can install from source.
+
+<Steps>
+  <Step title="Clone the repository">
+    ```bash
+    git clone https://github.com/liteclienthq/liteclient.git
+    cd liteclient
+    ```
+  </Step>
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  <Step title="Build the extension">
+    ```bash
+    npm run build
+    ```
+  </Step>
+  <Step title="Install the VSIX">
+    After building, you'll find a `.vsix` file in the `dist/` directory. Install it using:
+    ```bash
+    code --install-extension dist/liteclient-{version}.vsix
+    ```
+  </Step>
+</Steps>
+
+<Note>
+  Building from source requires Node.js 22.x or later and VS Code 1.90.0 or later.
+</Note>
+
+## Verify installation
+
+After installing LiteClient through any method, verify the installation:
+
+1. Look for the LiteClient icon in the Activity Bar (left sidebar)
+2. Click the icon to open the LiteClient sidebar
+3. You should see tabs for Collections, Environments, and History
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Make your first API request in under 60 seconds
+  </Card>
+  <Card title="Collections" icon="folder" href="/features/collections">
+    Learn how to organize your requests with collections
+  </Card>
+</CardGroup>

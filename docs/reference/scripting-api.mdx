@@ -1,0 +1,554 @@
+---
+title: Scripting API
+description: JavaScript API for pre-request and post-response scripts in LiteClient
+---
+
+LiteClient supports pre-request and post-response scripts using a Postman-compatible `pm` API. Write JavaScript code that runs before sending a request or after receiving a response to automate workflows, set variables dynamically, and validate responses.
+
+## Overview
+
+Scripts enable advanced automation and testing workflows:
+
+- **Pre-request scripts**: Run before a request is sent (set dynamic headers, compute signatures, etc.)
+- **Post-response scripts**: Run after receiving a response (validate data, extract values, run tests)
+
+<Note>
+  Scripts run in a sandboxed Node.js `vm` environment with a 2-second timeout and 100KB size limit.
+</Note>
+
+## The pm Object
+
+The `pm` object provides the scripting API. It's available globally in all scripts.
+
+### pm.environment
+
+Access and modify environment variables.
+
+<ParamField path="pm.environment.get" type="function">
+  Get the value of an environment variable.
+  
+  **Signature**: `pm.environment.get(name: string): string | undefined`
+  
+  ```javascript
+  const apiKey = pm.environment.get('API_KEY');
+  console.log('Using API key:', apiKey);
+  ```
+</ParamField>
+
+<ParamField path="pm.environment.set" type="function">
+  Set or create an environment variable. Changes are persisted to storage.
+  
+  **Signature**: `pm.environment.set(name: string, value: string): void`
+  
+  ```javascript
+  // Extract token from response and save to environment
+  const token = pm.response.json().access_token;
+  pm.environment.set('AUTH_TOKEN', token);
+  ```
+  
+  <Note>
+    If the variable doesn't exist, it will be created automatically in the current environment.
+  </Note>
+</ParamField>
+
+<ParamField path="pm.environment.unset" type="function">
+  Remove an environment variable.
+  
+  **Signature**: `pm.environment.unset(name: string): void`
+  
+  ```javascript
+  pm.environment.unset('TEMP_TOKEN');
+  ```
+</ParamField>
+
+### pm.globals
+
+Access and modify global variables (shared across all environments).
+
+<ParamField path="pm.globals.get" type="function">
+  Get the value of a global variable.
+  
+  **Signature**: `pm.globals.get(name: string): string | undefined`
+  
+  ```javascript
+  const baseUrl = pm.globals.get('BASE_URL');
+  ```
+</ParamField>
+
+<ParamField path="pm.globals.set" type="function">
+  Set or create a global variable. Changes are persisted to storage.
+  
+  **Signature**: `pm.globals.set(name: string, value: string): void`
+  
+  ```javascript
+  pm.globals.set('REQUEST_COUNT', '42');
+  ```
+</ParamField>
+
+<ParamField path="pm.globals.unset" type="function">
+  Remove a global variable.
+  
+  **Signature**: `pm.globals.unset(name: string): void`
+  
+  ```javascript
+  pm.globals.unset('TEMP_VALUE');
+  ```
+</ParamField>
+
+### pm.variables
+
+Read-only access to resolved variables (combines globals, collection, and environment).
+
+<ParamField path="pm.variables.get" type="function">
+  Get the resolved value of a variable following precedence order.
+  
+  **Signature**: `pm.variables.get(name: string): string | undefined`
+  
+  **Resolution order**: Globals → Collection → Environment (narrowest wins)
+  
+  ```javascript
+  // Gets the most specific value
+  const apiUrl = pm.variables.get('API_URL');
+  ```
+  
+  <Note>
+    Use `pm.variables.get()` when you don't care which scope the variable comes from. Use `pm.environment.get()` or `pm.globals.get()` when you need a specific scope.
+  </Note>
+</ParamField>
+
+### pm.request
+
+Access request data (available in both pre-request and post-response scripts).
+
+<ParamField path="pm.request.url" type="string">
+  The request URL (after variable substitution).
+  
+  ```javascript
+  console.log('Sending request to:', pm.request.url);
+  ```
+</ParamField>
+
+<ParamField path="pm.request.method" type="string">
+  The HTTP method (GET, POST, PUT, DELETE, etc.).
+  
+  ```javascript
+  if (pm.request.method === 'POST') {
+    // Add special header for POST requests
+    pm.request.headers.add('X-Request-Type', 'mutation');
+  }
+  ```
+</ParamField>
+
+<ParamField path="pm.request.headers" type="object">
+  Request headers collection.
+  
+  **Methods**:
+  - `get(name: string): string | undefined` - Get header value
+  - `add(name: string, value: string): void` - Add header
+  - `remove(name: string): void` - Remove header
+  
+  ```javascript
+  // Add authentication header
+  const token = pm.environment.get('TOKEN');
+  pm.request.headers.add('Authorization', `Bearer ${token}`);
+  
+  // Check existing header
+  const contentType = pm.request.headers.get('Content-Type');
+  ```
+</ParamField>
+
+<ParamField path="pm.request.body" type="object">
+  Request body content.
+  
+  **Methods**:
+  - `raw()` - Get body as string
+  - `json()` - Parse body as JSON (throws if invalid)
+  
+  ```javascript
+  // Modify request body
+  const body = pm.request.body.json();
+  body.timestamp = new Date().toISOString();
+  pm.request.body = JSON.stringify(body);
+  ```
+</ParamField>
+
+### pm.response
+
+Access response data (only available in post-response scripts).
+
+<ParamField path="pm.response.code" type="number">
+  HTTP status code.
+  
+  ```javascript
+  pm.test('Status is 200', () => {
+    pm.expect(pm.response.code).to.equal(200);
+  });
+  ```
+</ParamField>
+
+<ParamField path="pm.response.status" type="string">
+  HTTP status text (e.g., "OK", "Not Found").
+  
+  ```javascript
+  console.log('Response status:', pm.response.status);
+  ```
+</ParamField>
+
+<ParamField path="pm.response.headers" type="object">
+  Response headers collection.
+  
+  **Methods**:
+  - `get(name: string): string | undefined` - Get header value
+  - `has(name: string): boolean` - Check if header exists
+  
+  ```javascript
+  const contentType = pm.response.headers.get('Content-Type');
+  pm.test('Response is JSON', () => {
+    pm.expect(contentType).to.include('application/json');
+  });
+  ```
+</ParamField>
+
+<ParamField path="pm.response.body" type="string">
+  Raw response body as string.
+  
+  ```javascript
+  console.log('Response length:', pm.response.body.length);
+  ```
+</ParamField>
+
+<ParamField path="pm.response.json" type="function">
+  Parse response body as JSON.
+  
+  **Signature**: `pm.response.json(): any`
+  
+  ```javascript
+  const data = pm.response.json();
+  pm.test('Has user ID', () => {
+    pm.expect(data.user.id).to.be.a('number');
+  });
+  ```
+  
+  <Note>
+    Throws an error if the response body is not valid JSON.
+  </Note>
+</ParamField>
+
+<ParamField path="pm.response.time" type="number">
+  Response time in milliseconds.
+  
+  ```javascript
+  pm.test('Response time is acceptable', () => {
+    pm.expect(pm.response.time).to.be.below(500);
+  });
+  ```
+</ParamField>
+
+### pm.test()
+
+Define a test assertion (post-response scripts only).
+
+<ParamField path="pm.test" type="function">
+  Create a named test with an assertion function.
+  
+  **Signature**: `pm.test(name: string, fn: () => void): void`
+  
+  ```javascript
+  pm.test('User has valid email', () => {
+    const user = pm.response.json();
+    pm.expect(user.email).to.match(/@/);
+  });
+  ```
+  
+  **Test results** are displayed in the "Tests" tab of the response panel.
+</ParamField>
+
+### pm.expect()
+
+ChaiJS-style assertions for testing.
+
+<ParamField path="pm.expect" type="function">
+  Create an assertion using Chai's expect syntax.
+  
+  **Signature**: `pm.expect(actual): Assertion`
+  
+  **Common assertions**:
+  
+  <Tabs>
+    <Tab title="Equality">
+      ```javascript
+      pm.expect(actual).to.equal(expected);
+      pm.expect(actual).to.eql(expected); // deep equality
+      pm.expect(actual).to.not.equal(value);
+      ```
+    </Tab>
+    
+    <Tab title="Type Checking">
+      ```javascript
+      pm.expect(value).to.be.a('string');
+      pm.expect(value).to.be.an('array');
+      pm.expect(value).to.be.a('number');
+      pm.expect(value).to.be.true;
+      pm.expect(value).to.be.null;
+      pm.expect(value).to.be.undefined;
+      ```
+    </Tab>
+    
+    <Tab title="Comparison">
+      ```javascript
+      pm.expect(value).to.be.above(10);
+      pm.expect(value).to.be.below(100);
+      pm.expect(value).to.be.at.least(5);
+      pm.expect(value).to.be.at.most(50);
+      ```
+    </Tab>
+    
+    <Tab title="String Matching">
+      ```javascript
+      pm.expect(str).to.include('substring');
+      pm.expect(str).to.match(/regex/);
+      pm.expect(str).to.have.lengthOf(10);
+      ```
+    </Tab>
+    
+    <Tab title="Array/Object">
+      ```javascript
+      pm.expect(array).to.be.an('array').that.is.not.empty;
+      pm.expect(array).to.have.lengthOf(3);
+      pm.expect(array).to.include('item');
+      pm.expect(obj).to.have.property('key');
+      pm.expect(obj).to.have.all.keys('a', 'b', 'c');
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+### console
+
+Log messages and debugging output.
+
+<ParamField path="console.log" type="function">
+  Log informational messages.
+  
+  **Signature**: `console.log(...args: any[]): void`
+  
+  ```javascript
+  console.log('Token extracted:', token);
+  console.log('User data:', user.name, user.email);
+  ```
+</ParamField>
+
+<ParamField path="console.error" type="function">
+  Log error messages.
+  
+  **Signature**: `console.error(...args: any[]): void`
+  
+  ```javascript
+  console.error('Failed to parse response:', error.message);
+  ```
+</ParamField>
+
+<ParamField path="console.warn" type="function">
+  Log warning messages.
+  
+  **Signature**: `console.warn(...args: any[]): void`
+  
+  ```javascript
+  console.warn('Deprecated API endpoint used');
+  ```
+</ParamField>
+
+<Note>
+  Console output is displayed in the "Tests" tab with a 200-entry limit. Logs are cleared between requests.
+</Note>
+
+## Script Examples
+
+### Pre-Request Script Examples
+
+<Tabs>
+  <Tab title="Dynamic Headers">
+    Add computed headers before sending the request:
+    
+    ```javascript
+    // Add timestamp header
+    pm.request.headers.add('X-Request-Time', new Date().toISOString());
+    
+    // Add HMAC signature
+    const secret = pm.environment.get('API_SECRET');
+    const payload = pm.request.body.raw();
+    const signature = computeHMAC(secret, payload);
+    pm.request.headers.add('X-Signature', signature);
+    ```
+  </Tab>
+  
+  <Tab title="Token Refresh">
+    Check token expiration and refresh if needed:
+    
+    ```javascript
+    const expiresAt = pm.globals.get('TOKEN_EXPIRES_AT');
+    const now = Date.now();
+    
+    if (!expiresAt || now >= parseInt(expiresAt)) {
+      console.log('Token expired, refreshing...');
+      // Set flag to trigger token refresh flow
+      pm.globals.set('NEEDS_REFRESH', 'true');
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Request Counter">
+    Track request count:
+    
+    ```javascript
+    const count = parseInt(pm.globals.get('REQUEST_COUNT') || '0');
+    pm.globals.set('REQUEST_COUNT', (count + 1).toString());
+    console.log('Request number:', count + 1);
+    ```
+  </Tab>
+</Tabs>
+
+### Post-Response Script Examples
+
+<Tabs>
+  <Tab title="Extract Token">
+    Extract authentication token from response:
+    
+    ```javascript
+    const response = pm.response.json();
+    
+    if (response.access_token) {
+      pm.environment.set('AUTH_TOKEN', response.access_token);
+      console.log('Token saved to environment');
+      
+      // Calculate expiration time
+      const expiresIn = response.expires_in || 3600;
+      const expiresAt = Date.now() + (expiresIn * 1000);
+      pm.globals.set('TOKEN_EXPIRES_AT', expiresAt.toString());
+    }
+    ```
+  </Tab>
+  
+  <Tab title="Response Validation">
+    Validate response structure and data:
+    
+    ```javascript
+    pm.test('Status is 200 OK', () => {
+      pm.expect(pm.response.code).to.equal(200);
+    });
+    
+    pm.test('Response is JSON', () => {
+      const contentType = pm.response.headers.get('Content-Type');
+      pm.expect(contentType).to.include('application/json');
+    });
+    
+    pm.test('Response has required fields', () => {
+      const data = pm.response.json();
+      pm.expect(data).to.have.property('id');
+      pm.expect(data).to.have.property('email');
+      pm.expect(data.email).to.be.a('string');
+    });
+    
+    pm.test('Response time is acceptable', () => {
+      pm.expect(pm.response.time).to.be.below(1000);
+    });
+    ```
+  </Tab>
+  
+  <Tab title="Extract & Chain">
+    Extract data for use in subsequent requests:
+    
+    ```javascript
+    const user = pm.response.json();
+    
+    // Save user ID for next request
+    pm.environment.set('USER_ID', user.id.toString());
+    pm.environment.set('USER_EMAIL', user.email);
+    
+    console.log('User created:', user.id, user.email);
+    
+    pm.test('User ID is valid', () => {
+      pm.expect(user.id).to.be.a('number');
+      pm.expect(user.id).to.be.above(0);
+    });
+    ```
+  </Tab>
+  
+  <Tab title="Error Handling">
+    Handle errors gracefully:
+    
+    ```javascript
+    if (pm.response.code >= 400) {
+      console.error('Request failed:', pm.response.status);
+      
+      try {
+        const error = pm.response.json();
+        console.error('Error details:', error.message);
+      } catch (e) {
+        console.error('Non-JSON error response');
+      }
+    } else {
+      pm.test('Request successful', () => {
+        pm.expect(pm.response.code).to.be.below(400);
+      });
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Script Limits
+
+Scripts run in a sandboxed environment with the following limits:
+
+- **Timeout**: 2 seconds maximum execution time
+- **Size**: 100KB maximum script size
+- **Console output**: 200 entries maximum
+- **Test results**: 200 tests maximum
+- **No external modules**: Cannot use `require()` or `import`
+- **No file system access**: Cannot read/write files
+- **No network access**: Cannot make HTTP requests (except via `pm.sendRequest()` - coming soon)
+
+<Note>
+  Scripts that exceed the timeout or size limit will be terminated and an error will be displayed in the Tests tab.
+</Note>
+
+## Postman Compatibility
+
+LiteClient's scripting API is compatible with Postman Collection v2.1:
+
+- **Import**: Pre-request and test scripts are preserved when importing Postman collections
+- **Export**: Scripts are included when exporting to Postman format
+- **Limitations**: Collection-level and folder-level scripts are not supported (request-level only)
+
+<Note>
+  When importing a collection with collection-level or folder-level scripts, a warning will be displayed. You'll need to manually copy those scripts to individual requests.
+</Note>
+
+## Best Practices
+
+### Script Organization
+
+- Keep scripts focused on a single responsibility
+- Use comments to explain complex logic
+- Extract common logic to environment variables (as JSON strings)
+- Use meaningful test names that describe what's being validated
+
+### Performance
+
+- Avoid expensive operations in pre-request scripts (they delay request sending)
+- Cache computed values in variables instead of recalculating
+- Use `console.log()` sparingly in production scripts
+
+### Error Handling
+
+- Always wrap JSON parsing in try-catch blocks
+- Check for variable existence before using them
+- Provide descriptive error messages in console output
+- Use tests to validate assumptions about response structure
+
+### Variable Management
+
+- Use globals for values shared across all requests (base URLs, API keys)
+- Use environment variables for values specific to an environment (dev/prod tokens)
+- Use descriptive variable names (avoid single letters)
+- Clean up temporary variables with `unset()` when done

@@ -1,0 +1,265 @@
+---
+title: HTTP Requests
+description: Build precise HTTP requests with a familiar interface, supporting all major methods and content types
+---
+
+LiteClient provides a comprehensive interface for building HTTP requests with full control over methods, URLs, parameters, headers, and body content.
+
+## Request Methods
+
+LiteClient supports all standard HTTP methods:
+
+- **GET** - Retrieve resources
+- **POST** - Create new resources
+- **PUT** - Replace existing resources
+- **PATCH** - Partially update resources
+- **DELETE** - Remove resources
+- **HEAD** - Retrieve headers only
+- **OPTIONS** - Query supported methods
+
+Select your method from the dropdown next to the URL bar.
+
+## URL & Query Parameters
+
+### URL Input
+
+Enter your full URL in the URL bar. The URL supports variable substitution using the `{{variableName}}` syntax:
+
+```text
+{{baseUrl}}/api/v1/users/{{userId}}
+```
+
+<Tip>
+  Type `{{` to trigger autocomplete and see all available variables from your global, collection, and environment scopes.
+</Tip>
+
+### Query Parameters Editor
+
+Manage query parameters with a dedicated key-value editor:
+
+<Steps>
+  <Step title="Add Parameter">
+    Click **Add Parameter** to create a new query parameter row.
+  </Step>
+  <Step title="Enter Key and Value">
+    Type the parameter name and value. Both support variable substitution.
+  </Step>
+  <Step title="Toggle Individual Parameters">
+    Use the checkbox to enable or disable individual parameters without deleting them.
+  </Step>
+</Steps>
+
+**Example:**
+```text
+Key: page    Value: 1
+Key: limit   Value: {{pageSize}}
+Key: sort    Value: created_at
+```
+
+This generates: `?page=1&limit=50&sort=created_at`
+
+## Headers
+
+Customize request headers with full control over keys and values.
+
+### Adding Headers
+
+<Tabs>
+  <Tab title="Custom Headers">
+    1. Navigate to the **Headers** tab
+    2. Click **Add Header**
+    3. Enter the header key and value
+    4. Both key and value support variable substitution
+  </Tab>
+  <Tab title="Enable/Disable Headers">
+    Use the checkbox next to each header to temporarily disable it without deleting. This is useful for:
+    - Testing with and without authentication
+    - Debugging header-related issues
+    - A/B testing different header values
+  </Tab>
+</Tabs>
+
+### Common Headers Example
+
+```http
+Content-Type: application/json
+Accept: application/json
+X-API-Key: {{apiKey}}
+User-Agent: LiteClient/1.0
+```
+
+<Info>
+  Authentication headers (like `Authorization`) can be set automatically using the Auth tab. See the [Authentication](/features/authentication) page for details.
+</Info>
+
+## Request Body
+
+Configure request bodies with multiple content types:
+
+### No Body
+
+Select **No Body** for GET and HEAD requests that don't send a request body.
+
+### Raw Body
+
+The raw body editor supports multiple content types with syntax highlighting:
+
+<Tabs>
+  <Tab title="JSON">
+    ```json
+    {
+      "name": "{{userName}}",
+      "email": "user@example.com",
+      "role": "admin"
+    }
+    ```
+    Includes automatic syntax highlighting and validation.
+  </Tab>
+  <Tab title="XML">
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <user>
+      <name>{{userName}}</name>
+      <email>user@example.com</email>
+    </user>
+    ```
+  </Tab>
+  <Tab title="HTML">
+    ```html
+    <html>
+      <body>
+        <h1>{{title}}</h1>
+        <p>{{content}}</p>
+      </body>
+    </html>
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    ```javascript
+    const data = {
+      apiKey: "{{apiKey}}",
+      timestamp: Date.now()
+    };
+    ```
+  </Tab>
+  <Tab title="Plain Text">
+    ```text
+    Simple text content with {{variables}}
+    ```
+  </Tab>
+</Tabs>
+
+### Form Data
+
+Upload files and send multipart form data:
+
+<Steps>
+  <Step title="Select Form Data">
+    Choose **Form Data** from the body type dropdown.
+  </Step>
+  <Step title="Add Fields">
+    Add key-value pairs for text fields and file uploads.
+  </Step>
+  <Step title="Upload Files">
+    Click the file icon next to a field to select a file for upload (25MB limit).
+  </Step>
+</Steps>
+
+**Example use case:**
+```text
+Key: title       Value: Profile Picture
+Key: image       Value: [Select File: avatar.jpg]
+Key: category    Value: {{imageCategory}}
+```
+
+<Warning>
+  Form-data file uploads have a 25MB size limit. For larger files, consider using a dedicated file upload API.
+</Warning>
+
+### URL-Encoded Form Data
+
+Send form data as `application/x-www-form-urlencoded`:
+
+```text
+Key: username    Value: {{userName}}
+Key: password    Value: {{userPassword}}
+Key: remember    Value: true
+```
+
+This sends: `username=john&password=secret&remember=true`
+
+## Variable Substitution
+
+Variables work in all body types:
+
+- **Raw JSON/XML/HTML** - Use `{{variableName}}` anywhere in the content
+- **Form Data** - Both keys and values support variables
+- **URL-Encoded** - Keys and values support variables
+
+<Note>
+  Variable resolution follows the layered precedence: Environment → Collection → Global. Only enabled variables are resolved.
+</Note>
+
+## Sending Requests
+
+Once you've configured your request:
+
+<Steps>
+  <Step title="Click Send">
+    Click the **Send** button in the URL bar to execute the request.
+  </Step>
+  <Step title="View Response">
+    The response appears in the bottom panel with status, headers, body, and cookies.
+  </Step>
+  <Step title="Cancel If Needed">
+    Click **Cancel** during long-running operations to abort the request.
+  </Step>
+</Steps>
+
+## Request Execution Flow
+
+When you send a request, LiteClient:
+
+1. Runs pre-request scripts (if configured)
+2. Resolves all variables (globals → collection → environment)
+3. Substitutes variables in URL, headers, body, and auth
+4. Sends relevant cookies based on domain
+5. Executes the HTTP request
+6. Captures the response
+7. Runs post-response scripts (if configured)
+8. Records the request in history
+
+<Info>
+  Pre-request and post-response scripts can modify variables and perform assertions. See the [Scripting](/features/scripting) page for details.
+</Info>
+
+## Multi-Tab Editing
+
+Work on multiple requests simultaneously:
+
+- Open multiple request panels at once
+- Drag tabs to reorder
+- Unsaved changes indicator (dot) shows when modifications haven't been saved
+- Each tab maintains independent state
+
+<Tip>
+  Save frequently used requests to collections so you can quickly open them later from the sidebar.
+</Tip>
+
+## Best Practices
+
+<Accordion title="Use variables for dynamic values">
+  Replace hardcoded values like API keys, user IDs, and base URLs with variables. This makes requests reusable across environments.
+</Accordion>
+
+<Accordion title="Enable/disable instead of deleting">
+  Use the enable/disable toggle for headers and parameters instead of deleting them. This preserves your configuration for future testing.
+</Accordion>
+
+<Accordion title="Organize with descriptive names">
+  When saving requests to collections, use clear names that describe what the request does: "Create User", "Get Order by ID", "Delete Product".
+</Accordion>
+
+<Accordion title="Test with different body types">
+  Some APIs accept multiple content types. Save separate requests for JSON and XML variants to test both formats.
+</Accordion>

@@ -1,0 +1,187 @@
+---
+title: Configuration
+description: Configuration options for customizing LiteClient behavior
+---
+
+LiteClient provides configuration options to customize storage behavior and data persistence. All settings can be configured through VS Code's settings interface or directly in `settings.json`.
+
+## Settings
+
+### Storage Scope
+
+<ParamField path="liteclient.storageScope" type="string" default="global">
+  Controls where LiteClient stores collections, environments, history, and cookies.
+  
+  **Type**: `string`  
+  **Options**: `"global"` | `"workspace"`  
+  **Default**: `"global"`
+  
+  #### Options
+  
+  <Tabs>
+    <Tab title="global">
+      Stores all data in VS Code's global storage directory. Data is:
+      - **Private**: Not stored in your project repository
+      - **Persistent**: Available across all workspaces
+      - **User-specific**: Each user has their own collections and environments
+      
+      **Storage location**: Platform-specific VS Code global storage directory
+      
+      <Note>
+        Recommended for personal API testing and when you don't want to commit sensitive data to version control.
+      </Note>
+    </Tab>
+    
+    <Tab title="workspace">
+      Stores all data in a `.liteclient/` folder in your workspace root. Data is:
+      - **Shareable**: Can be committed to Git and shared with team
+      - **Project-specific**: Isolated per workspace
+      - **Team-accessible**: All team members can access the same collections
+      
+      **Storage location**: `<workspace-root>/.liteclient/`
+      
+      <Note>
+        Recommended for team collaboration and when you want to version control your API collections.
+      </Note>
+    </Tab>
+  </Tabs>
+  
+  #### Storage Files
+  
+  Regardless of scope, LiteClient stores data in these JSON files:
+  
+  | File | Contents |
+  |------|----------|
+  | `collections.json` | Collections, folders, and saved requests |
+  | `environments.json` | Environments and variables (including globals) |
+  | `history.json` | Request execution history with timestamps |
+  | `cookies.json` | Serialized cookie jar (per domain) |
+  | `settings.json` | User preferences and UI state |
+</ParamField>
+
+## Configuring Settings
+
+### Using VS Code Settings UI
+
+1. Open **Settings** (`Ctrl+,` or `Cmd+,`)
+2. Search for "liteclient"
+3. Select your preferred storage scope from the dropdown
+
+### Using settings.json
+
+Add the configuration directly to your VS Code settings:
+
+<Tabs>
+  <Tab title="User Settings">
+    Configure for all workspaces:
+    
+    ```json
+    {
+      "liteclient.storageScope": "global"
+    }
+    ```
+    
+    Access via: **Preferences: Open User Settings (JSON)**
+  </Tab>
+  
+  <Tab title="Workspace Settings">
+    Configure for current workspace only:
+    
+    ```json
+    {
+      "liteclient.storageScope": "workspace"
+    }
+    ```
+    
+    Access via: **Preferences: Open Workspace Settings (JSON)**
+  </Tab>
+</Tabs>
+
+## Migrating Data
+
+### From Global to Workspace
+
+To migrate existing data from global to workspace storage:
+
+1. Set `liteclient.storageScope` to `"workspace"`
+2. Run the **LiteClient: Migrate Data to Workspace** command
+3. All collections, environments, history, and cookies will be copied to `.liteclient/`
+
+The migration creates this structure:
+```text
+workspace-root/
+└── .liteclient/
+    ├── collections.json
+    ├── environments.json
+    ├── history.json
+    ├── cookies.json
+    └── settings.json
+```
+
+<Note>
+  The migration **copies** data rather than moving it. Your global storage data remains intact after migration.
+</Note>
+
+### From Workspace to Global
+
+To switch from workspace to global storage:
+
+1. Set `liteclient.storageScope` to `"global"`
+2. LiteClient will read from global storage on next launch
+3. The `.liteclient/` folder remains in your workspace but is not used
+
+<Note>
+  There is no automatic migration from workspace to global. You'll need to manually copy data if needed.
+</Note>
+
+## Version Control
+
+### Workspace Storage
+
+When using workspace storage, you can commit the `.liteclient/` folder to Git:
+
+```gitignore
+# Include collections and environments
+!.liteclient/collections.json
+!.liteclient/environments.json
+
+# Exclude sensitive data
+.liteclient/history.json
+.liteclient/cookies.json
+.liteclient/settings.json
+```
+
+<Note>
+  **Security Warning**: Be careful not to commit sensitive data like API keys, tokens, or cookies. Consider using environment variables for sensitive values and marking them as "secret" type in LiteClient.
+</Note>
+
+### Global Storage
+
+Global storage is never committed to version control. It resides in VS Code's application data directory:
+
+- **Windows**: `%APPDATA%/Code/User/globalStorage/liteclienthq.liteclient/`
+- **macOS**: `~/Library/Application Support/Code/User/globalStorage/liteclienthq.liteclient/`
+- **Linux**: `~/.config/Code/User/globalStorage/liteclienthq.liteclient/`
+
+## Best Practices
+
+### For Individual Developers
+
+- Use **global** storage for personal projects and experimentation
+- Keep sensitive credentials in global storage to avoid accidental commits
+- Use environment variables with "secret" type for API keys
+
+### For Teams
+
+- Use **workspace** storage for shared API collections
+- Commit `collections.json` and `environments.json` to Git
+- Use `.gitignore` to exclude `history.json` and `cookies.json`
+- Document required environment variables in your README
+- Use placeholder values for sensitive variables (e.g., `{{API_KEY}}`)
+
+### For Open Source Projects
+
+- Use **workspace** storage with example collections
+- Provide template environments with placeholder values
+- Document all required variables and how to obtain credentials
+- Never commit actual API keys or tokens

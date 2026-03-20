@@ -1,0 +1,145 @@
+---
+title: Collections
+description: Organize your API requests in a hierarchical structure that grows with your project
+---
+
+Collections help you organize and manage related API requests in a scalable, hierarchical structure. You can create unlimited collections, nest requests inside folders, and share your API definitions with your team.
+
+## Creating Collections
+
+You can create a new collection in multiple ways:
+
+<Steps>
+  <Step title="Using the Sidebar">
+    Click the **New Collection** button (folder icon) at the top of the Collections tab in the sidebar.
+  </Step>
+  <Step title="Using the Command Palette">
+    Open the Command Palette (`Cmd/Ctrl+Shift+P`) and run **LiteClient: New Collection**.
+  </Step>
+  <Step title="Name Your Collection">
+    Enter a descriptive name that reflects the API or service you're working with (e.g., "GitHub API", "Payment Service").
+  </Step>
+</Steps>
+
+## Organizing Requests
+
+### Adding Requests to Collections
+
+Once you've created a collection, you can add requests to it:
+
+1. Right-click on a collection in the sidebar
+2. Select **Add Request to Collection**
+3. Configure your request (URL, method, headers, body, auth)
+4. Save the request with a descriptive name
+
+### Nested Folders
+
+For larger projects, you can nest requests inside folders for logical organization:
+
+- Group endpoints by resource type (e.g., "Users", "Orders", "Products")
+- Organize by feature or workflow
+- Create hierarchies that mirror your API structure
+
+<Info>
+  Collections support unlimited nesting depth, so you can organize requests in whatever structure makes sense for your project.
+</Info>
+
+### Drag-and-Drop Reordering
+
+Keep your collections organized by dragging requests and folders to reorder them. This helps you:
+
+- Prioritize frequently used requests
+- Group related endpoints together
+- Maintain a logical workflow order
+
+## Saving Requests
+
+When you save a request to a collection, LiteClient stores the complete configuration:
+
+- Request URL with variables
+- HTTP method (GET, POST, PUT, etc.)
+- Headers (custom and authentication)
+- Request body and body type
+- Authentication settings
+- Pre-request and post-response scripts
+
+<Tabs>
+  <Tab title="Save New Request">
+    After configuring a request:
+    1. Click the **Save** button in the request editor
+    2. Choose the target collection
+    3. Enter a request name
+    4. The request appears in your collection immediately
+  </Tab>
+  <Tab title="Update Existing Request">
+    When you modify a saved request:
+    1. Make your changes in the editor
+    2. Click **Save** to update the stored version
+    3. The unsaved changes indicator (dot) disappears when saved
+  </Tab>
+</Tabs>
+
+## Postman Collection Import
+
+Migrate from Postman effortlessly with full Collection v2.1 import support.
+
+<Steps>
+  <Step title="Export from Postman">
+    In Postman, right-click your collection and select **Export**. Choose **Collection v2.1** format.
+  </Step>
+  <Step title="Import to LiteClient">
+    In LiteClient, run **LiteClient: Import Collection** from the Command Palette and select your exported JSON file.
+  </Step>
+  <Step title="Verify Import">
+    Your collection appears in the sidebar with all folders, requests, variables, and scripts preserved.
+  </Step>
+</Steps>
+
+<Note>
+  Pre-request and test scripts are fully supported during import. Collection-level and folder-level scripts will show a warning as they're not yet supported.
+</Note>
+
+## Exporting Collections
+
+Share your API collections with your team by exporting to Postman Collection v2.1 format:
+
+1. Right-click on a collection in the sidebar
+2. Select **Export Collection**
+3. Choose a save location
+4. Share the JSON file via email, Slack, or version control
+
+<Warning>
+  Exported collections include all request configurations and scripts. Review the file before sharing if it contains sensitive data like API keys or tokens.
+</Warning>
+
+## Collection Management
+
+### Renaming Collections
+
+Right-click on a collection and select **Rename Collection** to update its name.
+
+### Deleting Collections
+
+Right-click on a collection and select **Delete Collection**. This action is permanent and removes all requests and folders within the collection.
+
+<Warning>
+  Deleted collections cannot be recovered. Consider exporting important collections before deletion.
+</Warning>
+
+## Best Practices
+
+<Accordion title="Use descriptive names">
+  Name your collections and requests clearly so team members can understand their purpose at a glance. Use names like "Create User" instead of "POST /users".
+</Accordion>
+
+<Accordion title="Leverage folder hierarchy">
+  Mirror your API's structure with folders. For a REST API, create folders for each resource (Users, Posts, Comments) and nest related operations inside.
+</Accordion>
+
+<Accordion title="Combine with environments">
+  Use variables like `{{baseUrl}}` in your request URLs so collections work seamlessly across local, staging, and production environments.
+</Accordion>
+
+<Accordion title="Version control your collections">
+  Enable workspace storage and commit your `.liteclient/` folder to Git. This lets your team share collections and track API changes over time.
+</Accordion>

@@ -1,0 +1,196 @@
+---
+title: Contributing Guide
+description: Learn how to contribute to LiteClient and help make it better
+---
+
+Thank you for your interest in contributing to LiteClient! This guide covers everything you need to know to contribute effectively.
+
+## Getting Started
+
+### Prerequisites
+
+Before you begin, ensure you have:
+
+- Node.js 18+
+- VS Code (for development)
+- Git
+
+### Setup
+
+<Steps>
+  <Step title="Fork the repository">
+    Create your own fork of the LiteClient repository on GitHub.
+  </Step>
+  
+  <Step title="Clone your fork">
+    ```bash
+    git clone https://github.com/liteclienthq/liteclient.git
+    ```
+  </Step>
+  
+  <Step title="Install dependencies">
+    ```bash
+    npm install
+    ```
+  </Step>
+  
+  <Step title="Launch development environment">
+    Open the project in VS Code and press `F5` to launch the Extension Development Host.
+  </Step>
+</Steps>
+
+## Development Workflow
+
+### Branch Naming
+
+Create a branch from `main` using these prefixes:
+
+| Prefix | Purpose | Example |
+|--------|---------|---------|  
+| `feature/` | New features | `feature/oauth-support` |
+| `fix/` | Bug fixes | `fix/response-scroll-issue` |
+| `docs/` | Documentation | `docs/update-readme` |
+| `refactor/` | Code refactoring | `refactor/extract-commands` |
+| `chore/` | Maintenance | `chore/update-dependencies` |
+
+### Making Changes
+
+<Steps>
+  <Step title="Create your branch">
+    ```bash
+    git checkout -b feature/your-feature
+    ```
+  </Step>
+  
+  <Step title="Make changes incrementally">
+    Work on your feature or fix in small, logical commits.
+  </Step>
+  
+  <Step title="Test manually">
+    Use the Extension Development Host (`F5`) to test your changes.
+  </Step>
+  
+  <Step title="Run checks">
+    ```bash
+    npm run check
+    ```
+    Ensure all type checks pass before committing.
+  </Step>
+  
+  <Step title="Commit with clear messages">
+    Follow the conventional commit format (see below).
+  </Step>
+</Steps>
+
+### Before Submitting
+
+<Note>
+Make sure to complete this checklist before submitting your pull request:
+
+- Run `npm run check` (must pass with no errors)
+- Test the feature manually
+- Update documentation if needed
+</Note>
+
+## Commit Messages
+
+Use conventional commit messages:
+
+```text
+<type>: <description>
+
+Types:
+- feat: A new feature
+- fix: A bug fix
+- docs: Documentation only changes
+- refactor: Code refactoring (no behavior change)
+- chore: Maintenance tasks
+- test: Adding or updating tests
+```
+
+### Examples
+
+```text
+feat: add OAuth 2.0 authentication support
+fix: resolve scroll position reset in response panel
+docs: update README with new features
+refactor: extract command handlers to separate files
+chore: update dependencies
+```
+
+## Pull Request Process
+
+<Steps>
+  <Step title="Push your branch">
+    Push your branch to your fork on GitHub.
+  </Step>
+  
+  <Step title="Open a Pull Request">
+    Create a PR against the `main` branch.
+  </Step>
+  
+  <Step title="Ensure CI passes">
+    Wait for all CI checks to pass.
+  </Step>
+  
+  <Step title="Describe your changes">
+    Provide a clear description of what your PR does and why.
+  </Step>
+  
+  <Step title="Link related issues">
+    Reference any related issues in your PR description.
+  </Step>
+</Steps>
+
+## Code Style
+
+<Accordion title="TypeScript Guidelines">
+  - Strict mode enabled
+  - Avoid `any` — use proper types or `unknown`
+  - Shared types in `src/shared/`
+</Accordion>
+
+<Accordion title="Lit Components">
+  - Prefix with `lc-`
+  - Extend `LcBaseElement`
+  - Use `@customElement` decorator
+</Accordion>
+
+<Accordion title="Naming Conventions">
+  | Type | Convention | Example |
+  |------|------------|---------|  
+  | Files | camelCase | `collectionService.ts` |
+  | Classes | PascalCase | `CollectionService` |
+  | Functions/variables | camelCase | `getCollection()` |
+  | Commands | `liteclient.verbNoun` | `liteclient.sendRequest` |
+</Accordion>
+
+<Accordion title="General Guidelines">
+  - No comments unless complex logic requires explanation
+  - Follow existing patterns in neighboring code
+  - Prefer VS Code native UI over custom dialogs
+</Accordion>
+
+## Testing
+
+### Manual Testing
+
+Press `F5` in VS Code to launch the Extension Development Host where you can test your changes in a live environment.
+
+### Automated Testing
+
+```bash
+npm test          # Run all tests
+npm run check     # TypeScript type checking
+npm run lint      # ESLint validation
+```
+
+## Questions?
+
+- Open an issue for bugs or feature requests
+- Check existing issues before creating new ones
+- See [AGENTS.md](./AGENTS.md) for AI coding conventions
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.

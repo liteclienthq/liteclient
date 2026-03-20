@@ -1,0 +1,190 @@
+---
+title: Changelog
+description: Track the latest updates, features, and improvements to LiteClient
+---
+
+All notable changes to LiteClient are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.16.0] - 2026-03-03
+
+### Added
+
+<Accordion title="Pre-request & Post-response Scripts">
+  Write JavaScript scripts that run before a request is sent or after a response is received. Access a Postman-compatible `pm` API including:
+  - `pm.environment`
+  - `pm.globals`
+  - `pm.variables`
+  - `pm.test()`
+  - `pm.expect()`
+  - `pm.request`
+  - `pm.response`
+  - Console logging
+</Accordion>
+
+<Accordion title="Test Results Panel">
+  New "Tests" tab in the response section displays test pass/fail results, console output, and script errors with line numbers.
+</Accordion>
+
+<Accordion title="Scripts Tab">
+  New "Scripts" tab in the request section with a CodeMirror editor for writing pre-request and test scripts.
+</Accordion>
+
+<Accordion title="Script Variable Persistence">
+  Variables set via `pm.environment.set()` and `pm.globals.set()` are persisted back to storage and broadcast to all open panels. New variables are created automatically if they don't exist.
+</Accordion>
+
+<Accordion title="Sandboxed Execution">
+  Scripts run in a Node.js `vm` sandbox with:
+  - 2-second timeout
+  - Capped console output (200 entries)
+  - Capped test results (200)
+  - 100KB script size limit
+</Accordion>
+
+<Accordion title="Postman Script Import/Export">
+  Pre-request and test scripts are preserved when importing/exporting Postman Collection v2.1 files. Warnings are shown when collection-level or folder-level scripts are detected (not supported).
+</Accordion>
+
+## [0.15.0] - 2026-02-21
+
+### Added
+
+- **Response Body Formatting**: JSON and HTML/XML responses are now automatically pretty-printed for readability
+- **Format Button**: Manual "Format" button in the response toolbar to re-trigger formatting on demand
+- **js-beautify Integration**: HTML/XML formatting powered by `js-beautify` for reliable, industry-standard output
+
+## [0.14.0] - 2026-02-19
+
+### Added
+
+<Accordion title="Environment Manager">
+  Full webview panel for managing environments and variables in a table UI (similar to Postman). Open via command palette (`LiteClient: Manage Environments`) or the "Manage" action on any environment in the sidebar. Supports inline editing of:
+  - Variable name
+  - Initial value
+  - Current value
+  - Type (default/secret)
+  - Enabled state
+</Accordion>
+
+<Accordion title="Current Value Overrides">
+  Set workspace-local "current values" for environment variables that override initial values during request execution. Current values are stored in VS Code's `workspaceState` and never committed to Git.
+</Accordion>
+
+<Accordion title="Secret Variable Masking">
+  Variables with type `secret` display masked values (`••••••••`) in:
+  - Sidebar
+  - URL bar autocomplete
+  - Request metadata views
+  
+  Secret fields use password inputs in the Environment Manager.
+</Accordion>
+
+<Accordion title="Current Value Actions">
+  Context menu on variables includes "Set Current Value" and "Clear Current Value" options. Secret variables use a password input when setting current values.
+</Accordion>
+
+### Changed
+
+- **Environment Variables Data Model**: Variables now use structured `EnvironmentVariable` objects with `id`, `name`, `initialValue`, `type` (default/secret), and `enabled` fields instead of plain key-value pairs
+- **Variable Resolution**: New centralized `variableResolver` with layered resolution order: Globals → Collection → Environment. Resolution precedence: overrides → currentValue → initialValue
+- **Auto-Migration**: Existing environments using the legacy format are automatically migrated on load
+- **Type Consolidation**: Single `Environment` interface in `models.ts`, removing duplicates from `messages.ts` and `variableSubstitution.ts`
+- **Documentation**: Reorganized CONTRIBUTING.md, MAINTAINING.md, and AGENTS.md with clear separation of concerns
+
+## [0.13.0] - 2026-02-09
+
+### Added
+
+- **Workspace-Scoped Storage**: Store collections, environments, and history in a `.liteclient/` folder in your workspace root for team sharing via Git. Configurable via `liteclient.storageScope` setting
+- **Storage Scope Switcher**: Status bar indicator shows current storage scope (Global/Workspace). Click to switch
+- **Migrate to Workspace Command**: `LiteClient: Migrate Data to Workspace` copies existing global data into the workspace `.liteclient/` folder
+- **File System Watcher**: Automatically refreshes sidebar when `.liteclient/*.json` files change externally (e.g., after `git pull`)
+
+## [0.12.1] - 2026-02-07
+
+### Documentation
+
+- Updated AGENTS.md with complete architecture and feature documentation
+- Updated README.md with comprehensive user guide and feature descriptions
+
+## [0.12.0] - 2026-02-04
+
+### Added
+
+- **Variable Autocomplete**: Type `{{` in URL, params, headers, or body fields to trigger autocomplete dropdown showing available environment and global variables. Navigate with arrow keys, select with Enter/Tab
+- **Tab Indicators**: Visual indicators on tabs show item counts (Params, Headers, Response Headers, Cookies) or a dot (Body) when content is present
+
+### Changed
+
+- **Draggable Separator**: Updated request/response separator to match VS Code's native sash styling—subtle border by default, blue highlight on hover
+
+### Fixed
+
+- **Dropdown Backgrounds on Windows**: Fixed dropdown elements in auth panel showing white backgrounds in dark mode on Windows. Dropdowns now use consistent neutral background matching the extension's styling
+
+## [0.11.0] - 2026-02-02
+
+### Added
+
+<Accordion title="OAuth 2.0 Authentication">
+  Full OAuth 2.0 support with three grant type options:
+  
+  - **Authorization Code**: For user authentication via browser with traditional flow
+  - **Authorization Code with PKCE**: Enhanced security for public clients using Proof Key for Code Exchange
+  - **Client Credentials**: For machine-to-machine authentication (e.g., Auth0 M2M apps)
+  
+  Features:
+  - Configurable client authentication method: "Send as Basic Auth Header" (default) or "Send credentials in body"
+  - Support for Audience and Scope parameters for providers like Auth0
+  - Automatic token caching in VS Code's secure secret storage
+  - Automatic token refresh when tokens expire
+  - Token status display showing expiration time
+  - Authorization header automatically injected when sending requests
+</Accordion>
+
+## [0.10.0] - 2025-01-29
+
+### Added
+
+- **Drag-and-Drop Reordering**: Requests and folders can now be reordered within collections via drag-and-drop. Drag items before/after siblings to reorder, or drop onto folders to nest them inside
+- **Cross-Collection Moves**: Items can be dragged between different collections, not just within the same collection
+
+## [0.9.1] - 2025-01-29
+
+### Fixed
+
+- **Variable Substitution in Form Bodies**: Variables (`{{varName}}`) are now correctly substituted in `form-data` and `x-www-form-urlencoded` request body fields. Previously, variable substitution only worked for raw body content
+
+## [0.9.0] - 2025-01-26
+
+### Added
+
+<Accordion title="Request Timeout & Cancel">
+  Requests now have a 30-second default timeout. Cancel button appears in the response area while a request is in flight, allowing users to abort long-running requests.
+</Accordion>
+
+<Accordion title="Cookie Jar">
+  Per-domain cookie persistence using `tough-cookie`. Cookies are automatically sent on subsequent requests to the same domain.
+</Accordion>
+
+<Accordion title="Cookie Manager">
+  New webview panel for managing stored cookies. Access via "LiteClient: Manage Cookies" command. View all cookies grouped by domain in collapsible accordions. Delete individual cookies, all cookies for a domain, or clear all cookies.
+</Accordion>
+
+<Accordion title="Cookies Tab">
+  New "Cookies" tab in response area displays parsed Set-Cookie headers with Name, Value, Domain, Path, Expires, and flags (Secure, HttpOnly, SameSite) in a table format. Cookie count shown in tab label.
+</Accordion>
+
+### Fixed
+
+- **Cookie Capture on Redirects**: Cookies set during HTTP redirects (e.g., 302 responses) are now properly captured and displayed. Previously, only cookies from the final response were visible
+
+### Changed
+
+- **Basic Auth Encoding**: Replaced deprecated `btoa` with `Buffer.from().toString('base64')` for proper Base64 encoding
+- **ID Generation**: Unified all ID generators to use `crypto.randomUUID()` via `idUtils.ts`
+- **History Metadata**: Added `durationMs` to history execution records for response time tracking
+
+<Note>
+For the complete changelog including all versions, visit the [GitHub repository](https://github.com/liteclienthq/liteclient/blob/main/CHANGELOG.md).
+</Note>

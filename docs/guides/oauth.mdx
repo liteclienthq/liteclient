@@ -1,0 +1,231 @@
+---
+title: "OAuth 2.0 Setup"
+description: "Configure OAuth 2.0 authentication with LiteClient for Authorization Code, PKCE, and Client Credentials flows"
+---
+
+## Overview
+
+LiteClient supports OAuth 2.0 authentication with three grant types. Tokens are automatically acquired, cached in VS Code's SecretStorage, and injected into requests.
+
+## Supported Grant Types
+
+LiteClient supports three OAuth 2.0 flows:
+
+<CardGroup cols={3}>
+  <Card title="Authorization Code" icon="browser">
+    Traditional flow requiring user login via browser
+  </Card>
+  
+  <Card title="PKCE" icon="shield">
+    Enhanced security for public clients without client secret
+  </Card>
+  
+  <Card title="Client Credentials" icon="key">
+    Machine-to-machine authentication with direct token exchange
+  </Card>
+</CardGroup>
+
+## Authorization Code Flow
+
+Use this flow when your application needs to authenticate on behalf of a user.
+
+<Steps>
+  <Step title="Open Auth Tab">
+    Open a request panel and click the **Auth** tab
+  </Step>
+  
+  <Step title="Select OAuth 2.0">
+    Select **OAuth 2.0** from the authentication type dropdown
+  </Step>
+  
+  <Step title="Choose Grant Type">
+    Select **Authorization Code** as the grant type
+  </Step>
+  
+  <Step title="Configure Endpoints">
+    Enter the following URLs:
+    - **Authorization URL**: The endpoint where users log in
+    - **Token URL**: The endpoint that exchanges the code for a token
+  </Step>
+  
+  <Step title="Enter Credentials">
+    Provide:
+    - **Client ID**: Your application's client identifier
+    - **Client Secret**: Your application's secret key
+  </Step>
+  
+  <Step title="Add Scopes (Optional)">
+    Enter required scopes separated by spaces (e.g., `read:user write:repo`)
+  </Step>
+  
+  <Step title="Get Access Token">
+    Click **Get Access Token**. LiteClient will:
+    1. Open your default browser
+    2. Navigate to the authorization URL
+    3. Wait for you to log in and authorize
+    4. Receive the callback with authorization code
+    5. Exchange the code for an access token
+  </Step>
+  
+  <Step title="Token Auto-Injection">
+    The token is automatically saved and injected in the `Authorization` header for all requests using this auth configuration
+  </Step>
+</Steps>
+
+<Info>
+LiteClient handles the OAuth callback by registering a URI handler in VS Code.
+</Info>
+
+## Authorization Code with PKCE
+
+PKCE (Proof Key for Code Exchange) provides enhanced security for public clients that cannot securely store a client secret.
+
+<Steps>
+  <Step title="Open Auth Tab">
+    Open a request panel and click the **Auth** tab
+  </Step>
+  
+  <Step title="Select OAuth 2.0">
+    Select **OAuth 2.0** from the authentication type dropdown
+  </Step>
+  
+  <Step title="Choose PKCE Grant Type">
+    Select **Authorization Code (PKCE)** as the grant type
+  </Step>
+  
+  <Step title="Configure Endpoints">
+    Enter:
+    - **Authorization URL**: The authorization endpoint
+    - **Token URL**: The token exchange endpoint
+  </Step>
+  
+  <Step title="Enter Client ID">
+    Provide your **Client ID** (no client secret needed)
+  </Step>
+  
+  <Step title="Add Scopes (Optional)">
+    Enter required scopes if your API requires them
+  </Step>
+  
+  <Step title="Get Access Token">
+    Click **Get Access Token**. LiteClient will:
+    1. Generate a code verifier and challenge
+    2. Open browser to authorization URL with PKCE parameters
+    3. Receive authorization code callback
+    4. Exchange code + verifier for access token
+  </Step>
+</Steps>
+
+<Tip>
+PKCE is recommended for single-page applications and mobile apps where client secrets cannot be safely stored.
+</Tip>
+
+## Client Credentials Flow
+
+Use this flow for server-to-server authentication without user interaction.
+
+<Steps>
+  <Step title="Open Auth Tab">
+    Open a request panel and click the **Auth** tab
+  </Step>
+  
+  <Step title="Select OAuth 2.0">
+    Select **OAuth 2.0** from the authentication type dropdown
+  </Step>
+  
+  <Step title="Choose Client Credentials">
+    Select **Client Credentials** as the grant type
+  </Step>
+  
+  <Step title="Configure Token URL">
+    Enter the **Token URL** (authorization URL not needed for this flow)
+  </Step>
+  
+  <Step title="Enter Credentials">
+    Provide:
+    - **Client ID**: Your application identifier
+    - **Client Secret**: Your application secret
+  </Step>
+  
+  <Step title="Add Scopes (Optional)">
+    Enter required scopes for your API
+  </Step>
+  
+  <Step title="Get Access Token">
+    Click **Get Access Token**. The token is acquired directly without browser interaction
+  </Step>
+</Steps>
+
+<Warning>
+Client Credentials tokens represent the application itself, not a user. Ensure your API supports this flow.
+</Warning>
+
+## Token Management
+
+### Token Storage
+
+LiteClient stores OAuth tokens securely:
+- Tokens are saved in **VS Code's SecretStorage**
+- Tokens persist across VS Code sessions
+- Tokens are encrypted and never exposed in plain text
+
+### Token Refresh
+
+<Info>
+LiteClient automatically refreshes expired tokens when possible. If refresh fails, re-authenticate via the Auth tab.
+</Info>
+
+### Manual Re-authentication
+
+If your token expires or becomes invalid:
+
+1. Open the request's **Auth** tab
+2. Verify the OAuth configuration (URLs, Client ID, Secret)
+3. Click **Get Access Token** to acquire a new token
+
+## Common OAuth Providers
+
+Configuration examples for popular OAuth providers:
+
+<AccordionGroup>
+  <Accordion title="GitHub">
+    - **Authorization URL**: `https://github.com/login/oauth/authorize`
+    - **Token URL**: `https://github.com/login/oauth/access_token`
+    - **Grant Type**: Authorization Code or PKCE
+    - **Scopes**: `repo`, `user`, `read:org`, etc.
+  </Accordion>
+  
+  <Accordion title="Google">
+    - **Authorization URL**: `https://accounts.google.com/o/oauth2/v2/auth`
+    - **Token URL**: `https://oauth2.googleapis.com/token`
+    - **Grant Type**: Authorization Code or PKCE
+    - **Scopes**: `https://www.googleapis.com/auth/userinfo.email`, etc.
+  </Accordion>
+  
+  <Accordion title="Microsoft">
+    - **Authorization URL**: `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`
+    - **Token URL**: `https://login.microsoftonline.com/common/oauth2/v2.0/token`
+    - **Grant Type**: Authorization Code or PKCE
+    - **Scopes**: `User.Read`, `Mail.Read`, etc.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<Accordion title="Token Not Being Sent">
+  - Verify OAuth 2.0 is selected in the Auth tab
+  - Confirm you clicked **Get Access Token** and received a token
+  - Check that the token URL is correct
+</Accordion>
+
+<Accordion title="Browser Callback Fails">
+  - Ensure your OAuth application's redirect URI includes:
+    - `vscode://liteclienthq.liteclient/oauth-callback`
+  - Check that VS Code is set as the default handler for `vscode://` URIs
+</Accordion>
+
+<Accordion title="Token Expired">
+  - LiteClient automatically refreshes tokens when possible
+  - If refresh fails, manually re-authenticate via the Auth tab
+  - Verify the token URL is correct
+</Accordion>

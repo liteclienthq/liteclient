@@ -1,0 +1,238 @@
+---
+title: "Troubleshooting"
+description: "Common issues and solutions for LiteClient"
+---
+
+## Common Issues
+
+This guide covers common issues you may encounter while using LiteClient and how to resolve them.
+
+<AccordionGroup>
+  <Accordion title="Variables Not Substituting">
+    If variables appear unchanged in your requests (e.g., `{{baseUrl}}` sent literally):
+
+    **Possible Causes:**
+    1. No environment is selected in the sidebar
+    2. The variable doesn't exist in the active environment, collection, or globals
+    3. Typo in the variable name (e.g., `{{nam}}` instead of `{{name}}`)
+    4. The variable is disabled
+
+    **Solutions:**
+    - Ensure an environment is selected from the dropdown in the sidebar
+    - Verify the variable exists in the **Env** tab (check Globals, Collection, and Environment sections)
+    - Check the variable name spelling matches exactly (case-sensitive)
+    - Confirm the variable is **enabled** (check the enabled checkbox)
+    - Remember: Global variables are always available regardless of selected environment
+  </Accordion>
+
+  <Accordion title="Request Fails with 'Invalid URL'">
+    If your request fails before sending with an invalid URL error:
+
+    **Possible Causes:**
+    1. URL missing `http://` or `https://` protocol
+    2. Unresolved variables in the URL
+    3. Malformed URL structure
+
+    **Solutions:**
+    - Verify the URL starts with `http://` or `https://`
+    - Check for unresolved variables (e.g., `{{port}}` without defining the `port` variable)
+    - Test the URL in a browser to confirm the endpoint exists
+    - Use the variable autocomplete to ensure correct variable names
+  </Accordion>
+
+  <Accordion title="Cookies Not Being Sent">
+    If cookies aren't being included in your requests:
+
+    **Possible Causes:**
+    1. Cookie Jar is disabled
+    2. Cookies don't match the request domain
+    3. Cookie has expired
+    4. Cookie security settings prevent sending
+
+    **Solutions:**
+    - Ensure the Cookie Jar is enabled (it's enabled by default)
+    - Check that cookies match the request domain (e.g., cookies for `example.com` won't send to `api.other.com`)
+    - Verify cookie hasn't expired using the Cookie Manager
+    - Use the Cookie Manager to inspect stored cookies and their attributes
+    - Check if the cookie has `Secure` flag and you're using `https://`
+  </Accordion>
+
+  <Accordion title="OAuth Token Expired">
+    If requests fail with authentication errors:
+
+    **Possible Causes:**
+    1. Access token has expired
+    2. Refresh token failed or is invalid
+    3. OAuth configuration is incorrect
+
+    **Solutions:**
+    - LiteClient automatically refreshes tokens when possible
+    - If automatic refresh fails, manually re-authenticate:
+      1. Open the request's **Auth** tab
+      2. Verify OAuth configuration (Authorization URL, Token URL, Client ID, Secret)
+      3. Click **Get Access Token** to acquire a new token
+    - Check that the token URL is correct in your OAuth configuration
+    - Verify your OAuth application credentials haven't been revoked
+  </Accordion>
+
+  <Accordion title="Response Body Not Formatted">
+    If response appears as unformatted text:
+
+    **Possible Causes:**
+    1. Missing or incorrect `Content-Type` header in response
+    2. Server returning non-JSON content
+    3. Response body is actually plain text
+
+    **Solutions:**
+    - Response formatting requires proper `Content-Type` header from the server
+    - JSON responses with `Content-Type: application/json` are auto-formatted
+    - Other content types (XML, HTML, plain text) display as-is
+    - Check the response headers in the **Headers** tab to verify `Content-Type`
+    - If the server is returning JSON without proper headers, contact the API maintainer
+  </Accordion>
+
+  <Accordion title="Request Takes Too Long / Timeout">
+    If requests hang or timeout:
+
+    **Possible Causes:**
+    1. Server is slow or unresponsive
+    2. Network connectivity issues
+    3. Request timeout setting too short
+
+    **Solutions:**
+    - Verify your internet connection is working
+    - Test the endpoint in a browser or with `curl` to confirm it responds
+    - Check if the server is experiencing downtime
+    - Review any timeout settings in your request configuration
+    - For slow endpoints, consider the expected response time
+  </Accordion>
+
+  <Accordion title="Collection Not Importing from Postman">
+    If Postman import fails:
+
+    **Possible Causes:**
+    1. Wrong Postman collection version
+    2. Corrupted JSON file
+    3. Invalid file format
+
+    **Solutions:**
+    - Verify the file is **Postman Collection v2.1** format
+    - When exporting from Postman, explicitly select **Collection v2.1**
+    - Check that the JSON file is not corrupted (open in a text editor)
+    - Ensure the file is properly formatted JSON (use a JSON validator)
+    - Try re-exporting from Postman if issues persist
+  </Accordion>
+
+  <Accordion title="Workspace Storage Not Showing Data">
+    If switching to workspace storage shows empty collections:
+
+    **Possible Causes:**
+    1. `.liteclient/` folder doesn't exist
+    2. Storage scope not properly switched
+    3. Data not migrated from global storage
+
+    **Solutions:**
+    - Verify the storage scope indicator in the status bar shows **Workspace**
+    - Check that `.liteclient/` folder exists in your workspace root
+    - Run **LiteClient: Migrate Data to Workspace** command to copy global data
+    - Reload VS Code window after switching storage scopes
+    - Check file permissions on `.liteclient/` directory
+  </Accordion>
+
+  <Accordion title="Environment Variables Not Appearing in Autocomplete">
+    If autocomplete doesn't show your variables:
+
+    **Possible Causes:**
+    1. Variables not saved properly
+    2. Environment not selected
+    3. Autocomplete not triggered correctly
+
+    **Solutions:**
+    - Ensure you saved the environment after adding variables
+    - Select an environment from the dropdown in the sidebar
+    - Type `{{` to trigger autocomplete (not just `{`)
+    - Check the **Env** tab to confirm variables exist
+    - Global variables should always appear in autocomplete
+  </Accordion>
+
+  <Accordion title="Request Headers Not Being Sent">
+    If headers aren't appearing in the actual request:
+
+    **Possible Causes:**
+    1. Headers disabled in the headers table
+    2. Variables in headers not resolved
+    3. Header name/value contains invalid characters
+
+    **Solutions:**
+    - Check the checkbox next to each header in the Headers tab
+    - Verify any variables in header values are defined and enabled
+    - Ensure header names don't contain spaces or special characters
+    - Test with a simple static header first
+    - Use browser DevTools or a proxy to inspect the actual HTTP request
+  </Accordion>
+
+  <Accordion title="OAuth Callback Not Working">
+    If the OAuth flow opens browser but doesn't complete:
+
+    **Possible Causes:**
+    1. Redirect URI not configured in OAuth app
+    2. VS Code not handling `vscode://` URIs
+    3. Browser blocking the callback
+
+    **Solutions:**
+    - Ensure your OAuth application's redirect URI includes:
+      - `vscode://liteclienthq.liteclient/oauth-callback`
+    - Check that VS Code is the default handler for `vscode://` URIs on your system
+    - Try a different browser if your current browser blocks custom protocols
+    - Verify the Authorization URL and Token URL are correct
+    - Check OAuth application settings in the provider's console
+  </Accordion>
+
+  <Accordion title="Extension Not Loading / Sidebar Missing">
+    If LiteClient doesn't appear in VS Code:
+
+    **Possible Causes:**
+    1. Extension not installed properly
+    2. VS Code needs restart
+    3. Extension disabled
+
+    **Solutions:**
+    - Verify LiteClient is installed: Extensions panel → Search "LiteClient"
+    - Restart VS Code completely
+    - Check if the extension is enabled (not disabled)
+    - Look for the LiteClient icon in the Activity Bar (left sidebar)
+    - Try reinstalling the extension from the marketplace
+    - Check the Output panel (`View → Output → LiteClient`) for errors
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+If you encounter issues not covered here:
+
+<CardGroup cols={2}>
+  <Card title="Check Documentation" icon="book">
+    Review the full documentation for detailed feature guides
+  </Card>
+  
+  <Card title="GitHub Issues" icon="github">
+    Report bugs or request features on the GitHub repository
+  </Card>
+  
+  <Card title="VS Code Logs" icon="file-lines">
+    Check Output panel: `View → Output → LiteClient`
+  </Card>
+  
+  <Card title="Community" icon="comments">
+    Ask questions and share solutions with other users
+  </Card>
+</CardGroup>
+
+<Tip>
+When reporting issues, include:
+- LiteClient version (from Extensions panel)
+- VS Code version (`Help → About`)
+- Operating system
+- Steps to reproduce the issue
+- Any error messages from the Output panel
+</Tip>

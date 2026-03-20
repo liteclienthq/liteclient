@@ -1,0 +1,152 @@
+---
+title: "Variables"
+description: "Use dynamic variables throughout your requests with LiteClient's variable system"
+---
+
+## Overview
+
+LiteClient supports dynamic variable substitution using the `{{variableName}}` syntax. Variables can be used throughout your requests to create reusable, environment-specific configurations.
+
+## Variable Syntax
+
+Variables are enclosed in double curly braces:
+
+```text
+{{baseUrl}}/api/users
+{{apiKey}}
+{{environmentVariable}}
+```
+
+### Where Variables Work
+
+Variables can be used in:
+- **URLs**: `{{baseUrl}}/api/users/{{userId}}`
+- **Headers**: Both keys and values
+- **Request body**: All body modes (JSON, form-data, etc.)
+- **Authentication credentials**: API keys, OAuth parameters
+
+## Variable Types
+
+LiteClient uses `EnvironmentVariable` objects with the following properties:
+
+- `id` - Unique identifier
+- `name` - Variable name (used in `{{name}}` syntax)
+- `initialValue` - The variable's value
+- `type` - Either `default` or `secret`
+- `enabled` - Boolean flag to enable/disable the variable
+
+<Info>
+Only **enabled** variables are resolved during request execution.
+</Info>
+
+## Variable Resolution Order
+
+When a request is executed, LiteClient resolves variables using a layered precedence system. The **narrowest scope wins**:
+
+<Steps>
+  <Step title="Global Variables">
+    Global variables are always available regardless of the selected environment. They provide base values accessible across all requests.
+  </Step>
+  
+  <Step title="Collection Variables">
+    Collection-scoped variables override global variables. These are specific to requests within a collection.
+  </Step>
+  
+  <Step title="Environment Variables">
+    Environment variables have the highest precedence and override both global and collection variables. Use these for environment-specific configurations (development, staging, production).
+  </Step>
+</Steps>
+
+### Resolution Example
+
+If you have:
+- Global variable: `baseUrl = https://api.example.com`
+- Collection variable: `baseUrl = https://api.dev.example.com`
+- Environment variable: `baseUrl = https://api.staging.example.com`
+
+The request will use `https://api.staging.example.com` (environment scope wins).
+
+## Autocomplete
+
+LiteClient provides an autocomplete dropdown when typing variables:
+
+1. Type `{{` to trigger autocomplete
+2. Start typing the variable name
+3. Use arrow keys to navigate available variables
+4. Press Enter to select
+
+<Tip>
+The autocomplete shows all available variables from global, collection, and environment scopes.
+</Tip>
+
+## Creating Variables
+
+### Global Variables
+
+Global variables are always available:
+
+<Steps>
+  <Step title="Open Environment Tab">
+    Switch to the **Env** tab in the LiteClient sidebar
+  </Step>
+  
+  <Step title="Access Globals">
+    Select the **Globals** section
+  </Step>
+  
+  <Step title="Add Variable">
+    Click **Add Variable** and enter name and value
+  </Step>
+</Steps>
+
+### Environment Variables
+
+Create environment-specific variables:
+
+<Steps>
+  <Step title="Create Environment">
+    In the **Env** tab, click **New Environment**
+  </Step>
+  
+  <Step title="Name Environment">
+    Enter a name (e.g., "Development", "Production")
+  </Step>
+  
+  <Step title="Add Variables">
+    Click **Add Variable** and configure your environment-specific values
+  </Step>
+  
+  <Step title="Select Environment">
+    Choose the environment from the dropdown in any request panel
+  </Step>
+</Steps>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Use Descriptive Names" icon="tag">
+    Name variables clearly: `apiBaseUrl` instead of `url`, `authToken` instead of `token`
+  </Card>
+  
+  <Card title="Secret Variables" icon="lock">
+    Mark sensitive data (API keys, tokens) as `secret` type
+  </Card>
+  
+  <Card title="Global for Shared Values" icon="globe">
+    Use global variables for values shared across all environments
+  </Card>
+  
+  <Card title="Environment for Configs" icon="layer-group">
+    Use environments to manage different configurations (dev, staging, prod)
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<Warning>
+If variables are not being substituted, check:
+1. An environment is selected in the sidebar
+2. The variable exists in the active environment, collection, or globals
+3. The variable name matches exactly (case-sensitive)
+4. The variable is **enabled**
+</Warning>

@@ -1,0 +1,212 @@
+---
+title: Environments
+description: Manage different configurations for local, staging, and production environments with structured variables
+---
+
+Environments let you manage different configurations for local development, staging, and production without changing your requests. You can define variables, switch between environments instantly, and maintain separate settings for each context.
+
+## Creating Environments
+
+Create named environments to organize your variables:
+
+<Steps>
+  <Step title="Open Environment Manager">
+    Click the **New Environment** button in the Environments tab of the sidebar, or run **LiteClient: New Environment** from the Command Palette.
+  </Step>
+  <Step title="Name Your Environment">
+    Choose a descriptive name like "Local", "Staging", or "Production".
+  </Step>
+  <Step title="Add Variables">
+    Define variables specific to this environment (e.g., `baseUrl`, `apiKey`).
+  </Step>
+</Steps>
+
+## Variable Structure
+
+Environment variables use a structured format with multiple properties:
+
+- **Name** - The variable identifier used in `{{variableName}}` syntax
+- **Initial Value** - The default value stored in your environment file
+- **Current Value** - Optional workspace-local override (never committed to Git)
+- **Type** - Either `default` or `secret` (secrets are masked in the UI)
+- **Enabled** - Toggle to enable/disable individual variables
+
+<Info>
+  Current values are stored in VS Code's workspace state and override initial values during request execution. This lets you test with different values without modifying your saved environment.
+</Info>
+
+## Global Variables
+
+Global variables are available across all environments and collections. Use them for values that remain constant regardless of environment:
+
+- API version numbers
+- Common headers
+- Organization IDs
+- Default timeouts
+
+<Tabs>
+  <Tab title="Create Global Variable">
+    1. Open the **Globals** environment in the sidebar
+    2. Click **Add Variable**
+    3. Enter name and initial value
+    4. The variable is immediately available in all requests
+  </Tab>
+  <Tab title="Use Global Variable">
+    Reference global variables using the same `{{variableName}}` syntax:
+    ```text
+    {{baseUrl}}/api/{{apiVersion}}/users
+    ```
+  </Tab>
+</Tabs>
+
+## Variable Resolution
+
+LiteClient resolves variables using a layered precedence system. Variables from narrower scopes override broader scopes:
+
+**Resolution Order:**
+1. **Environment variables** (highest priority)
+2. **Collection variables**
+3. **Global variables** (lowest priority)
+
+<Note>
+  Only enabled variables are resolved. Disabled variables are skipped during resolution.
+</Note>
+
+### Resolution Example
+
+If you have:
+- Global variable: `baseUrl = https://api.example.com`
+- Environment variable: `baseUrl = http://localhost:3000`
+
+When you select that environment, `{{baseUrl}}` resolves to `http://localhost:3000`.
+
+## Using Variables
+
+Variables work everywhere in your requests:
+
+### URL
+```text
+{{baseUrl}}/api/users/{{userId}}
+```
+
+### Headers
+```http
+Authorization: Bearer {{authToken}}
+X-API-Key: {{apiKey}}
+```
+
+### Request Body
+```json
+{
+  "apiKey": "{{apiKey}}",
+  "environment": "{{env}}"
+}
+```
+
+### Authentication
+Use variables in API Key, Bearer Token, Basic Auth, and OAuth 2.0 configurations.
+
+## Variable Autocomplete
+
+Type `{{` in any input field to trigger autocomplete. You'll see all available variables from globals, collections, and the active environment:
+
+<Steps>
+  <Step title="Trigger Autocomplete">
+    Type `{{` in the URL bar, header value, or body editor.
+  </Step>
+  <Step title="Navigate Options">
+    Use arrow keys to navigate through available variables.
+  </Step>
+  <Step title="Select Variable">
+    Press Enter to insert the selected variable.
+  </Step>
+</Steps>
+
+<Tip>
+  Autocomplete shows the current value of each variable, making it easy to verify you're using the right one.
+</Tip>
+
+## Switching Environments
+
+Quickly switch between environments via the sidebar:
+
+1. Click the environment dropdown in the Environments tab
+2. Select your target environment
+3. All requests immediately use the new environment's variables
+
+<Info>
+  The active environment applies to all open request tabs. You don't need to reload or reconfigure anything.
+</Info>
+
+## Environment Manager
+
+Open the full Environment Manager panel for advanced editing:
+
+<Tabs>
+  <Tab title="Via Command Palette">
+    Run **LiteClient: Manage Environments** to open the manager in a dedicated panel.
+  </Tab>
+  <Tab title="Via Sidebar">
+    Click the **Manage** action on any environment in the sidebar.
+  </Tab>
+</Tabs>
+
+The Environment Manager provides:
+- Table view of all variables
+- Inline editing of name, initial value, current value, type, and enabled state
+- Bulk operations on multiple variables
+- Password-style input for secret variables
+
+## Secret Variables
+
+Protect sensitive values by marking variables as `secret`:
+
+- Secret values display as `••••••••` in the sidebar and autocomplete
+- Current value inputs use password fields
+- Secret variables are still stored in plaintext in environment files
+
+<Warning>
+  Secret variables provide UI masking but are not encrypted in storage. Never commit sensitive credentials to version control. Use current values for local testing instead.
+</Warning>
+
+## Current Value Overrides
+
+Set workspace-local current values that override initial values without modifying your environment file:
+
+<Steps>
+  <Step title="Set Current Value">
+    Right-click a variable in the sidebar and select **Set Current Value**. Enter the override value.
+  </Step>
+  <Step title="Use in Requests">
+    Requests automatically use the current value when present.
+  </Step>
+  <Step title="Clear Override">
+    Right-click the variable and select **Clear Current Value** to revert to the initial value.
+  </Step>
+</Steps>
+
+<Tip>
+  Current values are perfect for testing with temporary API keys or local database URLs without polluting your shared environment files.
+</Tip>
+
+## Legacy Format Migration
+
+Environments using the legacy key-value format are automatically migrated to the new structured format when loaded. Your existing environments will continue to work seamlessly.
+
+## Best Practices
+
+<Accordion title="Create environment-specific variables">
+  Define variables that change between environments: `baseUrl`, `apiKey`, `databaseUrl`. Keep constants in global variables.
+</Accordion>
+
+<Accordion title="Use consistent variable names">
+  Use the same variable names across all environments (e.g., `baseUrl` in Local, Staging, and Production). This ensures requests work in any environment.
+</Accordion>
+
+<Accordion title="Leverage secret types">
+  Mark API keys, tokens, and passwords as secret to prevent accidental exposure in screenshots or screen shares.
+</Accordion>
+
+<Accordion title="Use current values for testing">
+  Test with temporary credentials using current values instead of modifying initial values. This prevents accidental commits of test credentials.
+</Accordion>

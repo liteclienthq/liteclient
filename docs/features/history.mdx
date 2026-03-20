@@ -1,0 +1,250 @@
+---
+title: Request History
+description: Never lose track of what you've tried with automatic request history tracking and organization
+---
+
+LiteClient automatically records every request you send, organizing them by date for easy access. You can replay historical requests, review execution details, and manage your request history.
+
+## Automatic History Recording
+
+Every time you send a request, LiteClient automatically saves it to your history with complete details:
+
+- Request method and URL
+- Execution timestamp
+- Response status code
+- Execution duration
+- Full request configuration (headers, body, auth)
+
+<Info>
+  History is recorded regardless of whether the request succeeds or fails. This helps you debug issues by reviewing failed requests.
+</Info>
+
+## Viewing History
+
+Access your request history from the LiteClient sidebar:
+
+<Steps>
+  <Step title="Open History Tab">
+    Click the **History** tab in the LiteClient sidebar.
+  </Step>
+  <Step title="Browse by Date">
+    Requests are organized into groups: Today, Yesterday, Last Week, etc.
+  </Step>
+  <Step title="View Request Details">
+    Each history item shows:
+    - HTTP method (GET, POST, etc.)
+    - Request URL
+    - Execution duration in milliseconds
+    - Timestamp
+  </Step>
+</Steps>
+
+## Day-Grouped Organization
+
+History items are automatically organized into date groups for easy navigation:
+
+<Tabs>
+  <Tab title="Today">
+    All requests sent today appear in the "Today" group at the top of the history list.
+  </Tab>
+  <Tab title="Yesterday">
+    Requests from yesterday are grouped separately for quick access to recent work.
+  </Tab>
+  <Tab title="Last Week">
+    Older requests are grouped by week, making it easy to find requests from recent days.
+  </Tab>
+  <Tab title="Older">
+    Requests older than one week are grouped together in an "Older" section.
+  </Tab>
+</Tabs>
+
+<Tip>
+  Date grouping helps you quickly locate recent requests without scrolling through a long list. Use the groups to navigate to specific time periods.
+</Tip>
+
+## Replaying Requests
+
+Replay any historical request to re-execute it with the same configuration:
+
+<Steps>
+  <Step title="Find the Request">
+    Browse your history and locate the request you want to replay.
+  </Step>
+  <Step title="Click to Open">
+    Click the history item to open it in a new request editor panel.
+  </Step>
+  <Step title="Review Configuration">
+    The request opens with the same URL, method, headers, body, and auth settings.
+  </Step>
+  <Step title="Modify if Needed">
+    Make any changes to the request configuration before resending.
+  </Step>
+  <Step title="Send Again">
+    Click **Send** to re-execute the request with the current configuration.
+  </Step>
+</Steps>
+
+<Note>
+  When you replay a request, variables are resolved using current environment values, not the values from when the request was originally sent.
+</Note>
+
+## Request Details
+
+Each history item captures the complete request configuration:
+
+### What's Recorded
+
+- **URL** - Full request URL with query parameters
+- **Method** - HTTP method (GET, POST, PUT, etc.)
+- **Headers** - All request headers including authentication
+- **Body** - Request body content and type
+- **Auth** - Authentication configuration
+- **Duration** - Execution time in milliseconds
+- **Timestamp** - When the request was sent
+- **Status** - Response status code (if received)
+
+### What's Not Recorded
+
+- Response body content (only status is saved)
+- Response headers
+- Cookies
+- Test results
+
+<Info>
+  History items are lightweight to keep storage efficient. To preserve full response details, save important requests to collections.
+</Info>
+
+## Managing History
+
+### Delete Individual Items
+
+Remove specific requests from your history:
+
+<Steps>
+  <Step title="Locate the Request">
+    Find the history item you want to delete.
+  </Step>
+  <Step title="Right-Click">
+    Right-click on the history item to open the context menu.
+  </Step>
+  <Step title="Select Delete">
+    Choose **Delete** from the menu to remove the item.
+  </Step>
+</Steps>
+
+### Bulk Delete by Day
+
+Delete all requests from a specific day or date group:
+
+1. Right-click on a date group header (e.g., "Today", "Yesterday")
+2. Select **Delete All** to remove all requests from that group
+3. Confirm the deletion
+
+<Warning>
+  Bulk delete is permanent and cannot be undone. Consider exporting important requests to collections before bulk deletion.
+</Warning>
+
+### Clear All History
+
+Remove all history items at once:
+
+<Steps>
+  <Step title="Open History Tab">
+    Navigate to the History tab in the sidebar.
+  </Step>
+  <Step title="Click Clear All">
+    Click the **Clear History** button in the tab toolbar (trash icon).
+  </Step>
+  <Step title="Confirm">
+    Confirm that you want to clear all history. This action is permanent.
+  </Step>
+</Steps>
+
+<Warning>
+  Clearing history is permanent and cannot be undone. All historical requests will be deleted.
+</Warning>
+
+## History Storage
+
+History is stored according to your storage scope setting:
+
+<Tabs>
+  <Tab title="Global Storage">
+    When using global storage (default), history is saved in VS Code's global storage directory. This keeps history:
+    - Private to your VS Code installation
+    - Available across all workspaces
+    - Not shared via Git
+  </Tab>
+  <Tab title="Workspace Storage">
+    When using workspace storage, history is saved in the `.liteclient/` folder in your project root. This:
+    - Stores history in your workspace
+    - Can be shared via version control
+    - Is workspace-specific
+  </Tab>
+</Tabs>
+
+<Info>
+  Switch storage scopes by clicking the **LiteClient: Global/Workspace** indicator in the VS Code status bar. See the Storage documentation for details.
+</Info>
+
+## History Limits
+
+To keep storage efficient, LiteClient automatically manages history size:
+
+- No hard limit on number of items
+- Older items are eventually pruned to prevent unbounded growth
+- Recent requests are always preserved
+
+<Tip>
+  If your history becomes too large, use the Clear All option to reset it. Save important requests to collections before clearing.
+</Tip>
+
+## Using History Effectively
+
+### Debugging Failed Requests
+
+When a request fails:
+
+1. Open the history item to review the exact configuration
+2. Check the URL, headers, and body for errors
+3. Modify and resend to test fixes
+4. Save the working version to a collection
+
+### Tracking API Changes
+
+Use history to track API behavior over time:
+
+- Compare request durations to identify performance changes
+- Review status codes to detect API availability issues
+- Replay old requests to verify backward compatibility
+
+### Repeating Workflows
+
+For multi-step workflows:
+
+1. Execute each request in sequence
+2. Review history to verify all steps completed
+3. Replay failed steps as needed
+4. Save the complete workflow to a collection for future use
+
+## Best Practices
+
+<Accordion title="Save important requests to collections">
+  History is temporary and may be cleared. Save requests you'll reuse to collections so they're preserved permanently.
+</Accordion>
+
+<Accordion title="Review history regularly">
+  Periodically review your history to identify patterns, debug issues, and find requests worth saving to collections.
+</Accordion>
+
+<Accordion title="Use history for debugging">
+  When debugging, check history to compare working and failing requests. Look for differences in headers, parameters, or body content.
+</Accordion>
+
+<Accordion title="Clear old history periodically">
+  Keep your history manageable by clearing old items. Use bulk delete to remove requests from specific time periods.
+</Accordion>
+
+<Accordion title="Don't rely on history for collaboration">
+  History is personal and not shared with your team. Use collections and workspace storage for team collaboration.
+</Accordion>

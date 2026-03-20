@@ -1,0 +1,81 @@
+---
+title: Introduction
+description: The fastest, most focused REST API client for your code editor
+---
+
+LiteClient is a native VS Code extension that brings a powerful REST API client directly into your editor. No more context switching between your IDE and external tools. Make HTTP requests, manage environments, and organize your API collections without leaving VS Code.
+
+## Why LiteClient?
+
+Modern API clients have become bloated with cloud accounts, telemetry, and features you never use. LiteClient returns to the fundamentals:
+
+<CardGroup cols={2}>
+  <Card title="Zero startup time" icon="bolt">
+    Opens instantly with your workspace
+  </Card>
+  <Card title="Total privacy" icon="shield">
+    All data stays local. No accounts, no telemetry, no cloud sync
+  </Card>
+  <Card title="Native UX" icon="window">
+    Uses VS Code's native buttons, trees, and themes
+  </Card>
+  <Card title="Focused features" icon="crosshairs">
+    Everything you need, nothing you don't
+  </Card>
+</CardGroup>
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Install LiteClient from the VS Code Marketplace or Open VSX
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Make your first request in under 60 seconds
+  </Card>
+  <Card title="Collections" icon="folder" href="/features/collections">
+    Organize API requests in hierarchical collections with drag-and-drop
+  </Card>
+  <Card title="Environments" icon="layer-group" href="/features/environments">
+    Manage different configurations for local, staging, and production
+  </Card>
+  <Card title="Authentication" icon="key" href="/features/authentication">
+    API Key, Bearer Token, Basic Auth, and OAuth 2.0 support
+  </Card>
+  <Card title="Scripting" icon="code" href="/features/scripting">
+    Automate workflows with pre-request and post-response scripts
+  </Card>
+</CardGroup>
+
+## Core features
+
+### Collections and organization
+
+Organize your API requests in a hierarchical structure that grows with your project. Create unlimited collections to group related APIs, nest requests inside folders for logical organization, and use drag-and-drop reordering to keep things organized.
+
+### Environment management
+
+Manage different configurations for local, staging, and production environments. Create named environments with structured variables, use global variables available across all environments, and enjoy layered variable resolution that follows a clear precedence: Globals → Collection → Environment.
+
+### Complete authentication support
+
+LiteClient supports the authentication methods you need:
+- **API Key** - Custom header or query parameter placement
+- **Bearer Token** - Simple token-based authentication
+- **Basic Auth** - Username/password with automatic Base64 encoding
+- **OAuth 2.0** - Authorization Code, Authorization Code with PKCE, and Client Credentials flows with automatic token caching and refresh
+
+### Privacy first
+
+LiteClient is designed with privacy as a core principle. All data is stored locally in VS Code's global storage or optionally in your workspace's `.liteclient/` folder. No telemetry, no analytics, no tracking, and no cloud sync. Your API keys and credentials are stored locally—only you can access them.
+
+## What's next?
+
+<CardGroup cols={2}>
+  <Card title="Install LiteClient" icon="download" href="/installation">
+    Get started by installing the extension
+  </Card>
+  <Card title="Make your first request" icon="paper-plane" href="/quickstart">
+    Follow the quickstart guide to send your first API request
+  </Card>
+</CardGroup>

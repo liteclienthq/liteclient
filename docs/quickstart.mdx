@@ -1,0 +1,192 @@
+---
+title: Quickstart
+description: Make your first API request, create an environment, and organize with collections in under 5 minutes
+---
+
+This guide walks you through the essential features of LiteClient. You'll make your first API request, set up an environment with variables, and organize your work with collections.
+
+## Make your first request
+
+Let's start by making a simple GET request to a public API.
+
+<Steps>
+  <Step title="Open LiteClient">
+    Click the LiteClient icon in the Activity Bar to open the sidebar.
+  </Step>
+  <Step title="Create a new request">
+    Click **New Request** in the sidebar, or press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS) and run **LiteClient: New Request**.
+  </Step>
+  <Step title="Enter the URL">
+    In the URL bar at the top of the request panel, enter:
+    ```
+    https://jsonplaceholder.typicode.com/users
+    ```
+  </Step>
+  <Step title="Send the request">
+    Click the **Send** button or press `Ctrl+Enter` (Windows/Linux) or `Cmd+Enter` (macOS).
+  </Step>
+  <Step title="View the response">
+    The response appears in the panel below with syntax highlighting, status code, headers, and execution time.
+  </Step>
+</Steps>
+
+<Tip>
+  You can press `Ctrl+L` (Windows/Linux) or `Cmd+L` (macOS) to quickly focus the URL bar from anywhere in the request panel.
+</Tip>
+
+## Create an environment
+
+Environments let you manage different configurations for local, staging, and production. Let's create your first environment with variables.
+
+<Steps>
+  <Step title="Open the Environments tab">
+    Click the **Env** tab in the LiteClient sidebar.
+  </Step>
+  <Step title="Create a new environment">
+    Click **New Environment** and enter a name like "Development".
+  </Step>
+  <Step title="Add a variable">
+    Click **Add Variable** and create your first variable:
+    - **Name**: `baseUrl`
+    - **Value**: `http://localhost:3000`
+    - **Type**: Default
+    - **Enabled**: Yes
+  </Step>
+  <Step title="Add more variables">
+    Add an API key variable:
+    - **Name**: `apiKey`
+    - **Value**: `your-api-key-here`
+    - **Type**: Secret (this masks the value in the UI)
+    - **Enabled**: Yes
+  </Step>
+  <Step title="Use variables in requests">
+    Go back to your request panel and update the URL to use your variable:
+    ```
+    {{baseUrl}}/api/users
+    ```
+    Type `{{` to see an autocomplete dropdown with available variables.
+  </Step>
+</Steps>
+
+<Note>
+  Variables follow a layered resolution order: **Globals** → **Collection** → **Environment**. Variables defined in narrower scopes override those in broader scopes.
+</Note>
+
+## Organize with collections
+
+Collections help you organize related API requests in a hierarchical structure.
+
+<Steps>
+  <Step title="Open the Collections tab">
+    Click the **Collections** tab in the LiteClient sidebar.
+  </Step>
+  <Step title="Create a new collection">
+    Click **New Collection** and name it something descriptive like "My API".
+  </Step>
+  <Step title="Add a request to the collection">
+    Right-click the collection and select **Add Request**. Give it a name like "Get Users".
+  </Step>
+  <Step title="Configure the request">
+    The request opens in a new panel. Add your URL, headers, and any authentication:
+    ```
+    {{baseUrl}}/api/users
+    ```
+  </Step>
+  <Step title="Save the request">
+    Your request is automatically saved to the collection. Any changes you make are persisted.
+  </Step>
+  <Step title="Create folders for organization">
+    Right-click the collection and select **New Folder** to create logical groupings. You can drag and drop requests between folders.
+  </Step>
+</Steps>
+
+<Tip>
+  You can import existing Postman Collections (v2.1) by clicking **Add Collection** → **Import from Postman** in the Collections tab.
+</Tip>
+
+## Add authentication
+
+LiteClient supports multiple authentication methods. Let's add a Bearer token to a request.
+
+<Steps>
+  <Step title="Open the Auth tab">
+    In your request panel, click the **Auth** tab.
+  </Step>
+  <Step title="Select authentication type">
+    Choose **Bearer Token** from the dropdown.
+  </Step>
+  <Step title="Enter your token">
+    You can enter a token directly or use a variable:
+    ```
+    {{apiKey}}
+    ```
+  </Step>
+  <Step title="Send the request">
+    Click **Send**. The `Authorization` header is automatically added with your Bearer token.
+  </Step>
+</Steps>
+
+### Other authentication methods
+
+<CardGroup cols={2}>
+  <Card title="API Key" icon="key">
+    Add an API key as a custom header or query parameter
+  </Card>
+  <Card title="Basic Auth" icon="lock">
+    Username and password with automatic Base64 encoding
+  </Card>
+  <Card title="OAuth 2.0" icon="shield">
+    Authorization Code, PKCE, and Client Credentials flows with automatic token refresh
+  </Card>
+</CardGroup>
+
+## Use the request history
+
+Every request you send is automatically recorded in the History tab.
+
+<Steps>
+  <Step title="Open the History tab">
+    Click the **History** tab in the LiteClient sidebar.
+  </Step>
+  <Step title="Browse your requests">
+    History is organized by day (Today, Yesterday, Last Week). Each entry shows the method, URL, and execution time.
+  </Step>
+  <Step title="Replay a request">
+    Click any history entry to open it in a new request panel and send it again.
+  </Step>
+  <Step title="Clean up history">
+    Right-click any day group to delete all requests from that day, or click **Clear History** to remove everything.
+  </Step>
+</Steps>
+
+## Storage scopes
+
+LiteClient gives you control over where your data is stored.
+
+- **Global storage** (default) - Collections, environments, and history are stored in VS Code's global storage, available across all workspaces
+- **Workspace storage** - Data is stored in a `.liteclient/` folder in your project root, perfect for sharing API collections via Git
+
+Click the **LiteClient: Global/Workspace** indicator in the status bar to switch between scopes.
+
+<Note>
+  Workspace storage requires an open folder. Each scope maintains independent collections, environments, and history.
+</Note>
+
+## Next steps
+
+You've learned the basics of LiteClient. Here's what to explore next:
+
+<CardGroup cols={2}>
+  <Card title="Scripting" icon="code">
+    Write pre-request and post-response scripts to automate workflows
+  </Card>
+  <Card title="Cookie management" icon="cookie">
+    View and manage cookies with the built-in Cookie Manager
+  </Card>
+  <Card title="Import collections" icon="file-import">
+    Migrate from Postman by importing Collection v2.1 files
+  </Card>
+  <Card title="OAuth 2.0" icon="shield">
+    Set up OAuth 2.0 flows with automatic token caching and refresh
+  </Card>
+</CardGroup>

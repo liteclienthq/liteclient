@@ -1,0 +1,295 @@
+---
+title: Cookie Management
+description: Built-in cookie jar for automatic session management with domain-based storage and persistence
+---
+
+LiteClient includes a built-in cookie jar that automatically manages cookies for your API requests. Cookies are sent based on domain matching, persisted across VS Code sessions, and can be managed through a dedicated interface.
+
+## Automatic Cookie Management
+
+LiteClient automatically handles cookies without manual configuration:
+
+<Steps>
+  <Step title="Server Sets Cookies">
+    When a server sends a `Set-Cookie` header in the response, LiteClient automatically stores it in the cookie jar.
+  </Step>
+  <Step title="Cookies Sent Automatically">
+    On subsequent requests to the same domain, LiteClient automatically includes relevant cookies in the request headers.
+  </Step>
+  <Step title="Domain and Path Matching">
+    Cookies are sent only to matching domains and paths based on the cookie's domain and path attributes.
+  </Step>
+  <Step title="Expiration Handling">
+    Expired cookies are automatically removed from the jar and not sent with requests.
+  </Step>
+</Steps>
+
+<Info>
+  Cookie management is fully automatic. You don't need to manually copy cookies or configure cookie headers.
+</Info>
+
+## Viewing Cookies
+
+View cookies in two places:
+
+<Tabs>
+  <Tab title="Response Cookies">
+    After sending a request, view cookies set by the server in the **Cookies** tab of the response panel:
+
+    Each cookie displays with:
+    - **Name** - Cookie identifier
+    - **Value** - Cookie content
+    - **Domain** - Cookie scope (e.g., `.example.com`)
+    - **Path** - URL path scope (e.g., `/`, `/api`)
+    - **Expires** - Expiration date and time
+    - **HttpOnly** - Whether JavaScript can access the cookie
+    - **Secure** - Whether the cookie requires HTTPS
+  </Tab>
+  <Tab title="Cookie Manager">
+    Open the Cookie Manager to view all stored cookies grouped by domain:
+
+    <Steps>
+      <Step title="Open Cookie Manager">
+        Run **LiteClient: Manage Cookies** from the Command Palette, or click the cookie icon in the sidebar.
+      </Step>
+      <Step title="View by Domain">
+        Cookies are organized by domain (e.g., `api.example.com`, `localhost`).
+      </Step>
+      <Step title="Review Details">
+        Expand each domain to see all cookies with their full metadata.
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Cookie Persistence
+
+Cookies are automatically saved and loaded across VS Code sessions:
+
+- **Automatic Save** - Cookies are saved to disk immediately when received
+- **Session Persistence** - Cookies persist when you close and reopen VS Code
+- **Storage Location** - Cookies are stored in `cookies.json` in your storage directory
+- **Per-Scope Storage** - Global and workspace storage maintain separate cookie jars
+
+<Note>
+  Session cookies (cookies without an expiration date) are persisted across VS Code sessions, unlike browser behavior where session cookies are cleared when the browser closes.
+</Note>
+
+## Cookie Attributes
+
+LiteClient respects standard cookie attributes:
+
+### Domain Attribute
+
+Controls which domains receive the cookie:
+
+- **Exact domain** - `domain=api.example.com` matches only `api.example.com`
+- **Subdomain wildcard** - `domain=.example.com` matches `api.example.com`, `www.example.com`, etc.
+- **No domain** - Cookie is sent only to the exact origin that set it
+
+### Path Attribute
+
+Controls which URL paths receive the cookie:
+
+- `path=/` - Cookie sent to all paths
+- `path=/api` - Cookie sent only to `/api` and its subpaths like `/api/users`
+- `path=/api/v1` - Cookie sent only to `/api/v1` and deeper paths
+
+### Secure Flag
+
+When `Secure` is set:
+
+- Cookie is sent only over HTTPS connections
+- HTTP requests do not receive the cookie
+- Prevents cookie interception over insecure connections
+
+<Warning>
+  Secure cookies are not sent to `http://` URLs. Use HTTPS in your request URLs to receive secure cookies.
+</Warning>
+
+### HttpOnly Flag
+
+When `HttpOnly` is set:
+
+- Cookie cannot be accessed by JavaScript
+- Protects against XSS attacks
+- Automatically respected by LiteClient (no JavaScript access in scripts)
+
+### Expires / Max-Age
+
+Controls cookie lifetime:
+
+- **Expires** - Absolute expiration date (`Expires=Wed, 21 Oct 2026 07:28:00 GMT`)
+- **Max-Age** - Relative expiration in seconds (`Max-Age=3600` for 1 hour)
+- **No expiration** - Session cookie (deleted when browser closes, but persisted by LiteClient)
+
+<Info>
+  LiteClient uses the `tough-cookie` library for RFC 6265-compliant cookie handling.
+</Info>
+
+## Managing Cookies
+
+### Delete Individual Cookies
+
+Remove specific cookies from the jar:
+
+<Steps>
+  <Step title="Open Cookie Manager">
+    Run **LiteClient: Manage Cookies** from the Command Palette.
+  </Step>
+  <Step title="Find the Cookie">
+    Expand the domain group to find the cookie you want to delete.
+  </Step>
+  <Step title="Delete">
+    Click the delete icon next to the cookie to remove it from the jar.
+  </Step>
+</Steps>
+
+### Delete Domain Cookies
+
+Remove all cookies for a specific domain:
+
+<Steps>
+  <Step title="Open Cookie Manager">
+    Run **LiteClient: Manage Cookies** from the Command Palette.
+  </Step>
+  <Step title="Select Domain">
+    Find the domain whose cookies you want to delete.
+  </Step>
+  <Step title="Delete All">
+    Click the delete icon next to the domain to remove all cookies for that domain.
+  </Step>
+</Steps>
+
+<Tip>
+  Deleting domain cookies is useful when you want to clear session state for a specific API without affecting other domains.
+</Tip>
+
+### Clear All Cookies
+
+Remove all cookies from the jar:
+
+<Tabs>
+  <Tab title="Via Command Palette">
+    Run **LiteClient: Clear Cookie Jar** from the Command Palette to delete all cookies immediately.
+  </Tab>
+  <Tab title="Via Cookie Manager">
+    Open the Cookie Manager and click the **Clear All** button to remove all cookies.
+  </Tab>
+</Tabs>
+
+<Warning>
+  Clearing all cookies is permanent and cannot be undone. You'll need to re-authenticate with any APIs that rely on cookie-based sessions.
+</Warning>
+
+## Cookie-Based Authentication
+
+Many APIs use cookies for session management:
+
+### Login Flow Example
+
+<Steps>
+  <Step title="Send Login Request">
+    Send a POST request to the login endpoint with credentials:
+    ```json
+    {
+      "username": "user@example.com",
+      "password": "secret"
+    }
+    ```
+  </Step>
+  <Step title="Server Sets Session Cookie">
+    The server responds with a `Set-Cookie` header:
+    ```
+    Set-Cookie: session=abc123; Path=/; HttpOnly; Secure
+    ```
+  </Step>
+  <Step title="Cookie Stored Automatically">
+    LiteClient stores the session cookie in the cookie jar.
+  </Step>
+  <Step title="Subsequent Requests">
+    All future requests to the same domain automatically include the session cookie:
+    ```
+    Cookie: session=abc123
+    ```
+  </Step>
+  <Step title="Authenticated Access">
+    The server recognizes the session and grants access to protected resources.
+  </Step>
+</Steps>
+
+<Info>
+  You don't need to manually copy or set cookies. LiteClient handles the entire cookie lifecycle automatically.
+</Info>
+
+## Cookie Storage Scope
+
+Cookies are stored according to your active storage scope:
+
+<Tabs>
+  <Tab title="Global Storage">
+    When using global storage (default):
+    - Cookies are stored in VS Code's global storage
+    - Available across all workspaces
+    - Private to your machine
+    - Not shared via Git
+  </Tab>
+  <Tab title="Workspace Storage">
+    When using workspace storage:
+    - Cookies are stored in `.liteclient/cookies.json`
+    - Workspace-specific
+    - Can be shared via version control (not recommended for sensitive cookies)
+    - Useful for testing with shared session state
+  </Tab>
+</Tabs>
+
+<Warning>
+  Be careful when committing workspace storage to Git. The `cookies.json` file may contain sensitive session tokens. Consider adding it to `.gitignore`.
+</Warning>
+
+## Debugging Cookie Issues
+
+### Cookie Not Being Sent
+
+If a cookie isn't being sent with requests:
+
+1. **Check domain matching** - Verify the request URL matches the cookie's domain
+2. **Check path matching** - Ensure the request path matches the cookie's path
+3. **Check expiration** - Verify the cookie hasn't expired
+4. **Check Secure flag** - Use HTTPS if the cookie has the Secure flag
+5. **Review cookie jar** - Open the Cookie Manager to verify the cookie is stored
+
+### Cookie Not Being Stored
+
+If a cookie isn't appearing in the jar:
+
+1. **Check response headers** - Verify the server sent a `Set-Cookie` header
+2. **Check cookie format** - Ensure the `Set-Cookie` header is valid
+3. **Check domain attribute** - Verify the domain matches the request origin
+4. **Review response** - Look for cookie-related errors in the response
+
+<Tip>
+  Use the Response Headers tab to view the exact `Set-Cookie` header sent by the server. This helps diagnose why a cookie might not be stored.
+</Tip>
+
+## Best Practices
+
+<Accordion title="Use HTTPS for sensitive cookies">
+  Always use HTTPS when working with authentication cookies. This prevents cookie interception and ensures Secure cookies are sent.
+</Accordion>
+
+<Accordion title="Clear cookies when switching contexts">
+  When testing with multiple user accounts, clear cookies between tests to avoid session conflicts.
+</Accordion>
+
+<Accordion title="Review cookies periodically">
+  Open the Cookie Manager regularly to review stored cookies and delete expired or unnecessary entries.
+</Accordion>
+
+<Accordion title="Use separate storage scopes">
+  Use global storage for personal testing and workspace storage for team-shared test sessions (with caution).
+</Accordion>
+
+<Accordion title="Monitor cookie expiration">
+  If you encounter authentication errors, check if your session cookie has expired. Re-login to obtain a fresh cookie.
+</Accordion>

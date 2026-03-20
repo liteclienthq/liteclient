@@ -1,0 +1,82 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "LiteClient",
+  "theme": "palm",
+  "colors": {
+    "primary": "#E11D48",
+    "light": "#E11D48",
+    "dark": "#E11D48"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/liteclienthq/liteclient"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/liteclienthq/liteclient"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/collections",
+              "features/environments",
+              "features/requests",
+              "features/authentication",
+              "features/responses",
+              "features/scripting",
+              "features/history",
+              "features/cookies"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/variables",
+              "guides/oauth",
+              "guides/postman-migration",
+              "guides/storage-scopes",
+              "guides/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/commands",
+              "reference/configuration",
+              "reference/architecture",
+              "reference/scripting-api"
+            ]
+          },
+          {
+            "group": "Community",
+            "pages": [
+              "community/contributing",
+              "community/changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

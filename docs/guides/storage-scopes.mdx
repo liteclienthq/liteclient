@@ -1,0 +1,245 @@
+---
+title: "Storage Scopes"
+description: "Choose between global and workspace storage for collections, environments, and history"
+---
+
+## Overview
+
+LiteClient offers two storage scopes for your API data: **Global** and **Workspace**. Choose the scope that best fits your workflow and team collaboration needs.
+
+## Storage Scope Types
+
+<CardGroup cols={2}>
+  <Card title="Global Storage" icon="globe">
+    Data stored in VS Code's global storage directory. Private to your machine, persists across all workspaces.
+  </Card>
+  
+  <Card title="Workspace Storage" icon="folder">
+    Data stored in `.liteclient/` folder at workspace root. Can be shared via Git with your team.
+  </Card>
+</CardGroup>
+
+## Global Storage
+
+By default, LiteClient stores all data in VS Code's global storage directory.
+
+### Characteristics
+
+- **Location**: VS Code's `globalStorageUri` (machine-specific path)
+- **Scope**: Private to your user account on this machine
+- **Persistence**: Available across all VS Code workspaces
+- **Version Control**: Not tracked in Git
+
+### When to Use Global Storage
+
+<CardGroup cols={2}>
+  <Card title="Personal Projects" icon="user">
+    Working on solo projects where sharing isn't needed
+  </Card>
+  
+  <Card title="Private Credentials" icon="lock">
+    Storing sensitive API keys you don't want in repositories
+  </Card>
+  
+  <Card title="Cross-Project APIs" icon="diagram-project">
+    Testing the same APIs across multiple projects
+  </Card>
+  
+  <Card title="Local Development" icon="laptop">
+    Personal testing and development workflows
+  </Card>
+</CardGroup>
+
+## Workspace Storage
+
+Introduced in version 0.13.0, workspace storage enables team collaboration by storing data in your project directory.
+
+### Characteristics
+
+- **Location**: `.liteclient/` folder at workspace root
+- **Scope**: Specific to the current workspace
+- **Persistence**: Only available when this workspace is open
+- **Version Control**: Can be committed to Git for team sharing
+
+### Storage Files
+
+When using workspace storage, LiteClient creates:
+
+```text
+workspace-root/
+└── .liteclient/
+    ├── collections.json     # Collections, folders, requests
+    ├── environments.json    # Environments and variables
+    ├── history.json         # Request execution history
+    ├── cookies.json         # Cookie jar per domain
+    └── settings.json        # User preferences
+```
+
+### When to Use Workspace Storage
+
+<CardGroup cols={2}>
+  <Card title="Team Collaboration" icon="users">
+    Share collections and environments with your team via Git
+  </Card>
+  
+  <Card title="Project-Specific APIs" icon="folder-open">
+    API configurations that belong to a specific project
+  </Card>
+  
+  <Card title="Onboarding" icon="rocket">
+    New team members get API configs automatically when cloning
+  </Card>
+  
+  <Card title="Documentation" icon="book">
+    API examples and test cases as part of project documentation
+  </Card>
+</CardGroup>
+
+<Warning>
+Avoid committing sensitive data to workspace storage. Use environment variables or VS Code's SecretStorage for API keys and tokens.
+</Warning>
+
+## Switching Storage Scopes
+
+You can switch between global and workspace storage at any time.
+
+### Using the Status Bar
+
+<Steps>
+  <Step title="Find Storage Indicator">
+    Look for the storage scope indicator in the VS Code status bar (bottom)
+  </Step>
+  
+  <Step title="Click Indicator">
+    Click the indicator showing **Global** or **Workspace**
+  </Step>
+  
+  <Step title="Select New Scope">
+    Choose your desired storage scope from the dropdown
+  </Step>
+  
+  <Step title="Reload Workspace">
+    LiteClient will reload and use the selected storage scope
+  </Step>
+</Steps>
+
+### Using Settings
+
+Alternatively, configure via VS Code settings:
+
+1. Open Settings (`Ctrl+,` or `Cmd+,`)
+2. Search for `liteclient.storageScope`
+3. Select either `global` or `workspace`
+
+## Migrating Data to Workspace
+
+If you've been using global storage and want to switch to workspace storage:
+
+<Steps>
+  <Step title="Open Command Palette">
+    Press `Ctrl+Shift+P` (Windows/Linux) or `Cmd+Shift+P` (macOS)
+  </Step>
+  
+  <Step title="Run Migration Command">
+    Type and select: **LiteClient: Migrate Data to Workspace**
+  </Step>
+  
+  <Step title="Confirm Migration">
+    LiteClient copies your global data into `.liteclient/` folder
+  </Step>
+  
+  <Step title="Commit to Git">
+    Add `.liteclient/` to your repository:
+    ```bash
+    git add .liteclient/
+    git commit -m "Add LiteClient API configurations"
+    ```
+  </Step>
+</Steps>
+
+<Info>
+Migration **copies** data from global storage. Your original global data remains unchanged.
+</Info>
+
+## File System Watcher
+
+When using workspace storage, LiteClient automatically watches for external changes:
+
+- Detects changes to `.liteclient/*.json` files
+- Refreshes sidebar when files change externally
+- Useful after `git pull` or external edits
+
+<Tip>
+The file system watcher ensures your sidebar stays in sync when team members push collection updates.
+</Tip>
+
+## Version Control Best Practices
+
+When committing workspace storage to Git:
+
+### Recommended `.gitignore` Patterns
+
+```gitignore
+# Ignore sensitive or user-specific files
+.liteclient/settings.json
+.liteclient/history.json
+
+# Commit shared configurations
+# .liteclient/collections.json
+# .liteclient/environments.json
+```
+
+<AccordionGroup>
+  <Accordion title="collections.json">
+    **Recommended to commit**: Contains API requests and folder structure. Useful for team sharing.
+  </Accordion>
+  
+  <Accordion title="environments.json">
+    **Conditional**: Commit non-sensitive environment variables. Use template values (e.g., `{{YOUR_API_KEY}}`) for secrets.
+  </Accordion>
+  
+  <Accordion title="history.json">
+    **Recommended to ignore**: Personal request history varies by developer.
+  </Accordion>
+  
+  <Accordion title="cookies.json">
+    **Recommended to ignore**: Session cookies are user-specific and may contain sensitive data.
+  </Accordion>
+  
+  <Accordion title="settings.json">
+    **Recommended to ignore**: User preferences are personal.
+  </Accordion>
+</AccordionGroup>
+
+## Comparison Table
+
+| Feature | Global Storage | Workspace Storage |
+|---------|----------------|-------------------|
+| **Location** | VS Code global directory | `.liteclient/` in workspace |
+| **Sharing** | Not shareable | Git-based team sharing |
+| **Scope** | All workspaces | Current workspace only |
+| **Version Control** | No | Yes |
+| **File System Watcher** | No | Yes |
+| **Use Case** | Personal workflows | Team collaboration |
+
+## Troubleshooting
+
+<Accordion title="Data Not Appearing After Switch">
+  - Verify the storage scope indicator shows the correct scope
+  - Check that `.liteclient/` folder exists in workspace root
+  - Try reloading VS Code window
+  - Run the migration command if switching from global to workspace
+</Accordion>
+
+<Accordion title="Git Shows No .liteclient Folder">
+  - Ensure you're using workspace storage scope
+  - Check `.gitignore` isn't excluding `.liteclient/`
+  - Verify files exist: `ls -la .liteclient/`
+</Accordion>
+
+<Accordion title="Changes Not Syncing with Team">
+  - Confirm workspace storage is active
+  - Verify `.liteclient/*.json` files are committed
+  - Ask team members to pull latest changes and reload VS Code
+  - Check file system watcher is functioning
+</Accordion>

@@ -1,0 +1,190 @@
+---
+title: "Postman Migration"
+description: "Import your existing Postman collections into LiteClient"
+---
+
+## Overview
+
+LiteClient supports importing Postman Collection v2.1 files, including nested folders, requests, and metadata. This allows you to seamlessly migrate your existing API workflows to LiteClient.
+
+## Supported Format
+
+LiteClient imports:
+- **Postman Collection v2.1** JSON files
+- Nested folders and request organization
+- Request metadata (name, description, method, URL)
+- Headers, body, and authentication configurations
+
+<Info>
+LiteClient currently supports **Postman Collection v2.1** format. Ensure your collection is in this version before importing.
+</Info>
+
+## Importing a Postman Collection
+
+<Steps>
+  <Step title="Open Collections Tab">
+    In the LiteClient sidebar, switch to the **Collections** tab
+  </Step>
+  
+  <Step title="Click Add Collection">
+    Click the **Add Collection** button
+  </Step>
+  
+  <Step title="Select Import from Postman">
+    Choose **Import from Postman** from the options
+  </Step>
+  
+  <Step title="Choose JSON File">
+    Select your Postman Collection v2.1 JSON file from your file system
+  </Step>
+  
+  <Step title="Import Complete">
+    LiteClient automatically imports:
+    - All requests with their configurations
+    - Folder structure and organization
+    - Request metadata and descriptions
+  </Step>
+</Steps>
+
+## Exporting from Postman
+
+If you need to export your collection from Postman first:
+
+<Steps>
+  <Step title="Open Postman">
+    Launch the Postman application
+  </Step>
+  
+  <Step title="Select Collection">
+    Find the collection you want to export in the sidebar
+  </Step>
+  
+  <Step title="Export Collection">
+    1. Click the three dots (...) next to the collection name
+    2. Select **Export**
+    3. Choose **Collection v2.1** as the format
+    4. Save the JSON file
+  </Step>
+  
+  <Step title="Import to LiteClient">
+    Use the JSON file with LiteClient's import feature
+  </Step>
+</Steps>
+
+<Warning>
+Make sure to select **Collection v2.1** when exporting from Postman. Other versions may not be fully compatible.
+</Warning>
+
+## What Gets Imported
+
+LiteClient imports the following from Postman collections:
+
+<CardGroup cols={2}>
+  <Card title="Request Configuration" icon="file">
+    - HTTP method (GET, POST, etc.)
+    - URL and path parameters
+    - Headers and values
+    - Request body (all types)
+  </Card>
+  
+  <Card title="Organization" icon="folder">
+    - Collection name and description
+    - Nested folders
+    - Request order and hierarchy
+  </Card>
+  
+  <Card title="Metadata" icon="tag">
+    - Request names
+    - Request descriptions
+    - Collection metadata
+  </Card>
+  
+  <Card title="Authentication" icon="lock">
+    - API Key configurations
+    - Bearer tokens
+    - Basic auth settings
+  </Card>
+</CardGroup>
+
+## Exporting from LiteClient
+
+You can also export your LiteClient collections back to Postman format:
+
+<Steps>
+  <Step title="Open Collections Tab">
+    Navigate to the **Collections** tab in the sidebar
+  </Step>
+  
+  <Step title="Select Collection">
+    Find the collection you want to export
+  </Step>
+  
+  <Step title="Export Collection">
+    1. Click the collection menu (three dots)
+    2. Select **Export**
+    3. Choose a location to save the JSON file
+  </Step>
+  
+  <Step title="Import to Postman">
+    The exported file can be imported back into Postman if needed
+  </Step>
+</Steps>
+
+## Migration Checklist
+
+When migrating from Postman to LiteClient:
+
+- [ ] Export your Postman collection as v2.1 JSON
+- [ ] Import the JSON file into LiteClient
+- [ ] Verify all requests are present
+- [ ] Check folder structure is maintained
+- [ ] Recreate any environment variables in LiteClient
+- [ ] Test critical requests to ensure they work as expected
+- [ ] Configure OAuth flows if using OAuth 2.0 authentication
+
+<Tip>
+LiteClient's variable system works similarly to Postman's. You can recreate your Postman environments in LiteClient's **Env** tab.
+</Tip>
+
+## Differences from Postman
+
+While LiteClient maintains compatibility with Postman collections, there are some differences:
+
+<AccordionGroup>
+  <Accordion title="Environment Variables">
+    Postman environments need to be recreated manually in LiteClient. Export your Postman environment as JSON, then manually create variables in LiteClient's **Env** tab.
+  </Accordion>
+  
+  <Accordion title="Pre-request Scripts">
+    LiteClient does not currently support Postman's pre-request scripts. Use LiteClient's variable system for dynamic values.
+  </Accordion>
+  
+  <Accordion title="Test Scripts">
+    Postman test scripts are not imported. LiteClient focuses on request/response inspection via the native VS Code interface.
+  </Accordion>
+  
+  <Accordion title="Collection Runner">
+    LiteClient does not have a collection runner feature. Requests are executed individually.
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<Accordion title="Import Fails">
+  - Verify the file is Postman Collection v2.1 format
+  - Check that the JSON file is not corrupted
+  - Ensure the file is properly formatted JSON
+  - Try re-exporting from Postman if issues persist
+</Accordion>
+
+<Accordion title="Missing Requests">
+  - Check if the requests are nested in folders
+  - Expand all folders in the Collections tab
+  - Verify the original Postman collection included all requests
+</Accordion>
+
+<Accordion title="Authentication Not Working">
+  - Re-configure OAuth 2.0 flows in the Auth tab
+  - Verify API keys and bearer tokens are set correctly
+  - Check that variables used in auth are defined in environments
+</Accordion>

@@ -1,0 +1,289 @@
+---
+title: Authentication
+description: Comprehensive authentication support for modern APIs including API keys, tokens, Basic Auth, and OAuth 2.0
+---
+
+LiteClient provides built-in authentication support for the most common API authentication methods. Configure authentication in the Auth tab, and LiteClient automatically applies the necessary headers and credentials.
+
+## API Key Authentication
+
+API Key authentication lets you send a custom header or query parameter with your API key.
+
+<Tabs>
+  <Tab title="Header-Based">
+    Configure API key in a custom header:
+    
+    <Steps>
+      <Step title="Select API Key">
+        In the Auth tab, select **API Key** from the type dropdown.
+      </Step>
+      <Step title="Choose Placement">
+        Select **Header** as the placement location.
+      </Step>
+      <Step title="Configure Key and Value">
+        - **Key**: `X-API-Key` (or your API's header name)
+        - **Value**: `{{apiKey}}` (use a variable for security)
+      </Step>
+    </Steps>
+
+    **Example configuration:**
+    ```text
+    Placement: Header
+    Key: X-API-Key
+    Value: {{apiKey}}
+    ```
+
+    This sends: `X-API-Key: your-api-key-here`
+  </Tab>
+  <Tab title="Query Parameter">
+    Configure API key as a URL query parameter:
+    
+    <Steps>
+      <Step title="Select API Key">
+        In the Auth tab, select **API Key** from the type dropdown.
+      </Step>
+      <Step title="Choose Placement">
+        Select **Query Param** as the placement location.
+      </Step>
+      <Step title="Configure Key and Value">
+        - **Key**: `api_key` (or your API's parameter name)
+        - **Value**: `{{apiKey}}` (use a variable for security)
+      </Step>
+    </Steps>
+
+    **Example configuration:**
+    ```text
+    Placement: Query Param
+    Key: api_key
+    Value: {{apiKey}}
+    ```
+
+    This appends to your URL: `?api_key=your-api-key-here`
+  </Tab>
+</Tabs>
+
+<Tip>
+  Store API keys in environment variables and mark them as `secret` type to mask them in the UI. Never hardcode API keys in requests.
+</Tip>
+
+## Bearer Token Authentication
+
+Bearer Token authentication is commonly used for JWT-based APIs and OAuth 2.0 access tokens.
+
+<Steps>
+  <Step title="Select Bearer Token">
+    In the Auth tab, select **Bearer Token** from the type dropdown.
+  </Step>
+  <Step title="Enter Token">
+    Enter your token value. Use a variable like `{{accessToken}}` for flexibility.
+  </Step>
+  <Step title="Send Request">
+    LiteClient automatically adds the `Authorization: Bearer <token>` header.
+  </Step>
+</Steps>
+
+**Example configuration:**
+```text
+Type: Bearer Token
+Token: {{accessToken}}
+```
+
+**Generated header:**
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+<Info>
+  Bearer tokens support variable substitution. Store tokens in environment variables so you can use different tokens for local, staging, and production.
+</Info>
+
+## Basic Authentication
+
+Basic Auth sends username and password credentials encoded in Base64.
+
+<Steps>
+  <Step title="Select Basic Auth">
+    In the Auth tab, select **Basic Auth** from the type dropdown.
+  </Step>
+  <Step title="Enter Credentials">
+    - **Username**: Your username or `{{username}}` variable
+    - **Password**: Your password or `{{password}}` variable
+  </Step>
+  <Step title="Automatic Encoding">
+    LiteClient automatically encodes credentials in Base64 and adds the Authorization header.
+  </Step>
+</Steps>
+
+**Example configuration:**
+```text
+Type: Basic Auth
+Username: {{apiUsername}}
+Password: {{apiPassword}}
+```
+
+**Generated header:**
+```http
+Authorization: Basic dXNlcm5hbWU6cGFzc3dvcmQ=
+```
+
+<Warning>
+  Basic Auth sends credentials with every request. Always use HTTPS to prevent credentials from being intercepted. Consider using environment variables for credentials.
+</Warning>
+
+## OAuth 2.0 Authentication
+
+LiteClient provides comprehensive OAuth 2.0 support with three grant types and automatic token management.
+
+### Authorization Code Flow
+
+Traditional OAuth 2.0 flow with browser-based authentication.
+
+<Steps>
+  <Step title="Select OAuth 2.0">
+    In the Auth tab, select **OAuth 2.0** from the type dropdown.
+  </Step>
+  <Step title="Choose Grant Type">
+    Select **Authorization Code** as the grant type.
+  </Step>
+  <Step title="Configure Endpoints">
+    - **Authorization URL**: The provider's authorization endpoint
+    - **Token URL**: The provider's token endpoint
+    - **Client ID**: Your application's client ID
+    - **Client Secret**: Your application's client secret (if required)
+    - **Redirect URI**: `vscode://liteclienthq.liteclient/oauth2/callback`
+    - **Scope**: Space-separated scopes (e.g., `read write`)
+  </Step>
+  <Step title="Get Token">
+    Click **Get Token** to open the authorization page in your browser.
+  </Step>
+  <Step title="Authorize">
+    Log in and authorize the application. LiteClient receives the callback and exchanges the code for an access token.
+  </Step>
+  <Step title="Automatic Token Usage">
+    The token is cached in VS Code's secure storage and automatically added to requests.
+  </Step>
+</Steps>
+
+**Example configuration:**
+```text
+Grant Type: Authorization Code
+Auth URL: https://provider.com/oauth/authorize
+Token URL: https://provider.com/oauth/token
+Client ID: {{clientId}}
+Client Secret: {{clientSecret}}
+Redirect URI: vscode://liteclienthq.liteclient/oauth2/callback
+Scope: read write admin
+```
+
+### Authorization Code with PKCE
+
+Enhanced security flow for public clients (recommended for most use cases).
+
+<Steps>
+  <Step title="Select PKCE Grant Type">
+    In the Auth tab, select **Authorization Code with PKCE** as the grant type.
+  </Step>
+  <Step title="Configure Endpoints">
+    Same configuration as Authorization Code, but Client Secret is optional.
+  </Step>
+  <Step title="Get Token">
+    Click **Get Token**. LiteClient generates a code verifier and challenge automatically.
+  </Step>
+  <Step title="Enhanced Security">
+    PKCE protects against authorization code interception attacks.
+  </Step>
+</Steps>
+
+<Info>
+  PKCE (Proof Key for Code Exchange) is more secure than standard Authorization Code flow and doesn't require a client secret. Use PKCE when available.
+</Info>
+
+### Client Credentials Flow
+
+Machine-to-machine authentication without user interaction.
+
+<Steps>
+  <Step title="Select Client Credentials">
+    In the Auth tab, select **Client Credentials** as the grant type.
+  </Step>
+  <Step title="Configure Credentials">
+    - **Token URL**: The provider's token endpoint
+    - **Client ID**: Your application's client ID
+    - **Client Secret**: Your application's client secret
+    - **Scope**: Optional scopes
+    - **Audience**: Optional audience parameter
+  </Step>
+  <Step title="Get Token">
+    Click **Get Token**. LiteClient requests a token directly from the token endpoint.
+  </Step>
+  <Step title="Use for Server-to-Server">
+    Ideal for backend services, scheduled tasks, and server-to-server communication.
+  </Step>
+</Steps>
+
+**Example configuration:**
+```text
+Grant Type: Client Credentials
+Token URL: https://provider.com/oauth/token
+Client ID: {{serviceClientId}}
+Client Secret: {{serviceClientSecret}}
+Scope: api.read api.write
+Audience: https://api.example.com
+```
+
+<Tip>
+  Use environment variables for Client ID and Client Secret to support different OAuth apps across local, staging, and production.
+</Tip>
+
+### Token Caching and Refresh
+
+LiteClient automatically manages OAuth 2.0 tokens:
+
+- **Secure Storage**: Tokens are stored in VS Code's SecretStorage (encrypted)
+- **Automatic Caching**: Tokens are reused across requests until expiration
+- **Auto Refresh**: When tokens expire, LiteClient automatically requests a new token using the refresh token (if available)
+- **Per-Configuration**: Each OAuth 2.0 configuration maintains its own token cache
+
+<Note>
+  Token refresh happens automatically when you send a request with an expired token. You don't need to manually refresh tokens.
+</Note>
+
+## Using Variables in Authentication
+
+All authentication types support variable substitution:
+
+```text
+API Key: {{apiKey}}
+Bearer Token: {{accessToken}}
+Username: {{username}}
+Password: {{password}}
+Client ID: {{oauthClientId}}
+Client Secret: {{oauthClientSecret}}
+```
+
+This lets you:
+- Use different credentials per environment
+- Avoid hardcoding secrets in requests
+- Share collections without exposing credentials
+
+## Best Practices
+
+<Accordion title="Use environment variables for credentials">
+  Store all API keys, tokens, usernames, and passwords in environment variables. Mark them as `secret` type to mask them in the UI.
+</Accordion>
+
+<Accordion title="Use PKCE for OAuth 2.0">
+  When the API supports it, prefer Authorization Code with PKCE over standard Authorization Code for better security.
+</Accordion>
+
+<Accordion title="Separate credentials per environment">
+  Create separate environments for local, staging, and production with different API keys and OAuth credentials for each.
+</Accordion>
+
+<Accordion title="Never commit secrets to version control">
+  Use current values for local testing instead of initial values. Current values are never committed to Git.
+</Accordion>
+
+<Accordion title="Use Client Credentials for backend services">
+  For server-to-server API calls, use Client Credentials flow instead of Authorization Code to avoid interactive login.
+</Accordion>

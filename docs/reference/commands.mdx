@@ -1,0 +1,220 @@
+---
+title: Commands
+description: Complete reference of all VS Code commands available in LiteClient
+---
+
+LiteClient provides a comprehensive set of commands for managing requests, collections, environments, history, and cookies. All commands can be accessed via the Command Palette (`Ctrl+Shift+P` or `Cmd+Shift+P`).
+
+## Request Commands
+
+<ParamField path="liteclient.newRequest" type="command">
+  Create a new HTTP request file. Opens a new `.lcreq` file in the request editor.
+  
+  **Category**: LiteClient  
+  **Icon**: New File
+</ParamField>
+
+<ParamField path="liteclient.openHistoryRequest" type="command">
+  Open a previously executed request from history. Loads the request details into a new request editor.
+  
+  **Category**: LiteClient
+</ParamField>
+
+## Collection Commands
+
+<ParamField path="liteclient.newCollection" type="command">
+  Create a new collection to organize related requests. Prompts for a collection name.
+  
+  **Category**: LiteClient  
+  **Icon**: New Folder
+</ParamField>
+
+<ParamField path="liteclient.addCollection" type="command">
+  Add an existing collection. Alternative method for creating collections.
+  
+  **Category**: LiteClient
+</ParamField>
+
+<ParamField path="liteclient.renameCollection" type="command">
+  Rename an existing collection. Prompts for a new name.
+  
+  **Category**: LiteClient  
+  **Icon**: Edit
+</ParamField>
+
+<ParamField path="liteclient.deleteCollection" type="command">
+  Delete a collection and all its requests. Prompts for confirmation.
+  
+  **Category**: LiteClient  
+  **Icon**: Trash
+</ParamField>
+
+<ParamField path="liteclient.addRequestToCollection" type="command">
+  Add the current request to a collection. Prompts to select the target collection.
+  
+  **Category**: LiteClient
+</ParamField>
+
+<ParamField path="liteclient.renameCollectionRequest" type="command">
+  Rename a request within a collection. Prompts for a new name.
+  
+  **Category**: LiteClient
+</ParamField>
+
+<ParamField path="liteclient.deleteRequestFromCollection" type="command">
+  Remove a request from a collection. The request file itself is not deleted.
+  
+  **Category**: LiteClient  
+  **Icon**: Trash
+</ParamField>
+
+## Environment Commands
+
+<ParamField path="liteclient.newEnvironment" type="command">
+  Create a new environment for managing variables. Prompts for an environment name.
+  
+  **Category**: LiteClient  
+  **Icon**: New Folder
+</ParamField>
+
+<ParamField path="liteclient.addEnvironment" type="command">
+  Add a new environment. Alternative method for creating environments.
+  
+  **Category**: LiteClient
+</ParamField>
+
+<ParamField path="liteclient.renameEnvironment" type="command">
+  Rename an existing environment. Prompts for a new name.
+  
+  **Category**: LiteClient  
+  **Icon**: Edit
+</ParamField>
+
+<ParamField path="liteclient.deleteEnvironment" type="command">
+  Delete an environment and all its variables. Prompts for confirmation.
+  
+  **Category**: LiteClient  
+  **Icon**: Trash
+</ParamField>
+
+<ParamField path="liteclient.openEnvironmentManager" type="command">
+  Open the environment manager interface to manage all environments and variables.
+  
+  **Category**: LiteClient
+</ParamField>
+
+## Variable Commands
+
+<ParamField path="liteclient.addVariableToEnvironment" type="command">
+  Add a new variable to the selected environment. Prompts for name and value.
+  
+  **Category**: LiteClient  
+  **Icon**: Add
+</ParamField>
+
+<ParamField path="liteclient.editVariable" type="command">
+  Edit an existing environment variable. Prompts for new name and value.
+  
+  **Category**: LiteClient  
+  **Icon**: Edit
+</ParamField>
+
+<ParamField path="liteclient.deleteVariable" type="command">
+  Delete a variable from the environment. Prompts for confirmation.
+  
+  **Category**: LiteClient  
+  **Icon**: Trash
+</ParamField>
+
+## History Commands
+
+<ParamField path="liteclient.deleteHistoryItem" type="command">
+  Delete a single request from the history. Available in the history list context menu.
+  
+  **Category**: LiteClient  
+  **Icon**: Trash
+</ParamField>
+
+<ParamField path="liteclient.clearHistory" type="command">
+  Clear all request execution history. Prompts for confirmation.
+  
+  **Category**: LiteClient  
+  **Icon**: Trash
+</ParamField>
+
+## Cookie Commands
+
+<ParamField path="liteclient.openCookieManager" type="command">
+  Open the cookie manager interface to view and manage all stored cookies.
+  
+  **Category**: LiteClient
+</ParamField>
+
+<ParamField path="liteclient.clearCookies" type="command">
+  Clear the entire cookie jar. Removes all cookies for all domains.
+  
+  **Category**: LiteClient
+</ParamField>
+
+## Storage Commands
+
+<ParamField path="liteclient.migrateToWorkspace" type="command">
+  Migrate all data (collections, environments, history, cookies) from global storage to workspace storage.
+  
+  **Category**: LiteClient
+  
+  <Note>
+    This command creates a `.liteclient/` folder in your workspace root and copies all data there. Use this when you want to share collections and environments via Git.
+  </Note>
+</ParamField>
+
+<ParamField path="liteclient.switchStorageScope" type="command">
+  Switch between global and workspace storage scopes. Updates the `liteclient.storageScope` setting.
+  
+  **Category**: LiteClient
+  
+  <Note>
+    Switching storage scope does not automatically migrate data. Use `liteclient.migrateToWorkspace` to copy data from global to workspace storage.
+  </Note>
+</ParamField>
+
+## Using Commands
+
+### Command Palette
+
+Access any command by opening the Command Palette:
+
+<Tabs>
+  <Tab title="Windows/Linux">
+    Press `Ctrl+Shift+P` and type "LiteClient" to filter available commands.
+  </Tab>
+  <Tab title="macOS">
+    Press `Cmd+Shift+P` and type "LiteClient" to filter available commands.
+  </Tab>
+</Tabs>
+
+### Context Menus
+
+Many commands are also available via right-click context menus in the LiteClient sidebar:
+
+- **Collections**: Right-click a collection for rename/delete options
+- **Requests**: Right-click a request for rename/delete options
+- **Environments**: Right-click for rename/delete/add variable options
+- **Variables**: Right-click for edit/delete options
+- **History**: Right-click for delete options
+
+### Keyboard Shortcuts
+
+You can assign custom keyboard shortcuts to any LiteClient command:
+
+1. Open **Preferences: Open Keyboard Shortcuts** from the Command Palette
+2. Search for the command (e.g., "liteclient.newRequest")
+3. Click the + icon to add a custom keybinding
+
+Example keybinding:
+```json
+{
+  "key": "ctrl+alt+n",
+  "command": "liteclient.newRequest"
+}
+```

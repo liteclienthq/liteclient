@@ -1,0 +1,105 @@
+{
+  "projectType": "general",
+  "projectName": "LiteClient",
+  "projectDescription": "A fast, lightweight REST API client built natively into VS Code with zero telemetry and complete privacy.",
+  "theme": "palm",
+  "primaryColor": "#E11D48",
+  "lightColor": null,
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/collections",
+              "features/environments",
+              "features/requests",
+              "features/authentication",
+              "features/responses",
+              "features/scripting",
+              "features/history",
+              "features/cookies"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/variables",
+              "guides/oauth",
+              "guides/postman-migration",
+              "guides/storage-scopes",
+              "guides/troubleshooting"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Reference",
+        "groups": [
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/commands",
+              "reference/configuration",
+              "reference/architecture",
+              "reference/scripting-api"
+            ]
+          },
+          {
+            "group": "Community",
+            "pages": [
+              "community/contributing",
+              "community/changelog"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Native VS Code REST API client with zero startup time",
+    "Complete privacy with local-only storage and no telemetry",
+    "Collections and environments for organized API management",
+    "OAuth 2.0 with Authorization Code, PKCE, and Client Credentials",
+    "Pre-request and post-response scripting with Postman-compatible API",
+    "Workspace-scoped storage for team collaboration via Git",
+    "Built-in cookie jar with automatic domain-based management",
+    "Variable substitution with layered resolution (globals, collection, environment)"
+  ],
+  "publicApiSurface": [
+    "liteclient.newRequest",
+    "liteclient.newCollection",
+    "liteclient.newEnvironment",
+    "liteclient.addCollection",
+    "liteclient.renameCollection",
+    "liteclient.deleteCollection",
+    "liteclient.addRequestToCollection",
+    "liteclient.renameCollectionRequest",
+    "liteclient.deleteRequestFromCollection",
+    "liteclient.addEnvironment",
+    "liteclient.renameEnvironment",
+    "liteclient.deleteEnvironment",
+    "liteclient.addVariableToEnvironment",
+    "liteclient.editVariable",
+    "liteclient.deleteVariable",
+    "liteclient.openHistoryRequest",
+    "liteclient.deleteHistoryItem",
+    "liteclient.clearHistory",
+    "liteclient.openCookieManager",
+    "liteclient.openEnvironmentManager",
+    "liteclient.clearCookies",
+    "liteclient.migrateToWorkspace",
+    "liteclient.switchStorageScope"
+  ]
+}

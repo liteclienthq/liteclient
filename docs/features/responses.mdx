@@ -1,0 +1,296 @@
+---
+title: Response Analysis
+description: View API responses with rich formatting, syntax highlighting, and detailed metadata
+---
+
+LiteClient provides comprehensive response analysis with syntax-highlighted body content, detailed headers, cookies, status information, and execution timing.
+
+## Response Body
+
+View response bodies with automatic formatting and syntax highlighting.
+
+### Automatic Language Detection
+
+LiteClient automatically detects the response content type and applies appropriate syntax highlighting:
+
+<Tabs>
+  <Tab title="JSON">
+    JSON responses are automatically pretty-printed with syntax highlighting:
+    ```json
+    {
+      "id": 123,
+      "name": "John Doe",
+      "email": "john@example.com",
+      "roles": ["admin", "user"]
+    }
+    ```
+    - Proper indentation for readability
+    - Color-coded keys, strings, numbers, and booleans
+    - Collapsible nested objects and arrays
+  </Tab>
+  <Tab title="XML">
+    XML and HTML responses are formatted with proper indentation:
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <user>
+      <id>123</id>
+      <name>John Doe</name>
+      <email>john@example.com</email>
+    </user>
+    ```
+  </Tab>
+  <Tab title="HTML">
+    HTML responses display with syntax highlighting:
+    ```html
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>API Response</title>
+      </head>
+      <body>
+        <h1>Success</h1>
+      </body>
+    </html>
+    ```
+  </Tab>
+  <Tab title="JavaScript">
+    JavaScript responses include syntax highlighting for code:
+    ```javascript
+    function callback(data) {
+      console.log(data);
+      return data.results;
+    }
+    ```
+  </Tab>
+  <Tab title="Plain Text">
+    Plain text responses display without formatting:
+    ```text
+    Simple text response content
+    ```
+  </Tab>
+</Tabs>
+
+### Manual Formatting
+
+Use the **Format** button in the response toolbar to manually trigger formatting:
+
+<Steps>
+  <Step title="Receive Response">
+    After sending a request, the response appears in the bottom panel.
+  </Step>
+  <Step title="Click Format">
+    If the automatic formatting doesn't trigger, click the **Format** button in the toolbar.
+  </Step>
+  <Step title="View Formatted Content">
+    The response is re-formatted with proper indentation and syntax highlighting.
+  </Step>
+</Steps>
+
+<Info>
+  Manual formatting is useful when the automatic detection doesn't recognize the content type correctly, or when you want to re-format minified responses.
+</Info>
+
+## Response Status
+
+The response status bar displays key information about the request execution:
+
+### Status Code and Text
+
+- **2xx Success** - Green indicator (e.g., `200 OK`, `201 Created`)
+- **3xx Redirection** - Blue indicator (e.g., `301 Moved Permanently`, `302 Found`)
+- **4xx Client Error** - Orange indicator (e.g., `400 Bad Request`, `404 Not Found`)
+- **5xx Server Error** - Red indicator (e.g., `500 Internal Server Error`, `503 Service Unavailable`)
+
+### Execution Timing
+
+The status bar shows the total request duration in milliseconds:
+
+```text
+200 OK • 342ms
+```
+
+This includes:
+- DNS resolution
+- TCP connection
+- TLS handshake (for HTTPS)
+- Request transmission
+- Server processing
+- Response download
+
+<Tip>
+  Use execution timing to identify slow endpoints and optimize API performance. Compare times across environments to detect infrastructure issues.
+</Tip>
+
+## Response Headers
+
+View all response headers in a dedicated tab:
+
+<Steps>
+  <Step title="Click Headers Tab">
+    After receiving a response, click the **Headers** tab in the response section.
+  </Step>
+  <Step title="View All Headers">
+    All headers are displayed in key-value format with proper formatting.
+  </Step>
+  <Step title="Analyze Metadata">
+    Common headers to review:
+    - `Content-Type` - Response format
+    - `Content-Length` - Response size
+    - `Cache-Control` - Caching directives
+    - `Set-Cookie` - Cookie instructions
+    - `Authorization` - Auth requirements
+  </Step>
+</Steps>
+
+**Example headers:**
+```http
+Content-Type: application/json; charset=utf-8
+Content-Length: 1247
+Cache-Control: no-cache, private
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+Set-Cookie: session=abc123; Path=/; HttpOnly
+```
+
+## Response Cookies
+
+View cookies set by the server in the Cookies tab:
+
+<Tabs>
+  <Tab title="Cookie Details">
+    Each cookie displays with full metadata:
+    - **Name** - Cookie identifier
+    - **Value** - Cookie content
+    - **Domain** - Cookie scope
+    - **Path** - URL path scope
+    - **Expires** - Expiration timestamp
+    - **HttpOnly** - JavaScript access restriction
+    - **Secure** - HTTPS-only flag
+  </Tab>
+  <Tab title="Automatic Cookie Management">
+    LiteClient automatically:
+    - Stores cookies in the cookie jar
+    - Sends relevant cookies on subsequent requests
+    - Respects domain and path restrictions
+    - Handles cookie expiration
+  </Tab>
+</Tabs>
+
+<Info>
+  Cookies are automatically sent on matching requests based on domain and path. See the [Cookie Management](/features/cookies) page for details.
+</Info>
+
+## Test Results
+
+When you use post-response scripts with tests, results appear in the Tests tab:
+
+<Steps>
+  <Step title="Run Request with Tests">
+    Send a request that includes post-response test scripts.
+  </Step>
+  <Step title="View Test Results">
+    Click the **Tests** tab to see pass/fail results for each test.
+  </Step>
+  <Step title="Review Console Output">
+    Console logs from scripts (`console.log`, `console.warn`, etc.) appear in the test results.
+  </Step>
+  <Step title="Debug Failures">
+    Failed tests show the assertion error with line numbers for easy debugging.
+  </Step>
+</Steps>
+
+**Example test results:**
+```text
+✓ Status code is 200
+✓ Response time is less than 500ms
+✗ Response has user ID
+  AssertionError: expected undefined to exist
+  at test script:3
+
+Console Output:
+[INFO] Request completed successfully
+[WARN] Deprecated field detected: user.legacy_id
+```
+
+<Note>
+  Test scripts use the Postman-compatible `pm` API. See the [Scripting](/features/scripting) page for details on writing tests.
+</Note>
+
+## Request Cancellation
+
+Cancel long-running requests before they complete:
+
+<Steps>
+  <Step title="Send Request">
+    Click Send to execute a request.
+  </Step>
+  <Step title="Click Cancel">
+    If the request is taking too long, click the **Cancel** button that appears during execution.
+  </Step>
+  <Step title="Request Aborted">
+    The request is immediately cancelled, and no response is recorded in history.
+  </Step>
+</Steps>
+
+<Warning>
+  Cancelling a request doesn't guarantee the server hasn't processed it. For write operations (POST, PUT, DELETE), check the server state to confirm the operation was aborted.
+</Warning>
+
+## Error Responses
+
+When a request fails, LiteClient provides detailed error information:
+
+### Network Errors
+
+```text
+Error: connect ECONNREFUSED 127.0.0.1:3000
+```
+
+Common network errors:
+- `ECONNREFUSED` - Server not running or port closed
+- `ETIMEDOUT` - Request timeout (server took too long)
+- `ENOTFOUND` - DNS lookup failed (invalid domain)
+- `ECONNRESET` - Connection reset by server
+
+### HTTP Errors
+
+4xx and 5xx responses display the error status and body:
+
+```json
+400 Bad Request • 123ms
+
+Body:
+{
+  "error": "Invalid request parameters",
+  "details": {
+    "field": "email",
+    "issue": "Email format is invalid"
+  }
+}
+```
+
+<Tip>
+  Always check both the status code and response body for error details. Many APIs provide structured error messages with actionable information.
+</Tip>
+
+## Best Practices
+
+<Accordion title="Check status codes first">
+  Always review the status code before analyzing the response body. A 200 OK means success, while 4xx and 5xx indicate errors that need investigation.
+</Accordion>
+
+<Accordion title="Monitor response times">
+  Track execution times to identify slow endpoints. Consistently slow responses (>1000ms) may indicate performance issues or inefficient queries.
+</Accordion>
+
+<Accordion title="Review headers for debugging">
+  Headers contain valuable debugging information like rate limits, cache directives, and CORS settings. Check headers when troubleshooting issues.
+</Accordion>
+
+<Accordion title="Use test scripts for validation">
+  Write post-response scripts to automatically validate status codes, response structure, and data integrity. This catches regressions early.
+</Accordion>
+
+<Accordion title="Save error responses">
+  When debugging, save requests that produce errors to collections so you can easily reproduce and share the issue with your team.
+</Accordion>
