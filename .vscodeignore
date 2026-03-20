@@ -15,5 +15,6 @@ esbuild.js
 AGENTS.md
 MAINTAINING.md
 CONTRIBUTING.md
+docs/**
 .DS_Store
 **/*.tsbuildinfo
