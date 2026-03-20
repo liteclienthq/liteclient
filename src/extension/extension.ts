@@ -10,6 +10,7 @@ import { SidebarProvider } from './providers/webviews/sidebarProvider';
 import { RequestPanelManager } from './providers/webviews/requestPanelManager';
 import { CookieManagerProvider } from './providers/webviews/cookieManagerProvider';
 import { EnvironmentManagerProvider } from './providers/webviews/environmentManagerProvider';
+import { CollectionManagerProvider } from './providers/webviews/collectionManagerProvider';
 import { registerAllCommands } from './commands';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -55,6 +56,18 @@ export async function activate(context: vscode.ExtensionContext) {
 		async () => {
 			await sidebarProvider.refreshEnvironments();
 			await requestPanelManager.broadcastEnvironments();
+		}
+	);
+
+	const collectionManagerProvider = new CollectionManagerProvider(
+		context,
+		collectionService,
+		async (collectionId?: string) => {
+			await sidebarProvider.refreshCollections();
+			await requestPanelManager.broadcastCollections();
+			if (collectionId) {
+				await requestPanelManager.broadcastCollectionState(collectionId);
+			}
 		}
 	);
 
@@ -126,7 +139,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		sidebarProvider,
 		requestPanelManager,
 		cookieManagerProvider,
-		environmentManagerProvider
+		environmentManagerProvider,
+		collectionManagerProvider
 	});
 }
 

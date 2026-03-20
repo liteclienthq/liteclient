@@ -14,10 +14,12 @@ export type {
     // Extension → Webview
     ResponseMessage,
     LoadRequestMessage,
+    CollectionStateMessage,
     EnvironmentsListMessage,
     SetEnvironmentBroadcastMessage,
     HistoryListMessage,
     CollectionsListMessage,
+    CollectionMgrStateMessage,
     ExtensionToWebviewMessage,
     // Webview → Extension (Sidebar)
     GetHistoryMessage,
@@ -36,6 +38,7 @@ export type {
     EnvVariableActionMessage,
     EnvCurrentValueMessage,
     OpenEnvironmentManagerMessage,
+    OpenCollectionManagerMessage,
     SetEnvironmentMessage,
     SidebarToExtensionMessage,
     // Webview → Extension (Request Panel)
@@ -43,6 +46,7 @@ export type {
     SaveRequestMessage,
     DirtyStateMessage,
     RequestPanelToExtensionMessage,
+    CollectionManagerToExtensionMessage,
     // Combined
     WebviewToExtensionMessage,
 } from '../../shared/messages.js';

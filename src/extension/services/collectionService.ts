@@ -41,6 +41,8 @@ export interface Collection {
 interface LegacyCollection {
   id: string;
   name: string;
+  description?: string;
+  variables?: EnvironmentVariable[];
   requests?: any[];
   items?: CollectionItem[];
 }
@@ -68,6 +70,8 @@ export class CollectionService {
       return {
         id: c.id,
         name: c.name,
+        description: c.description,
+        variables: c.variables || [],
         items: items
       };
     });
@@ -84,10 +88,41 @@ export class CollectionService {
     const newCollection: Collection = {
       id: this.generateId(),
       name,
+      variables: [],
       items: []
     };
     collections.push(newCollection);
     await this.save(collections);
+  }
+
+  async getCollectionById(collectionId: string): Promise<Collection | undefined> {
+    const collections = await this.load();
+    return collections.find(c => c.id === collectionId);
+  }
+
+  async updateCollection(collection: Collection): Promise<void> {
+    const collections = await this.load();
+    const collectionIndex = collections.findIndex(c => c.id === collection.id);
+
+    if (collectionIndex === -1) {
+      throw new Error(`Collection with id ${collection.id} not found`);
+    }
+
+    collections[collectionIndex] = {
+      ...collection,
+      variables: collection.variables || []
+    };
+    await this.save(collections);
+  }
+
+  async updateCollectionVariables(collectionId: string, variables: EnvironmentVariable[]): Promise<void> {
+    const collection = await this.getCollectionById(collectionId);
+    if (!collection) {
+      throw new Error(`Collection with id ${collectionId} not found`);
+    }
+
+    collection.variables = variables;
+    await this.updateCollection(collection);
   }
 
   async addFolder(collectionId: string, name: string, parentId?: string): Promise<void> {
@@ -263,6 +298,7 @@ export class CollectionService {
       id: newId,
       name: c.name || 'Imported Collection',
       description: c.description,
+      variables: c.variables || [],
       items: this.sanitizeImportedItems(c.items || [])
     };
   }

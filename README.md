@@ -53,6 +53,15 @@ Manage different configurations for local, staging, and production environments.
 - Variables work everywhere: URL, headers, body, auth
 - Auto-migration from legacy key-value format
 
+### Collection Variables
+
+Store shared request variables at the collection level.
+
+- Collection-scoped variables sit between globals and environments
+- Manage collection variables from the collection actions menu
+- Variables appear in autocomplete and request metadata
+- Imported and exported with Postman collections
+
 ### HTTP Request Building
 
 Build requests with precision using a familiar interface.
@@ -131,9 +140,9 @@ Automate your workflow with pre-request and post-response scripts.
 
 - **Pre-request scripts** run before the request is sent — set variables, generate tokens, or modify state
 - **Post-response (test) scripts** run after the response — write assertions and log results
-- Postman-compatible `pm` API: `pm.environment`, `pm.globals`, `pm.test()`, `pm.expect()`, `pm.request`, `pm.response`
+- Postman-compatible `pm` API: `pm.environment`, `pm.collectionVariables`, `pm.globals`, `pm.test()`, `pm.expect()`, `pm.request`, `pm.response`
 - Console logging with `console.log/info/warn/error`
-- Variables set in scripts persist to environments automatically
+- Variables set in scripts persist back to globals, collections, or environments automatically
 - Test results displayed in a dedicated "Tests" response tab
 - Sandboxed execution with 2-second timeout
 - Scripts preserved in Postman import/export

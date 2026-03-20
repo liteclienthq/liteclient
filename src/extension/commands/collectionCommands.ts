@@ -2,18 +2,29 @@ import * as vscode from 'vscode';
 import { CollectionService, RequestItem } from '../services/collectionService';
 import { SidebarProvider } from '../providers/webviews/sidebarProvider';
 import { RequestPanelManager } from '../providers/webviews/requestPanelManager';
+import { CollectionManagerProvider } from '../providers/webviews/collectionManagerProvider';
 
 export interface CollectionCommandDeps {
     collectionService: CollectionService;
     sidebarProvider: SidebarProvider;
     requestPanelManager: RequestPanelManager;
+    collectionManagerProvider: CollectionManagerProvider;
 }
 
 export function registerCollectionCommands(
     context: vscode.ExtensionContext,
     deps: CollectionCommandDeps
 ): void {
-    const { collectionService, sidebarProvider, requestPanelManager } = deps;
+    const { collectionService, sidebarProvider, requestPanelManager, collectionManagerProvider } = deps;
+
+    const refreshCollectionViews = async (collectionId?: string) => {
+        await sidebarProvider.refreshCollections();
+        await requestPanelManager.broadcastCollections();
+        await collectionManagerProvider.refresh();
+        if (collectionId) {
+            await requestPanelManager.broadcastCollectionState(collectionId);
+        }
+    };
 
     context.subscriptions.push(
         vscode.commands.registerCommand('liteclient.openCollectionRequest', async (request: RequestItem) => {
@@ -27,8 +38,7 @@ export function registerCollectionCommands(
             const name = await vscode.window.showInputBox({ prompt: 'Enter collection name' });
             if (name) {
                 await collectionService.addCollection(name);
-                sidebarProvider.refreshCollections();
-                requestPanelManager.broadcastCollections();
+                await refreshCollectionViews();
             }
         }),
 
@@ -36,8 +46,7 @@ export function registerCollectionCommands(
             const newName = await vscode.window.showInputBox({ prompt: "New name", value: node.collection.name });
             if (newName) {
                 await collectionService.renameCollection(node.collection.id, newName);
-                sidebarProvider.refreshCollections();
-                requestPanelManager.broadcastCollections();
+                await refreshCollectionViews(node.collection.id);
             }
         }),
 
@@ -50,8 +59,7 @@ export function registerCollectionCommands(
 
             if (result === "Delete") {
                 await collectionService.deleteCollection(node.collection.id);
-                sidebarProvider.refreshCollections();
-                requestPanelManager.broadcastCollections();
+                await refreshCollectionViews();
             }
         }),
 
@@ -76,8 +84,7 @@ export function registerCollectionCommands(
                     if (warnings.length > 0) {
                         vscode.window.showWarningMessage(warnings.join(' '));
                     }
-                    sidebarProvider.refreshCollections();
-                    requestPanelManager.broadcastCollections();
+                    await refreshCollectionViews();
                 } catch (error: any) {
                     vscode.window.showErrorMessage(`Import failed: ${error.message}`);
                 }
@@ -120,8 +127,7 @@ export function registerCollectionCommands(
 
             if (collectionId) {
                 await collectionService.addRequest(collectionId, request, parentId);
-                sidebarProvider.refreshCollections();
-                requestPanelManager.broadcastCollections();
+                await refreshCollectionViews(collectionId);
             }
         }),
 
@@ -137,8 +143,7 @@ export function registerCollectionCommands(
 
                 if (confirmation === "Delete") {
                     await collectionService.deleteItem(result.collection.id, requestId);
-                    sidebarProvider.refreshCollections();
-                    requestPanelManager.broadcastCollections();
+                    await refreshCollectionViews(result.collection.id);
                 }
             }
         }),
@@ -154,9 +159,10 @@ export function registerCollectionCommands(
                 });
                 if (newName !== undefined) {
                     await collectionService.renameItem(result.collection.id, requestId, newName);
-                    sidebarProvider.refreshCollections();
+                    await sidebarProvider.refreshCollections();
                     requestPanelManager.updateTitle(requestId, newName || result.request.url);
-                    requestPanelManager.broadcastCollections();
+                    await requestPanelManager.broadcastCollections();
+                    await collectionManagerProvider.refresh();
                 }
             }
         }),
@@ -167,8 +173,7 @@ export function registerCollectionCommands(
             const name = await vscode.window.showInputBox({ prompt: 'Enter folder name' });
             if (name && collectionId) {
                 await collectionService.addFolder(collectionId, name, parentId);
-                sidebarProvider.refreshCollections();
-                requestPanelManager.broadcastCollections();
+                await refreshCollectionViews(collectionId);
             }
         }),
 
@@ -184,8 +189,7 @@ export function registerCollectionCommands(
 
                 if (confirmation === "Delete") {
                     await collectionService.deleteItem(collectionId, itemId);
-                    sidebarProvider.refreshCollections();
-                    requestPanelManager.broadcastCollections();
+                    await refreshCollectionViews(collectionId);
                 }
             }
         }),
@@ -199,8 +203,7 @@ export function registerCollectionCommands(
                 const newName = await vscode.window.showInputBox({ prompt: 'New name', value: currentName });
                 if (newName) {
                     await collectionService.renameItem(collectionId, itemId, newName);
-                    sidebarProvider.refreshCollections();
-                    requestPanelManager.broadcastCollections();
+                    await refreshCollectionViews(collectionId);
                 }
             }
         })

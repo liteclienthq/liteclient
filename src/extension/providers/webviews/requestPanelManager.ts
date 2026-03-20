@@ -20,6 +20,7 @@ interface RequestContext {
     originalRequest: any;
     source: 'history' | 'collection' | 'new';
     collectionId?: string;
+    collectionName?: string;
     executionId?: string;
 }
 
@@ -84,7 +85,7 @@ export class RequestPanelManager {
 
         if (existingPanel) {
             existingPanel.reveal();
-            this._populatePanel(existingPanel, item, source, collectionId, collectionName);
+            await this._populatePanel(existingPanel, item, source, collectionId, collectionName);
         } else {
             const itemName = source === 'history' ? item.request?.name : item.name;
             const itemUrl = source === 'history' ? item.request?.url : item.url;
@@ -102,9 +103,9 @@ export class RequestPanelManager {
 
             panel.iconPath = vscode.Uri.joinPath(this.context.extensionUri, 'media', 'file_icon.png');
 
-            this._setupMessageHandler(panel, item, source, collectionId, requestIdentity);
+            this._setupMessageHandler(panel, item, source, collectionId, collectionName, requestIdentity);
             panel.webview.html = RequestWebView.getHtmlContent(panel.webview, this.context.extensionUri);
-            this._populatePanel(panel, item, source, collectionId, collectionName);
+            await this._populatePanel(panel, item, source, collectionId, collectionName);
 
             this.panels.set(requestIdentity, panel);
             this.panelStates.set(requestIdentity, { panel, baseTitle: title, isDirty: false });
@@ -115,7 +116,7 @@ export class RequestPanelManager {
         }
     }
 
-    private _populatePanel(panel: vscode.WebviewPanel, item: any, source: 'history' | 'collection' | 'new', collectionId?: string, collectionName?: string) {
+    private async _populatePanel(panel: vscode.WebviewPanel, item: any, source: 'history' | 'collection' | 'new', collectionId?: string, collectionName?: string) {
         if (source === 'history') {
             panel.webview.postMessage({
                 type: "load-request",
@@ -127,23 +128,26 @@ export class RequestPanelManager {
                 }
             });
         } else {
+            const collection = collectionId ? await this.collectionService.getCollectionById(collectionId) : undefined;
             panel.webview.postMessage({
                 type: "load-request",
                 payload: {
                     ...item,
                     source,
                     collectionId,
-                    collectionPath: collectionName ? [collectionName] : undefined
+                    collectionPath: collectionName ? [collectionName] : undefined,
+                    collectionVariables: collection?.variables || []
                 }
             });
         }
     }
 
-    private _setupMessageHandler(panel: vscode.WebviewPanel, originalRequest: any, source: 'history' | 'collection' | 'new', collectionId?: string, requestIdentity?: string) {
+    private _setupMessageHandler(panel: vscode.WebviewPanel, originalRequest: any, source: 'history' | 'collection' | 'new', collectionId?: string, collectionName?: string, requestIdentity?: string) {
         const context: RequestContext = {
             originalRequest,
             source,
             collectionId,
+            collectionName,
             executionId: source === 'history' ? originalRequest.id : undefined
         };
 
@@ -201,6 +205,7 @@ export class RequestPanelManager {
         const selectedEnvironmentId = messageEnvironmentId !== undefined ? messageEnvironmentId : globalSelectedEnvironmentId;
 
         const globals = await this.environmentService.getEnvironmentById('globals');
+        const collection = ctx.collectionId ? await this.collectionService.getCollectionById(ctx.collectionId) : undefined;
         let selectedEnvironment;
         if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
             selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
@@ -213,6 +218,7 @@ export class RequestPanelManager {
 
         const environmentVariables = resolveVariables({
             globals: mergedGlobals,
+            collectionVariables: collection?.variables || [],
             environment: mergedSelectedEnv,
         });
 
@@ -235,10 +241,18 @@ export class RequestPanelManager {
             }
         }
 
+        const collectionVariables: Record<string, string> = {};
+        for (const v of collection?.variables || []) {
+            if (v.enabled) {
+                collectionVariables[v.name] = v.initialValue;
+            }
+        }
+
         const allTestResults: ScriptTestResult[] = [];
         const allConsoleLogs: ScriptConsoleEntry[] = [];
         let scriptError: string | undefined;
         const allEnvUpdates: Record<string, string | null> = {};
+        const allCollectionUpdates: Record<string, string | null> = {};
         const allGlobalUpdates: Record<string, string | null> = {};
 
         // Run pre-request script
@@ -251,6 +265,7 @@ export class RequestPanelManager {
                     body: message.body,
                 },
                 environmentVariables: envOnlyVariables,
+                collectionVariables,
                 globalVariables,
             });
 
@@ -264,6 +279,24 @@ export class RequestPanelManager {
                 for (const [key, value] of Object.entries(preResult.variableUpdates.environment)) {
                     allEnvUpdates[key] = value;
                     if (value !== null) {
+                        envOnlyVariables[key] = value;
+                    } else {
+                        delete envOnlyVariables[key];
+                    }
+                    if (value !== null) {
+                        environmentVariables[key] = value;
+                    } else {
+                        delete environmentVariables[key];
+                    }
+                }
+                for (const [key, value] of Object.entries(preResult.variableUpdates.collection)) {
+                    allCollectionUpdates[key] = value;
+                    if (value !== null) {
+                        collectionVariables[key] = value;
+                    } else {
+                        delete collectionVariables[key];
+                    }
+                    if (value !== null) {
                         environmentVariables[key] = value;
                     } else {
                         delete environmentVariables[key];
@@ -271,6 +304,11 @@ export class RequestPanelManager {
                 }
                 for (const [key, value] of Object.entries(preResult.variableUpdates.globals)) {
                     allGlobalUpdates[key] = value;
+                    if (value !== null) {
+                        globalVariables[key] = value;
+                    } else {
+                        delete globalVariables[key];
+                    }
                     if (value !== null) {
                         environmentVariables[key] = value;
                     } else {
@@ -338,6 +376,7 @@ export class RequestPanelManager {
                     body: response.body,
                 },
                 environmentVariables: envOnlyVariables,
+                collectionVariables,
                 globalVariables,
             });
 
@@ -351,6 +390,9 @@ export class RequestPanelManager {
                 for (const [key, value] of Object.entries(postResult.variableUpdates.environment)) {
                     allEnvUpdates[key] = value;
                 }
+                for (const [key, value] of Object.entries(postResult.variableUpdates.collection)) {
+                    allCollectionUpdates[key] = value;
+                }
                 for (const [key, value] of Object.entries(postResult.variableUpdates.globals)) {
                     allGlobalUpdates[key] = value;
                 }
@@ -358,7 +400,7 @@ export class RequestPanelManager {
         }
 
         // Persist variable updates from scripts
-        await this._persistScriptVariableUpdates(allEnvUpdates, allGlobalUpdates, selectedEnvironmentId);
+        await this._persistScriptVariableUpdates(allEnvUpdates, allCollectionUpdates, allGlobalUpdates, selectedEnvironmentId, ctx.collectionId);
 
         if (response.errorType !== 'cancelled') {
             let historyName = message.name;
@@ -471,6 +513,7 @@ export class RequestPanelManager {
             };
             await this.collectionService.updateRequest(collectionId, updatedRequest);
             this.refreshCollections();
+            await this.broadcastCollectionState(collectionId);
             vscode.window.showInformationMessage('Request updated!');
         } else {
             const collections = await this.collectionService.load();
@@ -488,6 +531,7 @@ export class RequestPanelManager {
                 };
                 await this.collectionService.addRequest(selected.collection.id, newRequest);
                 this.refreshCollections();
+                await this.broadcastCollectionState(selected.collection.id);
                 vscode.window.showInformationMessage('Saved to collection!');
             }
         }
@@ -497,12 +541,15 @@ export class RequestPanelManager {
 
     private async _persistScriptVariableUpdates(
         envUpdates: Record<string, string | null>,
+        collectionUpdates: Record<string, string | null>,
         globalUpdates: Record<string, string | null>,
-        selectedEnvironmentId: string | undefined | null
+        selectedEnvironmentId: string | undefined | null,
+        collectionId?: string
     ): Promise<void> {
         const hasEnvUpdates = Object.keys(envUpdates).length > 0;
+        const hasCollectionUpdates = Object.keys(collectionUpdates).length > 0;
         const hasGlobalUpdates = Object.keys(globalUpdates).length > 0;
-        if (!hasEnvUpdates && !hasGlobalUpdates) {
+        if (!hasEnvUpdates && !hasCollectionUpdates && !hasGlobalUpdates) {
             return;
         }
 
@@ -512,6 +559,11 @@ export class RequestPanelManager {
 
         if (hasEnvUpdates && selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
             await this._applyVariableUpdates(selectedEnvironmentId, envUpdates);
+        }
+
+        if (hasCollectionUpdates && collectionId) {
+            await this._applyCollectionVariableUpdates(collectionId, collectionUpdates);
+            await this.broadcastCollectionState(collectionId);
         }
 
         await this.broadcastEnvironments();
@@ -557,6 +609,49 @@ export class RequestPanelManager {
         }
     }
 
+    private async _applyCollectionVariableUpdates(collectionId: string, updates: Record<string, string | null>): Promise<void> {
+        const collection = await this.collectionService.getCollectionById(collectionId);
+        if (!collection) {
+            return;
+        }
+
+        const variables = [...(collection.variables || [])];
+        let modified = false;
+
+        for (const [name, value] of Object.entries(updates)) {
+            if (value === null) {
+                const idx = variables.findIndex(v => v.name === name);
+                if (idx !== -1) {
+                    variables.splice(idx, 1);
+                    modified = true;
+                }
+            } else {
+                const existing = variables.find(v => v.name === name);
+                if (existing) {
+                    existing.initialValue = value;
+                    modified = true;
+                } else {
+                    variables.push({
+                        id: generateId(),
+                        name,
+                        initialValue: value,
+                        type: 'default',
+                        enabled: true,
+                    });
+                    modified = true;
+                }
+            }
+        }
+
+        if (modified) {
+            await this.collectionService.updateCollection({
+                ...collection,
+                variables
+            });
+            this.refreshCollections();
+        }
+    }
+
     // --- Broadcast Methods ---
 
     private _broadcastToPanels(type: string, data: any) {
@@ -577,6 +672,19 @@ export class RequestPanelManager {
     public async broadcastCollections() {
         this._broadcastToPanels('collections-list', {
             collections: await this.collectionService.load()
+        });
+    }
+
+    public async broadcastCollectionState(collectionId: string): Promise<void> {
+        const collection = await this.collectionService.getCollectionById(collectionId);
+        if (!collection) {
+            return;
+        }
+
+        this._broadcastToPanels('collection-state', {
+            collectionId: collection.id,
+            name: collection.name,
+            variables: collection.variables || []
         });
     }
 

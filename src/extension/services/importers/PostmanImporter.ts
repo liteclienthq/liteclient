@@ -1,6 +1,6 @@
 import { Importer } from './Importer';
 import { Collection, CollectionItem, RequestItem, FolderItem } from '../collectionService';
-import { AuthConfig, RequestBody } from '../../../shared/models';
+import { AuthConfig, RequestBody, EnvironmentVariable } from '../../../shared/models';
 import { generateId } from '../../utils/idUtils';
 
 export class PostmanImporter implements Importer {
@@ -29,9 +29,26 @@ export class PostmanImporter implements Importer {
             id: this.generateId(),
             name: content.info?.name || 'Imported Collection',
             description: content.info?.description,
+            variables: this.parseCollectionVariables(content.variable),
             items: this.parseItems(content.item || [])
         };
         return [collection];
+    }
+
+    private parseCollectionVariables(variables: any[]): EnvironmentVariable[] {
+        if (!Array.isArray(variables)) {
+            return [];
+        }
+
+        return variables
+            .filter(variable => variable?.key)
+            .map(variable => ({
+                id: this.generateId(),
+                name: variable.key,
+                initialValue: variable.value || '',
+                type: 'default',
+                enabled: !variable.disabled
+            }));
     }
 
     private detectUnsupportedScripts(content: any): void {

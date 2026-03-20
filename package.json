@@ -181,6 +181,11 @@
         "category": "LiteClient"
       },
       {
+        "command": "liteclient.openCollectionManager",
+        "title": "Manage Collection Variables",
+        "category": "LiteClient"
+      },
+      {
         "command": "liteclient.clearCookies",
         "title": "Clear Cookie Jar",
         "category": "LiteClient"
@@ -222,6 +227,11 @@
         {
           "when": "view == collections && viewItem == collection",
           "command": "liteclient.deleteCollection"
+        },
+        {
+          "when": "view == collections && viewItem == collection",
+          "command": "liteclient.openCollectionManager",
+          "group": "1_modification"
         },
         {
           "when": "view == collections && viewItem == collection",

@@ -39,7 +39,8 @@ const webviewConfig = {
     request: 'src/webview/request/index.ts',
     sidebar: 'src/webview/sidebar/index.ts',
     'cookie-manager': 'src/webview/cookie-manager/index.ts',
-    'environment-manager': 'src/webview/environment-manager/index.ts'
+    'environment-manager': 'src/webview/environment-manager/index.ts',
+    'collection-manager': 'src/webview/collection-manager/index.ts'
   },
   bundle: true,
   outdir: 'dist/webview',

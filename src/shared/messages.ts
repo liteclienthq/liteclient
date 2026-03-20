@@ -42,9 +42,17 @@ export interface LoadRequestMessage {
         source: 'history' | 'collection' | 'new';
         collectionId?: string;
         collectionPath?: string[];
+        collectionVariables?: EnvironmentVariable[];
         preRequestScript?: string;
         postResponseScript?: string;
     };
+}
+
+export interface CollectionStateMessage {
+    type: 'collection-state';
+    collectionId: string;
+    name: string;
+    variables: EnvironmentVariable[];
 }
 
 export interface EnvironmentsListMessage {
@@ -118,7 +126,7 @@ export interface HistoryActionMessage {
 
 export interface CollectionActionMessage {
     type: 'collection-action';
-    action: 'delete' | 'rename' | 'export';
+    action: 'delete' | 'rename' | 'export' | 'manage-variables';
     collectionId: string;
 }
 
@@ -184,6 +192,11 @@ export interface OpenEnvironmentManagerMessage {
     environmentId?: string;
 }
 
+export interface OpenCollectionManagerMessage {
+    type: 'open-collection-manager';
+    collectionId?: string;
+}
+
 /** Messages from sidebar webview to extension */
 export type SidebarToExtensionMessage =
     | GetHistoryMessage
@@ -203,7 +216,8 @@ export type SidebarToExtensionMessage =
     | EnvVariableActionMessage
     | SetEnvironmentMessage
     | EnvCurrentValueMessage
-    | OpenEnvironmentManagerMessage;
+    | OpenEnvironmentManagerMessage
+    | OpenCollectionManagerMessage;
 
 // ============================================================================
 // Messages: Webview → Extension (Request Panel)
@@ -329,6 +343,36 @@ export interface OAuth2TokenResultMessage {
     error?: string;
 }
 
+export interface CollectionMgrGetStateMessage {
+    type: 'collectionmgr-get-state';
+}
+
+export interface CollectionMgrRenameCollectionMessage {
+    type: 'collectionmgr-rename-collection';
+    id: string;
+    name: string;
+}
+
+export interface CollectionMgrUpdateVariablesMessage {
+    type: 'collectionmgr-update-variables';
+    collectionId: string;
+    variables: EnvironmentVariable[];
+}
+
+export type CollectionManagerToExtensionMessage =
+    | CollectionMgrGetStateMessage
+    | CollectionMgrRenameCollectionMessage
+    | CollectionMgrUpdateVariablesMessage;
+
+export interface CollectionMgrStateMessage {
+    type: 'collectionmgr-state';
+    collection: {
+        id: string;
+        name: string;
+        variables: EnvironmentVariable[];
+    };
+}
+
 // ============================================================================
 // Messages: Webview → Extension (Environment Manager)
 // ============================================================================
@@ -405,17 +449,20 @@ export interface EnvmgrStateMessage {
 export type ExtensionToWebviewMessage =
     | ResponseMessage
     | LoadRequestMessage
+    | CollectionStateMessage
     | EnvironmentsListMessage
     | SetEnvironmentBroadcastMessage
     | HistoryListMessage
     | CollectionsListMessage
     | CookiesListMessage
     | OAuth2TokenResultMessage
-    | EnvmgrStateMessage;
+    | EnvmgrStateMessage
+    | CollectionMgrStateMessage;
 
 /** All messages from any webview to extension */
 export type WebviewToExtensionMessage =
     | SidebarToExtensionMessage
     | RequestPanelToExtensionMessage
     | CookieManagerToExtensionMessage
-    | EnvironmentManagerToExtensionMessage;
+    | EnvironmentManagerToExtensionMessage
+    | CollectionManagerToExtensionMessage;

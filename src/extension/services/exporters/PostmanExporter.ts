@@ -16,6 +16,12 @@ export class PostmanExporter implements Exporter {
                 description: collection.description || '',
                 schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
             },
+            variable: (collection.variables || []).map(variable => ({
+                key: variable.name,
+                value: variable.initialValue,
+                type: 'string',
+                disabled: !variable.enabled
+            })),
             item: collection.items.map(item => this.convertItem(item))
         };
 

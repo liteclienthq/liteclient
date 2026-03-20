@@ -9,6 +9,7 @@ import { SidebarProvider } from '../providers/webviews/sidebarProvider';
 import { RequestPanelManager } from '../providers/webviews/requestPanelManager';
 import { CookieManagerProvider } from '../providers/webviews/cookieManagerProvider';
 import { EnvironmentManagerProvider } from '../providers/webviews/environmentManagerProvider';
+import { CollectionManagerProvider } from '../providers/webviews/collectionManagerProvider';
 
 import { registerHistoryCommands } from './historyCommands';
 import { registerCollectionCommands } from './collectionCommands';
@@ -30,6 +31,7 @@ export interface CommandDependencies {
     requestPanelManager: RequestPanelManager;
     cookieManagerProvider: CookieManagerProvider;
     environmentManagerProvider: EnvironmentManagerProvider;
+    collectionManagerProvider: CollectionManagerProvider;
 }
 
 export function registerAllCommands(
@@ -46,7 +48,8 @@ export function registerAllCommands(
     registerCollectionCommands(context, {
         collectionService: deps.collectionService,
         sidebarProvider: deps.sidebarProvider,
-        requestPanelManager: deps.requestPanelManager
+        requestPanelManager: deps.requestPanelManager,
+        collectionManagerProvider: deps.collectionManagerProvider
     });
 
     registerEnvironmentCommands(context, {
@@ -78,6 +81,18 @@ export function registerAllCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('liteclient.openEnvironmentManager', async (args?: { environmentId?: string }) => {
             await deps.environmentManagerProvider.open(args);
+        }),
+        vscode.commands.registerCommand('liteclient.openCollectionManager', async (args?: { collectionId?: string }) => {
+            let collectionId = args?.collectionId;
+            if (!collectionId) {
+                const collections = await deps.collectionService.load();
+                const selected = await vscode.window.showQuickPick(
+                    collections.map(collection => ({ label: collection.name, collectionId: collection.id })),
+                    { placeHolder: 'Select a collection' }
+                );
+                collectionId = selected?.collectionId;
+            }
+            await deps.collectionManagerProvider.open({ collectionId });
         })
     );
 }

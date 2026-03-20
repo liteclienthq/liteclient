@@ -119,7 +119,7 @@ The extension module handles backend operations.
 
 | File | Contents |
 |------|----------|
-| collections.json | Collections, folders, requests |
+| collections.json | Collections, collection variables, folders, requests |
 | environments.json | Environments and variables |
 | history.json | Request execution history |
 | cookies.json | Serialized cookie jar |
@@ -133,7 +133,7 @@ StorageService provides atomic file writes with backup on corruption.
 
 ### Variable Substitution
 
-Environment variables use {{variableName}} syntax. Variables are `EnvironmentVariable` objects with `id`, `name`, `initialValue`, `type` (default/secret), and `enabled` fields.
+Environment, global, and collection variables use {{variableName}} syntax. Variables are `EnvironmentVariable` objects with `id`, `name`, `initialValue`, `type` (default/secret), and `enabled` fields.
 
 **Resolution order** (narrowest wins): Globals → Collection → Environment. Only `enabled` variables are resolved. The `variableResolver.ts` utility centralizes this logic.
 

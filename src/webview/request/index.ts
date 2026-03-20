@@ -7,6 +7,7 @@ import { html, css } from 'lit';
 import { customElement, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../shared/base-element.js';
 import { onMessage, postMessage, type ExtensionMessage, type RequestBody, type AuthConfig, type ScriptTestResult, type ScriptConsoleEntry } from '../shared/messaging.js';
+import type { EnvironmentVariable } from '../../shared/models.js';
 
 interface OriginalRequestState {
   method: string;
@@ -198,6 +199,7 @@ export class LcRequestPanel extends LcBaseElement {
   @state() preRequestScript = '';
   @state() postResponseScript = '';
   @state() collectionId: string | undefined;
+  @state() collectionVariables: EnvironmentVariable[] = [];
   @state() requestName = 'New Request';
   @state() selectedEnvironmentId: string | null = null;
   @state() environments: any[] = [];
@@ -245,6 +247,8 @@ export class LcRequestPanel extends LcBaseElement {
         this.handleResponse(message);
       } else if (message.type === 'load-request') {
         this.handleLoadRequest(message);
+      } else if (message.type === 'collection-state') {
+        this.handleCollectionState(message);
       } else if (message.type === 'environments-list') {
         this.handleEnvironmentsList(message);
       } else if (message.type === 'set-environment') {
@@ -301,6 +305,7 @@ export class LcRequestPanel extends LcBaseElement {
     this.preRequestScript = payload.preRequestScript || '';
     this.postResponseScript = payload.postResponseScript || '';
     this.collectionId = payload.collectionId;
+    this.collectionVariables = payload.collectionVariables || [];
     this.requestName = payload.name || 'New Request';
 
     // Map headers and params Record to arrays for the editor
@@ -323,6 +328,13 @@ export class LcRequestPanel extends LcBaseElement {
     // Store original state for dirty tracking (deep copy)
     this.storeOriginalRequest();
     this.setDirtyState(false);
+  }
+
+  private handleCollectionState(message: { collectionId: string; variables: EnvironmentVariable[] }) {
+    if (this.collectionId !== message.collectionId) {
+      return;
+    }
+    this.collectionVariables = message.variables || [];
   }
 
   private storeOriginalRequest() {
@@ -615,6 +627,9 @@ export class LcRequestPanel extends LcBaseElement {
           .method=${this.requestMethod}
           .url=${this.requestUrl}
           ?loading=${this.loading}
+          .environments=${this.environments}
+          .collectionVariables=${this.collectionVariables}
+          .selectedEnvironmentId=${this.selectedEnvironmentId}
           @method-change=${this.handleMethodChange}
           @url-change=${this.handleUrlChange}
           @send-request=${this.handleSendRequest}
@@ -634,6 +649,7 @@ export class LcRequestPanel extends LcBaseElement {
               .body=${this.requestBody}
               .auth=${this.requestAuth}
               .environments=${this.environments}
+              .collectionVariables=${this.collectionVariables}
               .selectedEnvironmentId=${this.selectedEnvironmentId}
               .preRequestScript=${this.preRequestScript}
               .postResponseScript=${this.postResponseScript}

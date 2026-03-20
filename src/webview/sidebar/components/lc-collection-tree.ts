@@ -74,6 +74,7 @@ export class LcCollectionTree extends LcBaseElement {
   private collectionActions: SidebarItemAction[] = [
     { id: 'add-folder', label: 'New Folder' },
     { id: 'add-request', label: 'New Request' },
+    { id: 'manage-variables', label: 'Manage Variables' },
     { id: 'rename', label: 'Rename' },
     { id: 'export', label: 'Export' },
     { id: 'delete', label: 'Delete', danger: true }
@@ -118,6 +119,7 @@ export class LcCollectionTree extends LcBaseElement {
           bubbles: true, composed: true
         }));
         break;
+      case 'manage-variables':
       case 'rename':
       case 'export':
       case 'delete':

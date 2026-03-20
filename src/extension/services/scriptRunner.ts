@@ -19,6 +19,7 @@ interface ScriptContext {
     request: ScriptRequest;
     response?: ScriptResponse;
     environmentVariables: Record<string, string>;
+    collectionVariables: Record<string, string>;
     globalVariables: Record<string, string>;
 }
 
@@ -48,6 +49,7 @@ export class ScriptRunner {
         const testResults: ScriptTestResult[] = [];
         const consoleLogs: ScriptConsoleEntry[] = [];
         const envUpdates: Record<string, string | null> = {};
+        const collectionUpdates: Record<string, string | null> = {};
         const globalUpdates: Record<string, string | null> = {};
 
         const makeConsoleMethod = (level: ScriptConsoleEntry['level']) => {
@@ -64,6 +66,7 @@ export class ScriptRunner {
         };
 
         const envVars = { ...context.environmentVariables };
+        const collectionVars = { ...context.collectionVariables };
         const globalVars = { ...context.globalVariables };
 
         const pm: any = {
@@ -91,8 +94,20 @@ export class ScriptRunner {
                 },
                 toObject: () => ({ ...globalVars })
             },
+            collectionVariables: {
+                get: (key: string) => collectionVars[key],
+                set: (key: string, value: string) => {
+                    collectionVars[key] = String(value);
+                    collectionUpdates[key] = String(value);
+                },
+                unset: (key: string) => {
+                    delete collectionVars[key];
+                    collectionUpdates[key] = null;
+                },
+                toObject: () => ({ ...collectionVars })
+            },
             variables: {
-                get: (key: string) => envVars[key] ?? globalVars[key]
+                get: (key: string) => envVars[key] ?? collectionVars[key] ?? globalVars[key]
             },
             request: {
                 url: context.request.url,
@@ -177,6 +192,7 @@ export class ScriptRunner {
                 error: errorMsg,
                 variableUpdates: {
                     environment: envUpdates,
+                    collection: collectionUpdates,
                     globals: globalUpdates
                 }
             };
@@ -187,6 +203,7 @@ export class ScriptRunner {
             consoleLogs,
             variableUpdates: {
                 environment: envUpdates,
+                collection: collectionUpdates,
                 globals: globalUpdates
             }
         };

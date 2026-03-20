@@ -10,7 +10,7 @@ import './lc-scripts-panel.js';
 import type { KeyValueItem } from './lc-key-value-editor.js';
 import type { AuthConfig, RequestBody } from '../../shared/messaging.js';
 import type { VariableItem } from './lc-variable-autocomplete.js';
-import type { Environment } from '../../../shared/models.js';
+import type { Environment, EnvironmentVariable } from '../../../shared/models.js';
 
 
 @customElement('lc-request-meta')
@@ -81,6 +81,7 @@ export class LcRequestMeta extends LcBaseElement {
   @property({ type: String }) preRequestScript = '';
   @property({ type: String }) postResponseScript = '';
   @property({ type: Array }) environments: Environment[] = [];
+  @property({ type: Array }) collectionVariables: EnvironmentVariable[] = [];
   @property({ type: String }) selectedEnvironmentId: string | null = null;
 
   @state() private activeTab = 'params';
@@ -110,9 +111,17 @@ export class LcRequestMeta extends LcBaseElement {
       }
     }
 
+    for (const v of this.collectionVariables) {
+      if (v.enabled) {
+        const displayValue = v.type === 'secret' ? '••••••••' : v.initialValue;
+        items.push({ name: v.name, value: displayValue, type: 'collection' });
+      }
+    }
+
     items.sort((a, b) => {
       if (a.type !== b.type) {
-        return a.type === 'environment' ? -1 : 1;
+        const order = { environment: 0, collection: 1, global: 2 };
+        return order[a.type] - order[b.type];
       }
       return a.name.localeCompare(b.name);
     });

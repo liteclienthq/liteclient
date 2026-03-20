@@ -3,6 +3,7 @@ import { customElement, property, state, query } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
 import { postMessage } from '../../shared/messaging.js';
 import type { Environment } from '../../../shared/models.js';
+import type { EnvironmentVariable } from '../../../shared/models.js';
 import './lc-variable-autocomplete.js';
 import type { LcVariableAutocomplete, VariableItem } from './lc-variable-autocomplete.js';
 
@@ -227,6 +228,7 @@ export class LcUrlBar extends LcBaseElement {
   @property({ type: String }) url = '';
   @property({ type: Boolean }) loading = false;
   @property({ type: Array }) environments: Environment[] = [];
+  @property({ type: Array }) collectionVariables: EnvironmentVariable[] = [];
   @property({ type: String }) selectedEnvironmentId: string | null = null;
 
   @state() private showAutocomplete = false;
@@ -290,9 +292,17 @@ export class LcUrlBar extends LcBaseElement {
       }
     }
 
+    for (const v of this.collectionVariables) {
+      if (v.enabled) {
+        const displayValue = v.type === 'secret' ? '••••••••' : v.initialValue;
+        items.push({ name: v.name, value: displayValue, type: 'collection' });
+      }
+    }
+
     items.sort((a, b) => {
       if (a.type !== b.type) {
-        return a.type === 'environment' ? -1 : 1;
+        const order = { environment: 0, collection: 1, global: 2 };
+        return order[a.type] - order[b.type];
       }
       return a.name.localeCompare(b.name);
     });

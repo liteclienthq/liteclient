@@ -47,6 +47,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
             'set-environment': (data) => this._handleSetEnvironment(data),
             'env-current-value': (data) => this._handleEnvCurrentValue(data),
             'open-environment-manager': (data) => vscode.commands.executeCommand('liteclient.openEnvironmentManager', { environmentId: data.environmentId }),
+            'open-collection-manager': (data) => vscode.commands.executeCommand('liteclient.openCollectionManager', { collectionId: data.collectionId }),
             };
     }
 
@@ -119,6 +120,9 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 break;
             case 'export':
                 vscode.commands.executeCommand('liteclient.exportCollection', { collection });
+                break;
+            case 'manage-variables':
+                vscode.commands.executeCommand('liteclient.openCollectionManager', { collectionId: data.collectionId });
                 break;
         }
     }

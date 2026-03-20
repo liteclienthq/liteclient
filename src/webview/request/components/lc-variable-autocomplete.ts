@@ -5,7 +5,7 @@ import { LcBaseElement } from '../../shared/base-element.js';
 export interface VariableItem {
   name: string;
   value: string;
-  type: 'environment' | 'global';
+  type: 'environment' | 'collection' | 'global';
 }
 
 @customElement('lc-variable-autocomplete')
@@ -64,6 +64,10 @@ export class LcVariableAutocomplete extends LcBaseElement {
 
     .badge.global {
       background: #2196f3;
+    }
+
+    .badge.collection {
+      background: #ff9800;
     }
 
     .variable-name {
@@ -179,7 +183,7 @@ export class LcVariableAutocomplete extends LcBaseElement {
                 class="variable-item ${index === this.selectedIndex ? 'selected' : ''}"
                 @click=${() => this.handleClick(variable)}
               >
-                <span class="badge ${variable.type}">${variable.type === 'environment' ? 'E' : 'G'}</span>
+                <span class="badge ${variable.type}">${variable.type === 'environment' ? 'E' : variable.type === 'collection' ? 'C' : 'G'}</span>
                 <span class="variable-name">${variable.name}</span>
                 <span class="variable-value">${this.truncateValue(variable.value)}</span>
               </div>

@@ -102,6 +102,7 @@ export interface ScriptResult {
     error?: string;
     variableUpdates?: {
         environment: Record<string, string | null>;
+        collection: Record<string, string | null>;
         globals: Record<string, string | null>;
     };
 }
