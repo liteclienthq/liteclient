@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-03-21
+
+### Added
+- **Collection Variables**: Collections now support first-class variables with a dedicated manager, request autocomplete support, and request-meta visibility.
+- **Script Collection Variable API**: Request scripts now support `pm.collectionVariables` and include collection variables in `pm.variables` resolution.
+
+### Changed
+- **Variable Resolution Runtime**: Collection-backed requests now resolve variables with the documented precedence `Globals → Collection → Environment`.
+- **Postman Interop**: Postman collection-level variables are now preserved on import and export.
+
 ## [0.16.0] - 2026-03-03
 
 ### Added
