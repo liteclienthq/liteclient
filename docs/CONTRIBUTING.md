@@ -1,31 +1,12 @@
-# Contribute to the documentation
+# Documentation Contributions
 
-Thank you for your interest in contributing to the LiteClient documentation!
+The canonical contribution workflow lives in the repository root at [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
-## How to contribute
+Use this directory for published product documentation only.
 
-### Option 1: Edit directly on GitHub
+## Docs-Specific Notes
 
-1. Navigate to the page you want to edit
-2. Click the "Edit this file" button (the pencil icon)
-3. Make your changes and submit a pull request
-
-### Option 2: Local development
-
-1. Fork and clone this repository
-2. Install the Mintlify CLI: `npm i -g mint`
-3. Create a branch for your changes
-4. Make changes
-5. Navigate to the docs directory and run `mint dev`
-6. Preview your changes at `http://localhost:3000`
-7. Commit your changes and submit a pull request
-
-## Writing guidelines
-
-- **Use active voice**: "Run the command" not "The command should be run"
-- **Address the reader directly**: Use "you" instead of "the user"
-- **Keep sentences concise**: Aim for one idea per sentence
-- **Lead with the goal**: Start instructions with what the user wants to accomplish
-- **Use consistent terminology**: Don't alternate between synonyms for the same concept
-- **Include examples**: Show, don't just tell
-- **Use sentence case for headings**: "Getting started" not "Getting Started"
+- Preview the docs site with `mint dev` from `docs/`.
+- Keep headings in sentence case.
+- Prefer active voice and direct instructions.
+- Avoid duplicating contributor or maintainer process docs inside `docs/`.

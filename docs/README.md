@@ -1,27 +1,22 @@
-# LiteClient Documentation
+# LiteClient Docs
 
-This is the official documentation for LiteClient, a fast and lightweight REST API client for VS Code.
+This directory contains the Mintlify documentation site for LiteClient.
 
-## Development
+## Local Preview
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview the documentation locally:
+Install the Mintlify CLI and run the docs locally from this directory:
 
 ```bash
 npm i -g mint
-```
-
-Run the following command at the root of your documentation:
-
-```bash
 mint dev
 ```
 
-View your local preview at `http://localhost:3000`.
+The local preview is available at `http://localhost:3000`.
 
-## Contributing
+## Doc Ownership
 
-Contributions to the documentation are welcome! Please see the [Contributing Guide](https://github.com/liteclienthq/liteclient/blob/main/CONTRIBUTING.md) for details.
+- Root `README.md` is the repository landing page.
+- Root `CONTRIBUTING.md` is the canonical contributor workflow.
+- This `docs/` directory is for published end-user documentation only.
 
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
+Keep contributor, maintainer, and agent instructions in the root docs rather than duplicating them here.
