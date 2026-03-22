@@ -56,7 +56,7 @@ Install from [Open VSX](https://open-vsx.org/extension/liteclienthq/liteclient) 
 
 1. Open the LiteClient view from the VS Code activity bar.
 2. Create a new request.
-3. Enter a URL such as `https://jsonplaceholder.typicode.com/users`.
+3. Enter a URL such as `https://liteclient.com/hello`.
 4. Choose an HTTP method and click **Send**.
 5. Inspect the response body, headers, timing, and cookies.
 
