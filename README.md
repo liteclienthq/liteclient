@@ -60,11 +60,11 @@ Install from [Open VSX](https://open-vsx.org/extension/liteclienthq/liteclient) 
 5. Inspect the response body, headers, timing, and cookies.
 
 For a guided walkthrough, see the docs site:
-- [Introduction](https://liteclient.com)
-- [Quickstart](https://liteclient.com/quickstart)
-- [Variables guide](https://liteclient.com/guides/variables)
-- [OAuth guide](https://liteclient.com/guides/oauth)
-- [Troubleshooting](https://liteclient.com/guides/troubleshooting)
+- [Introduction](https://docs.liteclient.com/introduction)
+- [Quickstart](https://docs.liteclient.com/quickstart)
+- [Variables guide](https://docs.liteclient.com/guides/variables)
+- [OAuth guide](https://docs.liteclient.com/guides/oauth)
+- [Troubleshooting](https://docs.liteclient.com/guides/troubleshooting)
 
 ## Privacy
 
