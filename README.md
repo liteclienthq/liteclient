@@ -5,6 +5,7 @@
 [![VS Code Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/liteclienthq.liteclient?style=flat-square&color=E11D48&label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
 [![VS Code Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/liteclienthq.liteclient?style=flat-square&color=blue&label=installs)](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
 [![Open VSX Version](https://img.shields.io/open-vsx/v/liteclienthq/liteclient?style=flat-square&color=orange&label=Open%20VSX)](https://open-vsx.org/extension/liteclienthq/liteclient)
+[![Open VSX Installs](https://img.shields.io/open-vsx/dt/liteclienthq/liteclient?style=flat-square&color=orange&label=installs)](https://open-vsx.org/extension/liteclienthq/liteclient)
 [![License](https://img.shields.io/github/license/liteclienthq/liteclient?style=flat-square&color=green)](https://github.com/liteclienthq/liteclient)
 
 **The fast, local-first REST API client for VS Code.**
