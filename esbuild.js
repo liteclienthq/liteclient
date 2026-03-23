@@ -40,7 +40,8 @@ const webviewConfig = {
     sidebar: 'src/webview/sidebar/index.ts',
     'cookie-manager': 'src/webview/cookie-manager/index.ts',
     'environment-manager': 'src/webview/environment-manager/index.ts',
-    'collection-manager': 'src/webview/collection-manager/index.ts'
+    'collection-manager': 'src/webview/collection-manager/index.ts',
+    'runner': 'src/webview/runner/index.ts'
   },
   bundle: true,
   outdir: 'dist/webview',

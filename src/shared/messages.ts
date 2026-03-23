@@ -442,6 +442,78 @@ export interface EnvmgrStateMessage {
 }
 
 // ============================================================================
+// Messages: Webview → Extension (Collection Runner)
+// ============================================================================
+
+export interface RunnerGetStateMessage {
+    type: 'runner-get-state';
+}
+
+export interface RunnerStartMessage {
+    type: 'runner-start';
+}
+
+export interface RunnerCancelMessage {
+    type: 'runner-cancel';
+}
+
+export type RunnerToExtensionMessage =
+    | RunnerGetStateMessage
+    | RunnerStartMessage
+    | RunnerCancelMessage;
+
+// ============================================================================
+// Messages: Extension → Webview (Collection Runner)
+// ============================================================================
+
+export interface RunRequestResult {
+    requestName: string;
+    method: string;
+    url: string;
+    status: string;
+    durationMs: number;
+    responseBody: string;
+    responseHeaders: Record<string, string>;
+    responseContentType: string;
+    testResults: ScriptTestResult[];
+    consoleLogs: ScriptConsoleEntry[];
+    passed: boolean;
+    error?: string;
+    scriptError?: string;
+}
+
+export interface RunnerStateMessage {
+    type: 'runner-state';
+    collectionName: string;
+    folderName?: string;
+    totalRequests: number;
+    environmentName?: string;
+}
+
+export interface RunnerProgressMessage {
+    type: 'runner-progress';
+    current: number;
+    total: number;
+    result: RunRequestResult;
+}
+
+export interface RunnerCompleteMessage {
+    type: 'runner-complete';
+    results: RunRequestResult[];
+    summary: {
+        total: number;
+        passed: number;
+        failed: number;
+        durationMs: number;
+    };
+}
+
+export interface RunnerErrorMessage {
+    type: 'runner-error';
+    error: string;
+}
+
+// ============================================================================
 // Combined Types
 // ============================================================================
 
@@ -457,7 +529,11 @@ export type ExtensionToWebviewMessage =
     | CookiesListMessage
     | OAuth2TokenResultMessage
     | EnvmgrStateMessage
-    | CollectionMgrStateMessage;
+    | CollectionMgrStateMessage
+    | RunnerStateMessage
+    | RunnerProgressMessage
+    | RunnerCompleteMessage
+    | RunnerErrorMessage;
 
 /** All messages from any webview to extension */
 export type WebviewToExtensionMessage =
@@ -465,4 +541,5 @@ export type WebviewToExtensionMessage =
     | RequestPanelToExtensionMessage
     | CookieManagerToExtensionMessage
     | EnvironmentManagerToExtensionMessage
-    | CollectionManagerToExtensionMessage;
+    | CollectionManagerToExtensionMessage
+    | RunnerToExtensionMessage;

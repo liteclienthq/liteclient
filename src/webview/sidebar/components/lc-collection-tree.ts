@@ -72,6 +72,7 @@ export class LcCollectionTree extends LcBaseElement {
   @state() private selectedId: string | null = null;
 
   private collectionActions: SidebarItemAction[] = [
+    { id: 'run', label: 'Run Collection' },
     { id: 'add-folder', label: 'New Folder' },
     { id: 'add-request', label: 'New Request' },
     { id: 'manage-variables', label: 'Manage Variables' },
@@ -81,6 +82,7 @@ export class LcCollectionTree extends LcBaseElement {
   ];
 
   private folderActions: SidebarItemAction[] = [
+    { id: 'run', label: 'Run Folder' },
     { id: 'add-folder', label: 'New Folder' },
     { id: 'add-request', label: 'New Request' },
     { id: 'rename', label: 'Rename' },
@@ -107,6 +109,12 @@ export class LcCollectionTree extends LcBaseElement {
 
     // Dispatch events based on action
     switch (actionId) {
+      case 'run':
+        this.dispatchEvent(new CustomEvent('collection-action', {
+          detail: { action: 'run', collectionId, folderId: itemId },
+          bubbles: true, composed: true
+        }));
+        break;
       case 'add-request':
         this.dispatchEvent(new CustomEvent('collection-action', {
           detail: { action: 'add-collection-request', collectionId, parentId: itemId },

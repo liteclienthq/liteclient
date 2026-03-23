@@ -11,6 +11,8 @@ import { RequestPanelManager } from './providers/webviews/requestPanelManager';
 import { CookieManagerProvider } from './providers/webviews/cookieManagerProvider';
 import { EnvironmentManagerProvider } from './providers/webviews/environmentManagerProvider';
 import { CollectionManagerProvider } from './providers/webviews/collectionManagerProvider';
+import { RunnerProvider } from './providers/webviews/runnerProvider';
+import { CollectionRunner } from './services/collectionRunner';
 import { registerAllCommands } from './commands';
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -69,6 +71,25 @@ export async function activate(context: vscode.ExtensionContext) {
 				await requestPanelManager.broadcastCollectionState(collectionId);
 			}
 		}
+	);
+
+	const collectionRunner = new CollectionRunner(
+		collectionService,
+		environmentService,
+		settingsService,
+		cookieJarService,
+		currentValuesService,
+		requestPanelManager.getOAuth2TokenService(),
+		historyService
+	);
+
+	const runnerProvider = new RunnerProvider(
+		context,
+		collectionRunner,
+		collectionService,
+		environmentService,
+		settingsService,
+		() => sidebarProvider.refreshHistory()
 	);
 
 	const oauth2TokenService = requestPanelManager.getOAuth2TokenService();
@@ -140,7 +161,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		requestPanelManager,
 		cookieManagerProvider,
 		environmentManagerProvider,
-		collectionManagerProvider
+		collectionManagerProvider,
+		runnerProvider
 	});
 }
 

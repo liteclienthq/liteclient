@@ -199,6 +199,11 @@
         "command": "liteclient.switchStorageScope",
         "title": "Switch Storage Scope",
         "category": "LiteClient"
+      },
+      {
+        "command": "liteclient.runCollection",
+        "title": "Run Collection",
+        "category": "LiteClient"
       }
     ],
     "menus": {

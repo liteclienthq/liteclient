@@ -106,12 +106,15 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         }
     }
 
-    private async _handleCollectionAction(data: { action: string; collectionId: string }) {
+    private async _handleCollectionAction(data: { action: string; collectionId: string; folderId?: string }) {
         const collections = await this._collectionService.load();
         const collection = collections.find(c => c.id === data.collectionId);
         if (!collection) {return;}
 
         switch (data.action) {
+            case 'run':
+                vscode.commands.executeCommand('liteclient.runCollection', { collectionId: data.collectionId, folderId: data.folderId });
+                break;
             case 'delete':
                 vscode.commands.executeCommand('liteclient.deleteCollection', { collection });
                 break;

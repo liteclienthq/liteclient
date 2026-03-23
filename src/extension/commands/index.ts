@@ -10,6 +10,7 @@ import { RequestPanelManager } from '../providers/webviews/requestPanelManager';
 import { CookieManagerProvider } from '../providers/webviews/cookieManagerProvider';
 import { EnvironmentManagerProvider } from '../providers/webviews/environmentManagerProvider';
 import { CollectionManagerProvider } from '../providers/webviews/collectionManagerProvider';
+import { RunnerProvider } from '../providers/webviews/runnerProvider';
 
 import { registerHistoryCommands } from './historyCommands';
 import { registerCollectionCommands } from './collectionCommands';
@@ -32,6 +33,7 @@ export interface CommandDependencies {
     cookieManagerProvider: CookieManagerProvider;
     environmentManagerProvider: EnvironmentManagerProvider;
     collectionManagerProvider: CollectionManagerProvider;
+    runnerProvider: RunnerProvider;
 }
 
 export function registerAllCommands(
@@ -93,6 +95,20 @@ export function registerAllCommands(
                 collectionId = selected?.collectionId;
             }
             await deps.collectionManagerProvider.open({ collectionId });
+        }),
+        vscode.commands.registerCommand('liteclient.runCollection', async (args?: { collectionId?: string; folderId?: string }) => {
+            let collectionId = args?.collectionId;
+            if (!collectionId) {
+                const collections = await deps.collectionService.load();
+                const selected = await vscode.window.showQuickPick(
+                    collections.map(collection => ({ label: collection.name, collectionId: collection.id })),
+                    { placeHolder: 'Select a collection to run' }
+                );
+                collectionId = selected?.collectionId;
+            }
+            if (collectionId) {
+                await deps.runnerProvider.open({ collectionId, folderId: args?.folderId });
+            }
         })
     );
 }
