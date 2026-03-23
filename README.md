@@ -33,6 +33,7 @@ LiteClient is built for developers who want a focused API client inside VS Code:
 - Authentication support for API key, bearer token, basic auth, and OAuth 2.0
 - Response inspection with formatting, headers, cookies, and timing
 - Request history with quick replay
+- Collection runner for sequential execution with variable chaining and real-time results
 - Pre-request and post-response scripts with a Postman-style `pm` API
 - Built-in cookie jar and cookie manager
 - Global and workspace storage scopes

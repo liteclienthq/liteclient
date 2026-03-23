@@ -1,0 +1,136 @@
+---
+title: Collection Runner
+description: Run all requests in a collection or folder sequentially with variable chaining, scripting, and real-time results
+---
+
+The Collection Runner executes all requests in a collection or folder sequentially, running scripts between each request and carrying variables and cookies forward. This is the primary way to automate multi-step API workflows like authentication flows, data seeding, and end-to-end testing.
+
+## Starting a Run
+
+You can start a collection run in multiple ways:
+
+<Steps>
+  <Step title="From the Sidebar Action Menu">
+  In the sidebar, click the action menu (⋯) on a collection and select **Run Collection**, or on a folder and select **Run Folder**. Only the requests within that scope are executed.
+  </Step>
+  <Step title="Use the Command Palette">
+    Open the Command Palette (`Cmd/Ctrl+Shift+P`) and run **LiteClient: Run Collection**. Select the collection you want to run.
+  </Step>
+  <Step title="View Results">
+    The results panel opens automatically and displays real-time progress as each request completes.
+  </Step>
+</Steps>
+
+<Info>
+  Requests are executed in the order they appear in the sidebar. Use drag-and-drop reordering to control execution order.
+</Info>
+
+## Variable Chaining
+
+The primary use case for the Collection Runner is **variable chaining** — setting variables in one request's scripts and using them in subsequent requests. Variables set via `pm.environment.set()` or `pm.globals.set()` in a script persist for the remainder of the run.
+
+<Tabs>
+  <Tab title="Request 1 — Login">
+    **POST** `{{baseUrl}}/auth/login`
+
+    Post-response script extracts the token from the response and saves it as an environment variable:
+
+    ```javascript
+    pm.test('Login successful', function() {
+      pm.response.to.have.status(200);
+
+      const jsonData = pm.response.json();
+      pm.environment.set('token', jsonData.token);
+
+      console.log('Token saved for subsequent requests');
+    });
+    ```
+  </Tab>
+  <Tab title="Request 2 — Get User Profile">
+    **GET** `{{baseUrl}}/users/me`
+
+    Uses the token set by Request 1 in its Authorization header:
+
+    ```
+    Authorization: Bearer {{token}}
+    ```
+
+    The runner automatically resolves `{{token}}` to the value set by the login script.
+  </Tab>
+</Tabs>
+
+<Tip>
+  Order your requests so that authentication and setup requests come first. The runner processes them top-to-bottom, so variables set early are available to all later requests.
+</Tip>
+
+## How Scripts Work with the Runner
+
+Pre-request and post-response scripts run for every request during a collection run, just as they do for individual requests.
+
+- **Pre-request scripts** run before each request is sent — use them to generate timestamps, signatures, or dynamic values
+- **Post-response scripts** run after each response is received — use them to extract data, set variables, and write assertions
+- **Variables carry forward** — any variable set in one request's script is available to all subsequent requests in the run
+- **Test results accumulate** — all `pm.test()` assertions across the run are collected and displayed in the results panel
+
+<Note>
+  Scripts run in the same sandboxed environment as individual requests. The same 2-second timeout and 100KB size limit apply per script. See [Scripting](/features/scripting) for the full pm API reference.
+</Note>
+
+## Cookie Persistence
+
+Cookies set during a collection run carry forward between requests automatically. If a server sets a cookie on the first request (e.g., a session cookie), subsequent requests to the same domain include that cookie — just like a browser would.
+
+This is especially useful for workflows that depend on session-based authentication or CSRF tokens.
+
+## Results Panel
+
+The results panel provides real-time feedback as the runner executes each request.
+
+### What You'll See
+
+- **Progress bar** — tracks how many requests have completed out of the total
+- **Results table** — each request is listed with its pass/fail status based on script assertions
+- **Expandable rows** — click a row to view the full response body, headers, test results, and console logs for that request
+
+<Tabs>
+  <Tab title="Passed">
+    Requests where all `pm.test()` assertions pass are marked with a green checkmark. Requests without any tests are also marked as passed.
+  </Tab>
+  <Tab title="Failed">
+    Requests where one or more `pm.test()` assertions fail are marked with a red indicator. Expand the row to see which assertions failed and why.
+  </Tab>
+</Tabs>
+
+<Tip>
+  Use `console.log()` in your scripts to trace variable values and debug issues. All console output is captured and visible in the expandable row for each request.
+</Tip>
+
+## History
+
+Each request executed by the Collection Runner is saved to your [request history](/features/history). This means you can:
+
+- Review the exact request and response for any step in the run
+- Re-send individual requests from the run
+- Compare responses across different runs
+
+<Info>
+  History entries from a collection run are identical to manually executed requests — they include the full request configuration, response body, headers, and timing.
+</Info>
+
+## Best Practices
+
+<Accordion title="Order requests intentionally">
+  Place setup requests (login, create resources) at the top of your collection. The runner executes top-to-bottom, so dependencies should come first.
+</Accordion>
+
+<Accordion title="Use assertions to catch failures early">
+  Add `pm.test()` assertions to validate each step. If a login request fails, the test result makes it immediately clear where the run broke down.
+</Accordion>
+
+<Accordion title="Combine with environments">
+  Use environment variables like `{{baseUrl}}` so the same collection run works against local, staging, and production servers by switching environments.
+</Accordion>
+
+<Accordion title="Keep scripts idempotent">
+  Design your scripts so they produce the same result regardless of prior state. This makes runs repeatable and easier to debug.
+</Accordion>
