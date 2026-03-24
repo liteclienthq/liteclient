@@ -1,5 +1,6 @@
 import * as vm from 'vm';
 import { ScriptTestResult, ScriptConsoleEntry, ScriptResult } from '../../shared/models';
+import { HttpRequestService, ResponseData } from './httpRequestService';
 
 interface ScriptRequest {
     method: string;
@@ -23,21 +24,22 @@ interface ScriptContext {
     globalVariables: Record<string, string>;
 }
 
-const SCRIPT_TIMEOUT_MS = 2000;
+const SCRIPT_TIMEOUT_MS = 10_000;
 const MAX_CONSOLE_ENTRIES = 200;
 const MAX_TEST_RESULTS = 200;
 const MAX_SCRIPT_SIZE = 100_000;
+const MAX_SEND_REQUESTS = 5;
 
 export class ScriptRunner {
-    runPreRequestScript(script: string, context: ScriptContext): ScriptResult {
+    async runPreRequestScript(script: string, context: ScriptContext): Promise<ScriptResult> {
         return this.executeScript(script, context, 'pre-request');
     }
 
-    runPostResponseScript(script: string, context: ScriptContext): ScriptResult {
+    async runPostResponseScript(script: string, context: ScriptContext): Promise<ScriptResult> {
         return this.executeScript(script, context, 'post-response');
     }
 
-    private executeScript(script: string, context: ScriptContext, phase: string): ScriptResult {
+    private async executeScript(script: string, context: ScriptContext, phase: string): Promise<ScriptResult> {
         if (script.length > MAX_SCRIPT_SIZE) {
             return {
                 testResults: [],
@@ -68,6 +70,10 @@ export class ScriptRunner {
         const envVars = { ...context.environmentVariables };
         const collectionVars = { ...context.collectionVariables };
         const globalVars = { ...context.globalVariables };
+
+        // Track pending pm.sendRequest promises for async resolution
+        const pendingRequests: Promise<void>[] = [];
+        let sendRequestCount = 0;
 
         const pm: any = {
             environment: {
@@ -134,6 +140,74 @@ export class ScriptRunner {
                 info: makeConsoleMethod('info'),
                 warn: makeConsoleMethod('warn'),
                 error: makeConsoleMethod('error')
+            },
+            sendRequest: (urlOrRequest: string | Record<string, any>, callback?: (err: any, response: any) => void) => {
+                if (sendRequestCount >= MAX_SEND_REQUESTS) {
+                    const err = new Error(`pm.sendRequest limit reached (max ${MAX_SEND_REQUESTS} per script)`);
+                    if (callback) {
+                        callback(err, null);
+                        return;
+                    }
+                    throw err;
+                }
+                sendRequestCount++;
+
+                let method = 'GET';
+                let url: string;
+                let headers: Record<string, string> = {};
+                let body: string | undefined;
+
+                if (typeof urlOrRequest === 'string') {
+                    url = urlOrRequest;
+                } else {
+                    url = urlOrRequest.url;
+                    method = (urlOrRequest.method || 'GET').toUpperCase();
+                    headers = urlOrRequest.header || urlOrRequest.headers || {};
+                    if (urlOrRequest.body) {
+                        if (typeof urlOrRequest.body === 'string') {
+                            body = urlOrRequest.body;
+                        } else if (urlOrRequest.body.raw) {
+                            body = urlOrRequest.body.raw;
+                        } else {
+                            try { body = JSON.stringify(urlOrRequest.body); }
+                            catch { body = String(urlOrRequest.body); }
+                        }
+                    }
+                }
+
+                const requestPromise = HttpRequestService.sendRequest(
+                    {
+                        method,
+                        url,
+                        headers,
+                        body: body ? { mode: 'raw', rawType: 'text', value: body } : { mode: 'none' },
+                    },
+                    {},
+                    { timeout: SCRIPT_TIMEOUT_MS }
+                ).then((responseData: ResponseData) => {
+                    const statusCode = parseInt(responseData.status, 10) || 0;
+                    const scriptResponse = {
+                        code: statusCode,
+                        status: responseData.status,
+                        headers: responseData.headers,
+                        body: responseData.body,
+                        text: () => responseData.body,
+                        json: () => {
+                            try { return JSON.parse(responseData.body); }
+                            catch (e) { throw new Error(`Response is not valid JSON: ${(e as Error).message}`); }
+                        }
+                    };
+
+                    if (callback) {
+                        callback(responseData.isError ? new Error(responseData.body) : null, scriptResponse);
+                    }
+                }).catch((err: Error) => {
+                    if (callback) {
+                        callback(err, null);
+                    }
+                });
+
+                pendingRequests.push(requestPromise);
             }
         };
 
@@ -165,18 +239,36 @@ export class ScriptRunner {
             decodeURI,
             atob: (s: string) => Buffer.from(s, 'base64').toString(),
             btoa: (s: string) => Buffer.from(s).toString('base64'),
+            setTimeout: (fn: (...args: any[]) => void, ms: number) => {
+                const p = new Promise<void>(resolve => {
+                    const timer = globalThis.setTimeout(() => { fn(); resolve(); }, ms);
+                    // Cap at script timeout to prevent runaway timers
+                    globalThis.setTimeout(() => { globalThis.clearTimeout(timer); resolve(); }, SCRIPT_TIMEOUT_MS);
+                });
+                pendingRequests.push(p);
+                return 0;
+            },
         };
 
         try {
             const vmContext = vm.createContext(sandbox);
-            vm.runInContext(script, vmContext, {
+
+            // Wrap script in an async IIFE so pm.sendRequest callbacks resolve before we collect results
+            const wrappedScript = `(async () => { ${script} })()`;
+            const scriptPromise = vm.runInContext(wrappedScript, vmContext, {
                 timeout: SCRIPT_TIMEOUT_MS,
                 filename: `${phase}-script.js`
             });
+
+            // Await the async IIFE and all pending pm.sendRequest promises
+            await scriptPromise;
+            if (pendingRequests.length > 0) {
+                await Promise.all(pendingRequests);
+            }
         } catch (err) {
             let errorMsg: string;
             if (err instanceof Error && err.message.includes('Script execution timed out')) {
-                errorMsg = `${phase === 'pre-request' ? 'Pre-request' : 'Tests'}: Script timed out after ${SCRIPT_TIMEOUT_MS}ms`;
+                errorMsg = `${phase === 'pre-request' ? 'Pre-request' : 'Tests'}: Script timed out after ${SCRIPT_TIMEOUT_MS / 1000}s`;
             } else if (err instanceof Error) {
                 errorMsg = `${phase === 'pre-request' ? 'Pre-request' : 'Tests'}: ${err.message}`;
                 if (err.stack) {

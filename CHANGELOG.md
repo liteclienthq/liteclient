@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2026-03-25
+
+### Added
+- **`pm.sendRequest()` in Scripts**: Make HTTP requests from pre-request and post-response scripts using the Postman-compatible `pm.sendRequest(url, callback)` API. Supports string URLs or request objects with `url`, `method`, `header`, and `body` fields. Enables token chaining, dynamic lookups, and multi-step API workflows directly in scripts.
+- **Async Script Execution**: Scripts now run in an async sandbox, supporting `pm.sendRequest()` callbacks and `setTimeout`. Existing synchronous scripts continue to work without changes.
+
+### Changed
+- **Script Timeout**: Increased from 2 seconds to 10 seconds to accommodate `pm.sendRequest()` network round-trips.
+- **`pm.sendRequest()` Safety Limits**: Maximum 5 `pm.sendRequest()` calls per script execution to prevent runaway scripts.
+
 ## [0.18.0] - 2026-03-23
 
 ### Added

@@ -111,8 +111,8 @@ export class LcScriptsPanel extends LcBaseElement {
 
       <div class="hint">
         ${isPreRequest
-          ? 'Runs before the request. Use pm.environment.set() / pm.globals.set() to set variables. Synchronous scripts only.'
-          : 'Runs after the response. Use pm.test() and pm.expect() to write assertions. Synchronous scripts only.'}
+          ? 'Runs before the request. Use pm.environment.set() / pm.globals.set() to set variables, pm.sendRequest() to make HTTP calls.'
+          : 'Runs after the response. Use pm.test() and pm.expect() to write assertions, pm.sendRequest() to make HTTP calls.'}
       </div>
     `;
   }

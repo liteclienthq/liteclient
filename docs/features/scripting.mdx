@@ -206,6 +206,35 @@ pm.expect(jsonData.roles).to.include('admin');
 pm.expect(jsonData.active).to.be.true;
 ```
 
+### pm.sendRequest()
+
+Make HTTP requests from within scripts. This enables token fetching, dynamic lookups, and multi-step API workflows:
+
+```javascript
+// Simple GET request
+pm.sendRequest('https://api.example.com/health', function (err, res) {
+    console.log('Health check status:', res.code);
+});
+
+// POST request with headers and body
+pm.sendRequest({
+    url: 'https://api.example.com/auth/token',
+    method: 'POST',
+    header: { 'Content-Type': 'application/json' },
+    body: { raw: JSON.stringify({ client_id: pm.environment.get('clientId'), grant_type: 'client_credentials' }) }
+}, function (err, res) {
+    if (!err) {
+        const token = res.json().access_token;
+        pm.environment.set('authToken', token);
+        console.log('Token acquired');
+    }
+});
+```
+
+<Info>
+  `pm.sendRequest()` is limited to 5 calls per script execution and shares the 10-second script timeout. The callback receives `(error, response)` where `response` has `.code`, `.status`, `.headers`, `.json()`, and `.text()` methods.
+</Info>
+
 ## Console Logging
 
 Use standard console methods for debugging:
@@ -327,7 +356,7 @@ console.log('User data:', user);
   ```
 </Accordion>
 
-<Accordion title="Chain requests">
+<Accordion title="Chain requests with variables">
   ```javascript
   pm.test('User created successfully', function() {
     pm.response.to.have.status(201);
@@ -343,19 +372,38 @@ console.log('User data:', user);
   ```
 </Accordion>
 
+<Accordion title="Chain requests with pm.sendRequest">
+  ```javascript
+  // Fetch a token, then verify the user with a follow-up call
+  const userId = pm.response.json().id;
+
+  pm.sendRequest({
+    url: 'https://api.example.com/users/' + userId,
+    method: 'GET',
+    header: { 'Authorization': 'Bearer ' + pm.environment.get('authToken') }
+  }, function (err, res) {
+    pm.test('Follow-up GET returns the created user', function () {
+      pm.expect(res.code).to.equal(200);
+      pm.expect(res.json().id).to.equal(userId);
+    });
+  });
+  ```
+</Accordion>
+
 ## Script Execution
 
 ### Sandboxed Environment
 
 Scripts run in a Node.js VM sandbox with the following constraints:
 
-- **2-second timeout** - Scripts that exceed 2 seconds are automatically terminated
+- **10-second timeout** - Scripts that exceed 10 seconds are automatically terminated
 - **100KB size limit** - Scripts larger than 100KB are rejected
 - **200 console entries** - Console output is capped at 200 entries
 - **200 test results** - Test results are capped at 200 tests
+- **5 `pm.sendRequest()` calls** - HTTP requests from scripts are capped at 5 per execution
 
 <Warning>
-  Scripts have no access to the file system, network (except via the current request), or VS Code APIs. They run in an isolated environment for security.
+  Scripts have no access to the file system or VS Code APIs. Network access is available only via `pm.sendRequest()`. They run in an isolated environment for security.
 </Warning>
 
 ### Error Handling

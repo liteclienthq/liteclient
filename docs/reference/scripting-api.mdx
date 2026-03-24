@@ -13,7 +13,7 @@ Scripts enable advanced automation and testing workflows:
 - **Post-response scripts**: Run after receiving a response (validate data, extract values, run tests)
 
 <Note>
-  Scripts run in a sandboxed Node.js `vm` environment with a 2-second timeout and 100KB size limit.
+  Scripts run in a sandboxed Node.js `vm` environment with a 10-second timeout and 100KB size limit.
 </Note>
 
 ## The pm Object
@@ -323,6 +323,54 @@ ChaiJS-style assertions for testing.
   </Tabs>
 </ParamField>
 
+### pm.sendRequest()
+
+Make HTTP requests from within scripts.
+
+<ParamField path="pm.sendRequest" type="function">
+  Send an HTTP request from a script. Accepts a URL string or a request options object.
+  
+  **Signatures**:
+  - `pm.sendRequest(url: string, callback?: (err, response) => void): void`
+  - `pm.sendRequest(request: object, callback?: (err, response) => void): void`
+  
+  **Request object properties**:
+  - `url` (string, required) — The request URL
+  - `method` (string, optional) — HTTP method, defaults to `GET`
+  - `header` or `headers` (object, optional) — Request headers
+  - `body` (string or `{ raw: string }`, optional) — Request body
+  
+  **Callback response object**:
+  - `code` (number) — HTTP status code
+  - `status` (string) — Status text (e.g. `"200 OK"`)
+  - `headers` (object) — Response headers
+  - `json()` — Parse response body as JSON
+  - `text()` — Get response body as string
+  
+  ```javascript
+  // Simple GET
+  pm.sendRequest('https://api.example.com/health', function (err, res) {
+      console.log('Status:', res.code);
+  });
+  
+  // POST with body
+  pm.sendRequest({
+      url: 'https://api.example.com/auth/token',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json' },
+      body: { raw: JSON.stringify({ grant_type: 'client_credentials' }) }
+  }, function (err, res) {
+      if (!err) {
+          pm.environment.set('token', res.json().access_token);
+      }
+  });
+  ```
+  
+  <Note>
+    Limited to 5 calls per script execution. Shares the 10-second script timeout. If the callback is omitted, errors are silently ignored.
+  </Note>
+</ParamField>
+
 ### console
 
 Log messages and debugging output.
@@ -391,8 +439,19 @@ Log messages and debugging output.
     
     if (!expiresAt || now >= parseInt(expiresAt)) {
       console.log('Token expired, refreshing...');
-      // Set flag to trigger token refresh flow
-      pm.globals.set('NEEDS_REFRESH', 'true');
+      pm.sendRequest({
+        url: pm.environment.get('TOKEN_URL'),
+        method: 'POST',
+        header: { 'Content-Type': 'application/json' },
+        body: { raw: JSON.stringify({ grant_type: 'client_credentials', client_id: pm.environment.get('CLIENT_ID') }) }
+      }, function (err, res) {
+        if (!err) {
+          const data = res.json();
+          pm.environment.set('AUTH_TOKEN', data.access_token);
+          pm.globals.set('TOKEN_EXPIRES_AT', (now + data.expires_in * 1000).toString());
+          console.log('Token refreshed');
+        }
+      });
     }
     ```
   </Tab>
@@ -500,13 +559,13 @@ Log messages and debugging output.
 
 Scripts run in a sandboxed environment with the following limits:
 
-- **Timeout**: 2 seconds maximum execution time
+- **Timeout**: 10 seconds maximum execution time
 - **Size**: 100KB maximum script size
 - **Console output**: 200 entries maximum
 - **Test results**: 200 tests maximum
+- **`pm.sendRequest()` calls**: 5 per script execution
 - **No external modules**: Cannot use `require()` or `import`
 - **No file system access**: Cannot read/write files
-- **No network access**: Cannot make HTTP requests (except via `pm.sendRequest()` - coming soon)
 
 <Note>
   Scripts that exceed the timeout or size limit will be terminated and an error will be displayed in the Tests tab.

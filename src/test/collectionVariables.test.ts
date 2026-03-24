@@ -37,9 +37,9 @@ suite('Collection Variables Test Suite', () => {
         assert.ok(!('disabledVar' in resolved));
     });
 
-    test('script runner exposes pm.collectionVariables and pm.variables precedence', () => {
+    test('script runner exposes pm.collectionVariables and pm.variables precedence', async () => {
         const runner = new ScriptRunner();
-        const result = runner.runPreRequestScript(
+        const result = await runner.runPreRequestScript(
             `
             pm.test('collection variable available', function () {
                 pm.expect(pm.collectionVariables.get('collectionOnly')).to.equal('collection');

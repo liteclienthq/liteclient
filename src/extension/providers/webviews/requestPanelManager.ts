@@ -257,7 +257,7 @@ export class RequestPanelManager {
 
         // Run pre-request script
         if (message.preRequestScript) {
-            const preResult = this.scriptRunner.runPreRequestScript(message.preRequestScript, {
+            const preResult = await this.scriptRunner.runPreRequestScript(message.preRequestScript, {
                 request: {
                     method: message.method,
                     url: message.url,
@@ -362,7 +362,7 @@ export class RequestPanelManager {
         if (message.postResponseScript) {
             const statusCode = parseInt(response.status, 10) || 0;
 
-            const postResult = this.scriptRunner.runPostResponseScript(message.postResponseScript, {
+            const postResult = await this.scriptRunner.runPostResponseScript(message.postResponseScript, {
                 request: {
                     method: message.method,
                     url: message.url,

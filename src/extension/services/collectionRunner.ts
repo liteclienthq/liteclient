@@ -247,7 +247,7 @@ export class CollectionRunner {
 
         // Run pre-request script
         if (request.preRequestScript) {
-            const preResult = this.scriptRunner.runPreRequestScript(request.preRequestScript, {
+            const preResult = await this.scriptRunner.runPreRequestScript(request.preRequestScript, {
                 request: {
                     method: request.method,
                     url: request.url,
@@ -317,7 +317,7 @@ export class CollectionRunner {
         if (request.postResponseScript) {
             const statusCode = parseInt(response.status, 10) || 0;
 
-            const postResult = this.scriptRunner.runPostResponseScript(request.postResponseScript, {
+            const postResult = await this.scriptRunner.runPostResponseScript(request.postResponseScript, {
                 request: {
                     method: request.method,
                     url: request.url,
