@@ -47,24 +47,16 @@ export class CollectionManagerProvider {
                     await this.sendState(collectionId, panel);
                     break;
                 case 'collectionmgr-rename-collection': {
-                    const target = await this.collectionService.getCollectionById(message.id);
-                    if (target) {
-                        target.name = message.name;
-                        await this.collectionService.updateCollection(target);
-                        panel.title = `${message.name} Variables`;
-                        await this.onCollectionsChanged(message.id);
-                        await this.sendState(collectionId, panel);
-                    }
+                    await this.collectionService.renameCollection(message.id, message.name);
+                    panel.title = `${message.name} Variables`;
+                    await this.onCollectionsChanged(message.id);
+                    await this.sendState(collectionId, panel);
                     break;
                 }
                 case 'collectionmgr-update-variables': {
-                    const target = await this.collectionService.getCollectionById(message.collectionId);
-                    if (target) {
-                        target.variables = message.variables;
-                        await this.collectionService.updateCollection(target);
-                        await this.onCollectionsChanged(message.collectionId);
-                        await this.sendState(collectionId, panel);
-                    }
+                    await this.collectionService.updateCollectionVariables(message.collectionId, message.variables);
+                    await this.onCollectionsChanged(message.collectionId);
+                    await this.sendState(collectionId, panel);
                     break;
                 }
             }

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.1] - 2026-04-01
+
+### Fixed
+- **Data Integrity: Atomic Read-Modify-Write**: All service-layer mutations (collections, environments, history) now serialize the entire read → mutate → write cycle per file, preventing concurrent operations from silently overwriting each other's changes. Previously, rapid actions (e.g., sending a request while a collection runner is recording history, or script variable persistence racing with a sidebar edit) could cause one change to be silently lost.
+- **StorageService `updateJson()` API**: New `updateJson()` method ensures the read and write happen inside a single file-scoped lock, eliminating stale-snapshot overwrites.
+- **Narrower Service Mutations**: `EnvironmentService.applyVariableUpdates()` and `CollectionService.applyVariableUpdates()` replace the previous pattern where callers read a full object, mutated it externally, and wrote it back — the most common source of race conditions.
+
+### Added
+- **Concurrency Tests**: Three focused tests verify that concurrent history adds, concurrent environment variable updates, and concurrent collection mutations all preserve every change.
+
 ## [0.19.0] - 2026-03-25
 
 ### Added

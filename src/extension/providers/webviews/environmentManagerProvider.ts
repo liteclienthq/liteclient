@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { EnvironmentService } from '../../services/environmentService';
 import { SettingsService } from '../../services/settingsService';
 import { CurrentValuesService } from '../../services/currentValuesService';
-import { generateId } from '../../utils/idUtils';
 
 export class EnvironmentManagerProvider {
     private panels = new Map<string, vscode.WebviewPanel>();
@@ -52,15 +51,10 @@ export class EnvironmentManagerProvider {
                     await this.sendState(environmentId, panel);
                     break;
                 case 'envmgr-rename-environment': {
-                    const envs = await this.environmentService.load();
-                    const target = envs.find(e => e.id === message.id);
-                    if (target) {
-                        target.name = message.name;
-                        await this.environmentService.updateEnvironment(target);
-                        panel.title = message.name;
-                        await this.onEnvironmentsChanged();
-                        await this.sendState(environmentId, panel);
-                    }
+                    await this.environmentService.renameEnvironment(message.id, message.name);
+                    panel.title = message.name;
+                    await this.onEnvironmentsChanged();
+                    await this.sendState(environmentId, panel);
                     break;
                 }
                 case 'envmgr-delete-environment': {
@@ -75,34 +69,23 @@ export class EnvironmentManagerProvider {
                     break;
                 }
                 case 'envmgr-duplicate-environment': {
-                    const envs = await this.environmentService.load();
-                    const source = envs.find(e => e.id === message.id);
-                    if (source) {
-                        const copyName = `${source.name} (Copy)`;
-                        await this.environmentService.addEnvironment(copyName);
-                        const updatedEnvs = await this.environmentService.load();
-                        const newEnv = updatedEnvs.find(e => e.name === copyName);
-                        if (newEnv) {
-                            newEnv.variables = source.variables.map(v => ({
-                                ...v,
-                                id: generateId()
-                            }));
-                            await this.environmentService.updateEnvironment(newEnv);
-                            await this.onEnvironmentsChanged();
-                            await this.open({ environmentId: newEnv.id });
-                        }
+                    const source = await this.environmentService.getEnvironmentById(message.id);
+                    if (!source) {
+                        break;
+                    }
+
+                    const copyName = `${source.name} (Copy)`;
+                    const newEnv = await this.environmentService.duplicateEnvironment(message.id, copyName);
+                    if (newEnv) {
+                        await this.onEnvironmentsChanged();
+                        await this.open({ environmentId: newEnv.id });
                     }
                     break;
                 }
                 case 'envmgr-update-variables': {
-                    const envs = await this.environmentService.load();
-                    const target = envs.find(e => e.id === message.envId);
-                    if (target) {
-                        target.variables = message.variables;
-                        await this.environmentService.updateEnvironment(target);
-                        await this.onEnvironmentsChanged();
-                        await this.sendState(environmentId, panel);
-                    }
+                    await this.environmentService.setVariables(message.envId, message.variables);
+                    await this.onEnvironmentsChanged();
+                    await this.sendState(environmentId, panel);
                     break;
                 }
                 case 'envmgr-set-current-value':

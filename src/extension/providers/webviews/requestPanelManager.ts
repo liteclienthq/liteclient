@@ -10,7 +10,7 @@ import { CurrentValuesService } from '../../services/currentValuesService';
 import { OAuth2TokenService } from '../../services/oauth2TokenService';
 import { ScriptRunner } from '../../services/scriptRunner';
 import type { RequestPanelToExtensionMessage, RequestExecutionSource, Environment } from '../../../shared/messages';
-import type { ScriptResult, ScriptTestResult, ScriptConsoleEntry, EnvironmentVariable } from '../../../shared/models';
+import type { ScriptTestResult, ScriptConsoleEntry } from '../../../shared/models';
 import { generateId } from '../../utils/idUtils';
 import { resolveVariables } from '../../utils/variableResolver';
 
@@ -554,101 +554,44 @@ export class RequestPanelManager {
         }
 
         if (hasGlobalUpdates) {
-            await this._applyVariableUpdates('globals', globalUpdates);
+            await this._applyScriptVariableUpdates('globals', globalUpdates);
         }
 
         if (hasEnvUpdates && selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
-            await this._applyVariableUpdates(selectedEnvironmentId, envUpdates);
+            await this._applyScriptVariableUpdates(selectedEnvironmentId, envUpdates);
         }
 
         if (hasCollectionUpdates && collectionId) {
-            await this._applyCollectionVariableUpdates(collectionId, collectionUpdates);
+            await this.collectionService.applyVariableUpdates(collectionId, collectionUpdates);
+            this.refreshCollections();
             await this.broadcastCollectionState(collectionId);
         }
 
         await this.broadcastEnvironments();
     }
 
-    private async _applyVariableUpdates(envId: string, updates: Record<string, string | null>): Promise<void> {
-        const env = await this.environmentService.getEnvironmentById(envId);
-        if (!env) {
-            return;
+    /**
+     * Atomically persist script variable updates to an environment.
+     * Uses the service's atomic applyVariableUpdates, then syncs currentValues.
+     */
+    private async _applyScriptVariableUpdates(envId: string, updates: Record<string, string | null>): Promise<void> {
+        const removedVarIds = await this.environmentService.applyVariableUpdates(envId, updates);
+        for (const varId of removedVarIds) {
+            await this.currentValuesService.clearCurrentValue(envId, varId);
         }
 
-        let modified = false;
-        for (const [name, value] of Object.entries(updates)) {
-            if (value === null) {
-                const idx = env.variables.findIndex(v => v.name === name);
-                if (idx !== -1) {
-                    const removedVar = env.variables[idx];
-                    env.variables.splice(idx, 1);
-                    await this.currentValuesService.clearCurrentValue(envId, removedVar.id);
-                    modified = true;
-                }
-            } else {
-                const existing = env.variables.find(v => v.name === name);
-                if (existing) {
-                    await this.currentValuesService.setCurrentValue(envId, existing.id, value);
-                    modified = true;
-                } else {
-                    const newVar: EnvironmentVariable = {
-                        id: generateId(),
-                        name,
-                        initialValue: value,
-                        type: 'default',
-                        enabled: true,
-                    };
-                    env.variables.push(newVar);
-                    modified = true;
+        // Set current values for variables that were set (not unset)
+        const setUpdates = Object.entries(updates).filter(([, v]) => v !== null);
+        if (setUpdates.length > 0) {
+            const env = await this.environmentService.getEnvironmentById(envId);
+            if (env) {
+                for (const [name, value] of setUpdates) {
+                    const v = env.variables.find(v => v.name === name);
+                    if (v) {
+                        await this.currentValuesService.setCurrentValue(envId, v.id, value!);
+                    }
                 }
             }
-        }
-
-        if (modified) {
-            await this.environmentService.updateEnvironment(env);
-        }
-    }
-
-    private async _applyCollectionVariableUpdates(collectionId: string, updates: Record<string, string | null>): Promise<void> {
-        const collection = await this.collectionService.getCollectionById(collectionId);
-        if (!collection) {
-            return;
-        }
-
-        const variables = [...(collection.variables || [])];
-        let modified = false;
-
-        for (const [name, value] of Object.entries(updates)) {
-            if (value === null) {
-                const idx = variables.findIndex(v => v.name === name);
-                if (idx !== -1) {
-                    variables.splice(idx, 1);
-                    modified = true;
-                }
-            } else {
-                const existing = variables.find(v => v.name === name);
-                if (existing) {
-                    existing.initialValue = value;
-                    modified = true;
-                } else {
-                    variables.push({
-                        id: generateId(),
-                        name,
-                        initialValue: value,
-                        type: 'default',
-                        enabled: true,
-                    });
-                    modified = true;
-                }
-            }
-        }
-
-        if (modified) {
-            await this.collectionService.updateCollection({
-                ...collection,
-                variables
-            });
-            this.refreshCollections();
         }
     }
 

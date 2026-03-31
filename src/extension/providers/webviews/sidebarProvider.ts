@@ -7,7 +7,6 @@ import { SettingsService } from '../../services/settingsService';
 import { CurrentValuesService } from '../../services/currentValuesService';
 import type { SidebarToExtensionMessage } from '../../../shared/messages';
 import type { EnvironmentVariable } from '../../../shared/models';
-import { generateId } from '../../utils/idUtils';
 
 type MessageHandler = (data: any) => void | Promise<void> | Thenable<unknown>;
 
@@ -199,13 +198,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
                 }
                 break;
             case 'update-vars': {
-                const allEnvs = await this._environmentService.load();
-                const targetEnv = allEnvs.find(e => e.id === data.id);
-                if (targetEnv && data.variables) {
-                    await this._environmentService.updateEnvironment({
-                        ...targetEnv,
-                        variables: data.variables
-                    });
+                if (data.id && data.variables) {
+                    await this._environmentService.setVariables(data.id, data.variables);
                     this.refreshEnvironments();
                 }
                 break;
@@ -214,28 +208,31 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     }
 
     private async _handleEnvVariableAction(data: { action: string; envId: string; varName?: string; newValue?: string }) {
-        const envs = await this._environmentService.load();
-        const env = envs.find(e => e.id === data.envId);
-        if (!env) {return;}
-
         switch (data.action) {
             case 'add-variable':
                 if (data.varName && data.newValue !== undefined) {
-                    env.variables.push({ id: generateId(), name: data.varName, initialValue: data.newValue, type: 'default', enabled: true });
-                    await this._environmentService.updateEnvironment(env);
+                    await this._environmentService.applyVariableUpdates(data.envId, {
+                        [data.varName]: data.newValue
+                    });
                     this.refreshEnvironments();
                 } else {
+                    const envs = await this._environmentService.load();
+                    const env = envs.find(e => e.id === data.envId);
+                    if (!env) { return; }
                     vscode.commands.executeCommand('liteclient.addVariableToEnvironment', { env });
                 }
                 break;
             case 'edit-variable':
                 if (data.varName) {
                     if (data.newValue !== undefined) {
-                        const envVar = env.variables.find(v => v.name === data.varName);
-                        if (envVar) { envVar.initialValue = data.newValue; }
-                        await this._environmentService.updateEnvironment(env);
+                        await this._environmentService.applyVariableUpdates(data.envId, {
+                            [data.varName]: data.newValue
+                        });
                         this.refreshEnvironments();
                     } else {
+                        const envs = await this._environmentService.load();
+                        const env = envs.find(e => e.id === data.envId);
+                        if (!env) { return; }
                         vscode.commands.executeCommand('liteclient.editVariable', {
                             environmentId: data.envId,
                             variableName: data.varName,

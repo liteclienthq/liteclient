@@ -3,8 +3,6 @@ import { EnvironmentService } from '../services/environmentService';
 import { SettingsService } from '../services/settingsService';
 import { SidebarProvider } from '../providers/webviews/sidebarProvider';
 import { RequestPanelManager } from '../providers/webviews/requestPanelManager';
-import { generateId } from '../utils/idUtils';
-import type { EnvironmentVariable } from '../../shared/models';
 
 export interface EnvironmentCommandDeps {
     environmentService: EnvironmentService;
@@ -32,7 +30,7 @@ export function registerEnvironmentCommands(
         vscode.commands.registerCommand('liteclient.renameEnvironment', async (node: any) => {
             const newName = await vscode.window.showInputBox({ prompt: "New name", value: node.env.name });
             if (newName) {
-                await environmentService.updateEnvironment({ ...node.env, name: newName });
+                await environmentService.renameEnvironment(node.env.id, newName);
                 sidebarProvider.refreshEnvironments();
                 requestPanelManager.broadcastEnvironments();
             }
@@ -66,9 +64,7 @@ export function registerEnvironmentCommands(
             if (key) {
                 const value = await vscode.window.showInputBox({ prompt: 'Variable value' });
                 if (value !== undefined) {
-                    const newVar: EnvironmentVariable = { id: generateId(), name: key, initialValue: value, type: 'default', enabled: true };
-                    node.env.variables.push(newVar);
-                    await environmentService.updateEnvironment(node.env);
+                    await environmentService.applyVariableUpdates(node.env.id, { [key]: value });
                     sidebarProvider.refreshEnvironments();
                     requestPanelManager.broadcastEnvironments();
                 }
@@ -85,35 +81,19 @@ export function registerEnvironmentCommands(
                 value: variableValue
             });
             if (newValue !== undefined) {
-                const envs = await environmentService.load();
-                const env = envs.find(e => e.id === environmentId);
-                if (env) {
-                    const envVar = env.variables.find(v => v.name === variableName);
-                    if (envVar) {
-                        envVar.initialValue = newValue;
-                        await environmentService.updateEnvironment(env);
-                        sidebarProvider.refreshEnvironments();
-                        requestPanelManager.broadcastEnvironments();
-                    }
-                }
+                await environmentService.applyVariableUpdates(environmentId, { [variableName]: newValue });
+                sidebarProvider.refreshEnvironments();
+                requestPanelManager.broadcastEnvironments();
             }
         }),
 
         vscode.commands.registerCommand('liteclient.duplicateEnvironment', async (node: any) => {
-            const envs = await environmentService.load();
-            const source = envs.find(e => e.id === node.environmentId);
+            const source = await environmentService.getEnvironmentById(node.environmentId);
             if (!source) { return; }
 
             const copyName = `${source.name} (Copy)`;
-            await environmentService.addEnvironment(copyName);
-            const updatedEnvs = await environmentService.load();
-            const newEnv = updatedEnvs.find(e => e.name === copyName);
+            const newEnv = await environmentService.duplicateEnvironment(node.environmentId, copyName);
             if (newEnv) {
-                newEnv.variables = source.variables.map(v => ({
-                    ...v,
-                    id: generateId()
-                }));
-                await environmentService.updateEnvironment(newEnv);
                 sidebarProvider.refreshEnvironments();
                 requestPanelManager.broadcastEnvironments();
                 vscode.commands.executeCommand('liteclient.openEnvironmentManager', { environmentId: newEnv.id });
@@ -128,14 +108,9 @@ export function registerEnvironmentCommands(
             );
 
             if (confirmation === "Delete") {
-                const envs = await environmentService.load();
-                const env = envs.find(e => e.id === node.environmentId);
-                if (env) {
-                    env.variables = env.variables.filter(v => v.name !== node.variableName);
-                    await environmentService.updateEnvironment(env);
-                    sidebarProvider.refreshEnvironments();
-                    requestPanelManager.broadcastEnvironments();
-                }
+                await environmentService.applyVariableUpdates(node.environmentId, { [node.variableName]: null });
+                sidebarProvider.refreshEnvironments();
+                requestPanelManager.broadcastEnvironments();
             }
         })
     );

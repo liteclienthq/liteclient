@@ -109,21 +109,40 @@ export class StorageService {
   }
 
   async writeJson(fileName: string, data: any): Promise<void> {
+    await this.enqueue(fileName, () => this._writeJsonAtomic(fileName, data));
+  }
+
+  /**
+   * Atomically read-modify-write a JSON file.
+   * The entire read → mutate → write cycle is serialized per file,
+   * preventing stale-read overwrites from concurrent operations.
+   */
+  async updateJson<T>(
+    fileName: string,
+    defaultValue: T,
+    mutator: (current: T) => T | Promise<T>
+  ): Promise<T> {
+    return this.enqueue(fileName, async () => {
+      const current = await this.readJson<T>(fileName, defaultValue);
+      const next = await mutator(current);
+      await this._writeJsonAtomic(fileName, next);
+      return next;
+    });
+  }
+
+  private enqueue<R>(fileName: string, fn: () => Promise<R>): Promise<R> {
     const existingLock = this.writeLocks.get(fileName);
-    if (existingLock) {
-      await existingLock;
-    }
 
-    const writeOperation = this._writeJsonAtomic(fileName, data);
-    this.writeLocks.set(fileName, writeOperation);
+    const operation = (existingLock ? existingLock.then(fn, fn) : fn());
 
-    try {
-      await writeOperation;
-    } finally {
-      if (this.writeLocks.get(fileName) === writeOperation) {
+    const voidOp = operation.then(() => {}, () => {});
+    this.writeLocks.set(fileName, voidOp);
+
+    return operation.finally(() => {
+      if (this.writeLocks.get(fileName) === voidOp) {
         this.writeLocks.delete(fileName);
       }
-    }
+    });
   }
 
   private async _writeJsonAtomic(fileName: string, data: any): Promise<void> {

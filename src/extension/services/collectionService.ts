@@ -83,16 +83,28 @@ export class CollectionService {
     await this.storage.writeJson(CollectionService.COLLECTIONS_FILE, collections);
   }
 
+  private async mutateCollections(
+    mutator: (collections: Collection[]) => void | Promise<void>
+  ): Promise<void> {
+    await this.storage.updateJson<Collection[]>(
+      CollectionService.COLLECTIONS_FILE, [],
+      async (raw) => {
+        const collections = raw as Collection[];
+        await mutator(collections);
+        return collections;
+      }
+    );
+  }
+
   async addCollection(name: string): Promise<void> {
-    const collections = await this.load();
-    const newCollection: Collection = {
-      id: this.generateId(),
-      name,
-      variables: [],
-      items: []
-    };
-    collections.push(newCollection);
-    await this.save(collections);
+    await this.mutateCollections((collections) => {
+      collections.push({
+        id: this.generateId(),
+        name,
+        variables: [],
+        items: []
+      });
+    });
   }
 
   async getCollectionById(collectionId: string): Promise<Collection | undefined> {
@@ -101,154 +113,174 @@ export class CollectionService {
   }
 
   async updateCollection(collection: Collection): Promise<void> {
-    const collections = await this.load();
-    const collectionIndex = collections.findIndex(c => c.id === collection.id);
-
-    if (collectionIndex === -1) {
-      throw new Error(`Collection with id ${collection.id} not found`);
-    }
-
-    collections[collectionIndex] = {
-      ...collection,
-      variables: collection.variables || []
-    };
-    await this.save(collections);
+    await this.mutateCollections((collections) => {
+      const idx = collections.findIndex(c => c.id === collection.id);
+      if (idx === -1) {
+        throw new Error(`Collection with id ${collection.id} not found`);
+      }
+      collections[idx] = {
+        ...collection,
+        variables: collection.variables || []
+      };
+    });
   }
 
   async updateCollectionVariables(collectionId: string, variables: EnvironmentVariable[]): Promise<void> {
-    const collection = await this.getCollectionById(collectionId);
-    if (!collection) {
-      throw new Error(`Collection with id ${collectionId} not found`);
-    }
-
-    collection.variables = variables;
-    await this.updateCollection(collection);
+    await this.mutateCollections((collections) => {
+      const collection = collections.find(c => c.id === collectionId);
+      if (!collection) {
+        throw new Error(`Collection with id ${collectionId} not found`);
+      }
+      collection.variables = variables;
+    });
   }
 
   async addFolder(collectionId: string, name: string, parentId?: string): Promise<void> {
-    const collections = await this.load();
-    const collection = collections.find(c => c.id === collectionId);
-    if (!collection) {
-      throw new Error(`Collection with id ${collectionId} not found`);
-    }
-
-    const newFolder: FolderItem = {
-      id: this.generateId(),
-      name,
-      type: 'folder',
-      items: []
-    };
-
-    if (parentId) {
-      const parent = this.findFolder(collection.items, parentId);
-      if (parent) {
-        parent.items.push(newFolder);
-      } else {
-        throw new Error(`Parent folder with id ${parentId} not found`);
+    await this.mutateCollections((collections) => {
+      const collection = collections.find(c => c.id === collectionId);
+      if (!collection) {
+        throw new Error(`Collection with id ${collectionId} not found`);
       }
-    } else {
-      collection.items.push(newFolder);
-    }
 
-    await this.save(collections);
+      const newFolder: FolderItem = {
+        id: this.generateId(),
+        name,
+        type: 'folder',
+        items: []
+      };
+
+      if (parentId) {
+        const parent = this.findFolder(collection.items, parentId);
+        if (parent) {
+          parent.items.push(newFolder);
+        } else {
+          throw new Error(`Parent folder with id ${parentId} not found`);
+        }
+      } else {
+        collection.items.push(newFolder);
+      }
+    });
   }
 
   async addRequest(collectionId: string, request: Omit<RequestItem, 'type'>, parentId?: string): Promise<void> {
-    const collections = await this.load();
-    const collection = collections.find(c => c.id === collectionId);
-
-    if (!collection) {
-      throw new Error(`Collection with id ${collectionId} not found`);
-    }
-
-    const newRequest: RequestItem = {
-      ...request,
-      type: 'request',
-      id: request.id || this.generateId()
-    };
-
-    if (parentId) {
-      const parent = this.findFolder(collection.items, parentId);
-      if (parent) {
-        parent.items.push(newRequest);
-      } else {
-        throw new Error(`Parent folder with id ${parentId} not found`);
+    await this.mutateCollections((collections) => {
+      const collection = collections.find(c => c.id === collectionId);
+      if (!collection) {
+        throw new Error(`Collection with id ${collectionId} not found`);
       }
-    } else {
-      collection.items.push(newRequest);
-    }
 
-    await this.save(collections);
+      const newRequest: RequestItem = {
+        ...request,
+        type: 'request',
+        id: request.id || this.generateId()
+      };
+
+      if (parentId) {
+        const parent = this.findFolder(collection.items, parentId);
+        if (parent) {
+          parent.items.push(newRequest);
+        } else {
+          throw new Error(`Parent folder with id ${parentId} not found`);
+        }
+      } else {
+        collection.items.push(newRequest);
+      }
+    });
   }
 
   async updateRequest(collectionId: string, request: RequestItem): Promise<void> {
-    const collections = await this.load();
-    const collection = collections.find(c => c.id === collectionId);
-
-    if (!collection) {
-      throw new Error(`Collection with id ${collectionId} not found`);
-    }
-
-    if (this.updateItemInTree(collection.items, request)) {
-      await this.save(collections);
-    } else {
-      throw new Error(`Request with id ${request.id} not found`);
-    }
+    await this.mutateCollections((collections) => {
+      const collection = collections.find(c => c.id === collectionId);
+      if (!collection) {
+        throw new Error(`Collection with id ${collectionId} not found`);
+      }
+      if (!this.updateItemInTree(collection.items, request)) {
+        throw new Error(`Request with id ${request.id} not found`);
+      }
+    });
   }
 
   async deleteItem(collectionId: string, itemId: string): Promise<void> {
-    const collections = await this.load();
-    const collection = collections.find(c => c.id === collectionId);
-
-    if (!collection) {
-      throw new Error(`Collection with id ${collectionId} not found`);
-    }
-
-    if (this.deleteItemFromTree(collection.items, itemId)) {
-      await this.save(collections);
-    } else {
-      throw new Error(`Item with id ${itemId} not found`);
-    }
+    await this.mutateCollections((collections) => {
+      const collection = collections.find(c => c.id === collectionId);
+      if (!collection) {
+        throw new Error(`Collection with id ${collectionId} not found`);
+      }
+      if (!this.deleteItemFromTree(collection.items, itemId)) {
+        throw new Error(`Item with id ${itemId} not found`);
+      }
+    });
   }
 
   async renameCollection(collectionId: string, newName: string): Promise<void> {
-    const collections = await this.load();
-    const collection = collections.find(c => c.id === collectionId);
-
-    if (collection) {
+    await this.mutateCollections((collections) => {
+      const collection = collections.find(c => c.id === collectionId);
+      if (!collection) {
+        throw new Error(`Collection with id ${collectionId} not found`);
+      }
       collection.name = newName;
-      await this.save(collections);
-    } else {
-      throw new Error(`Collection with id ${collectionId} not found`);
-    }
+    });
   }
 
   async renameItem(collectionId: string, itemId: string, newName: string): Promise<void> {
-    const collections = await this.load();
-    const collection = collections.find(c => c.id === collectionId);
-
-    if (!collection) {
-      throw new Error(`Collection with id ${collectionId} not found`);
-    }
-
-    const item = this.findItem(collection.items, itemId);
-    if (item) {
+    await this.mutateCollections((collections) => {
+      const collection = collections.find(c => c.id === collectionId);
+      if (!collection) {
+        throw new Error(`Collection with id ${collectionId} not found`);
+      }
+      const item = this.findItem(collection.items, itemId);
+      if (!item) {
+        throw new Error(`Item with id ${itemId} not found`);
+      }
       item.name = newName;
-      await this.save(collections);
-    } else {
-      throw new Error(`Item with id ${itemId} not found`);
-    }
+    });
   }
 
   async deleteCollection(collectionId: string): Promise<void> {
-    const collections = await this.load();
-    const filteredCollections = collections.filter(c => c.id !== collectionId);
+    await this.mutateCollections((collections) => {
+      const idx = collections.findIndex(c => c.id === collectionId);
+      if (idx === -1) {
+        throw new Error(`Collection with id ${collectionId} not found`);
+      }
+      collections.splice(idx, 1);
+    });
+  }
 
-    if (filteredCollections.length !== collections.length) {
-      await this.save(filteredCollections);
-    } else {
-      throw new Error(`Collection with id ${collectionId} not found`);
-    }
+  /**
+   * Atomically apply variable updates from scripts to a collection.
+   * Handles set (value !== null) and unset (value === null) operations.
+   */
+  async applyVariableUpdates(
+    collectionId: string,
+    updates: Record<string, string | null>
+  ): Promise<void> {
+    await this.mutateCollections((collections) => {
+      const collection = collections.find(c => c.id === collectionId);
+      if (!collection) { return; }
+      if (!collection.variables) { collection.variables = []; }
+
+      for (const [name, value] of Object.entries(updates)) {
+        if (value === null) {
+          const idx = collection.variables.findIndex(v => v.name === name);
+          if (idx !== -1) {
+            collection.variables.splice(idx, 1);
+          }
+        } else {
+          const existing = collection.variables.find(v => v.name === name);
+          if (existing) {
+            existing.initialValue = value;
+          } else {
+            collection.variables.push({
+              id: this.generateId(),
+              name,
+              initialValue: value,
+              type: 'default',
+              enabled: true,
+            });
+          }
+        }
+      }
+    });
   }
 
   // --- Import / Export ---
@@ -276,9 +308,9 @@ export class CollectionService {
       processedCollections = collectionsToImport.map(c => this.sanitizeImportedCollection(c));
     }
 
-    const currentCollections = await this.load();
-    const newCollections = [...currentCollections, ...processedCollections];
-    await this.save(newCollections);
+    await this.mutateCollections((collections) => {
+      collections.push(...processedCollections);
+    });
     return warnings;
   }
 
@@ -418,60 +450,59 @@ export class CollectionService {
     targetParentId: string | undefined,
     insertBeforeId: string | undefined
   ): Promise<void> {
-    const collections = await this.load();
-    const sourceCollection = collections.find(c => c.id === sourceCollectionId);
-    const targetCollection = collections.find(c => c.id === targetCollectionId);
+    await this.mutateCollections((collections) => {
+      const sourceCollection = collections.find(c => c.id === sourceCollectionId);
+      const targetCollection = collections.find(c => c.id === targetCollectionId);
 
-    if (!sourceCollection) {
-      throw new Error(`Source collection with id ${sourceCollectionId} not found`);
-    }
-    if (!targetCollection) {
-      throw new Error(`Target collection with id ${targetCollectionId} not found`);
-    }
-
-    // Find the item in the source collection
-    const item = this.findItem(sourceCollection.items, itemId);
-    if (!item) {
-      throw new Error(`Item with id ${itemId} not found in source collection`);
-    }
-
-    // Prevent moving a folder into itself or its descendants
-    if (item.type === 'folder' && targetParentId) {
-      if (item.id === targetParentId || this.isDescendant(item, targetParentId)) {
-        throw new Error('Cannot move a folder into itself or its descendants');
+      if (!sourceCollection) {
+        throw new Error(`Source collection with id ${sourceCollectionId} not found`);
       }
-    }
-
-    // Remove the item from its current location in the source collection
-    if (!this.deleteItemFromTree(sourceCollection.items, itemId)) {
-      throw new Error(`Failed to remove item ${itemId} from source collection`);
-    }
-
-    // Get the target container in the target collection
-    let targetItems: CollectionItem[];
-    if (targetParentId) {
-      const parent = this.findFolder(targetCollection.items, targetParentId);
-      if (!parent) {
-        throw new Error(`Target parent folder with id ${targetParentId} not found`);
+      if (!targetCollection) {
+        throw new Error(`Target collection with id ${targetCollectionId} not found`);
       }
-      targetItems = parent.items;
-    } else {
-      targetItems = targetCollection.items;
-    }
 
-    // Insert at the correct position
-    if (insertBeforeId) {
-      const insertIndex = targetItems.findIndex(i => i.id === insertBeforeId);
-      if (insertIndex >= 0) {
-        targetItems.splice(insertIndex, 0, item);
+      // Find the item in the source collection
+      const item = this.findItem(sourceCollection.items, itemId);
+      if (!item) {
+        throw new Error(`Item with id ${itemId} not found in source collection`);
+      }
+
+      // Prevent moving a folder into itself or its descendants
+      if (item.type === 'folder' && targetParentId) {
+        if (item.id === targetParentId || this.isDescendant(item, targetParentId)) {
+          throw new Error('Cannot move a folder into itself or its descendants');
+        }
+      }
+
+      // Remove the item from its current location in the source collection
+      if (!this.deleteItemFromTree(sourceCollection.items, itemId)) {
+        throw new Error(`Failed to remove item ${itemId} from source collection`);
+      }
+
+      // Get the target container in the target collection
+      let targetItems: CollectionItem[];
+      if (targetParentId) {
+        const parent = this.findFolder(targetCollection.items, targetParentId);
+        if (!parent) {
+          throw new Error(`Target parent folder with id ${targetParentId} not found`);
+        }
+        targetItems = parent.items;
+      } else {
+        targetItems = targetCollection.items;
+      }
+
+      // Insert at the correct position
+      if (insertBeforeId) {
+        const insertIndex = targetItems.findIndex(i => i.id === insertBeforeId);
+        if (insertIndex >= 0) {
+          targetItems.splice(insertIndex, 0, item);
+        } else {
+          targetItems.push(item);
+        }
       } else {
         targetItems.push(item);
       }
-    } else {
-      targetItems.push(item);
-    }
-
-    await this.save(collections);
+    });
   }
 
   private isDescendant(folder: FolderItem, targetId: string): boolean {

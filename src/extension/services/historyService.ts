@@ -32,22 +32,30 @@ export class HistoryService {
     const needsMigration = this.detectLegacyFormat(rawHistory[0]);
 
     if (needsMigration && !this.migrationDone) {
-      const migrated = rawHistory.map(item => this.migrateLegacyItem(item));
-      await this.storage.writeJson(HistoryService.HISTORY_FILE, migrated);
+      const migrated = await this.storage.updateJson<any[]>(
+        HistoryService.HISTORY_FILE, [],
+        (current) => {
+          if (current.length === 0 || !this.detectLegacyFormat(current[0])) {
+            return current;
+          }
+          return current.map(item => this.migrateLegacyItem(item));
+        }
+      );
       this.migrationDone = true;
-      return migrated;
+      return migrated as RequestExecution[];
     }
 
     return rawHistory as RequestExecution[];
   }
 
   async add(execution: RequestExecution): Promise<void> {
-    const history = await this.load();
-
-    history.unshift(execution);
-
-    const capped = history.slice(0, HistoryService.MAX_HISTORY_ITEMS);
-    await this.storage.writeJson(HistoryService.HISTORY_FILE, capped);
+    await this.storage.updateJson<RequestExecution[]>(
+      HistoryService.HISTORY_FILE, [],
+      (history) => {
+        history.unshift(execution);
+        return history.slice(0, HistoryService.MAX_HISTORY_ITEMS);
+      }
+    );
   }
 
   async clear(): Promise<void> {
@@ -55,9 +63,18 @@ export class HistoryService {
   }
 
   async delete(id: string): Promise<void> {
-    const history = await this.load();
-    const filtered = history.filter(h => h.id !== id);
-    await this.storage.writeJson(HistoryService.HISTORY_FILE, filtered);
+    await this.storage.updateJson<RequestExecution[]>(
+      HistoryService.HISTORY_FILE, [],
+      (history) => history.filter(h => h.id !== id)
+    );
+  }
+
+  async deleteBulk(ids: string[]): Promise<void> {
+    const idSet = new Set(ids);
+    await this.storage.updateJson<RequestExecution[]>(
+      HistoryService.HISTORY_FILE, [],
+      (history) => history.filter(h => !idSet.has(h.id))
+    );
   }
 
   createExecution(
