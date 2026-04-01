@@ -200,253 +200,288 @@ export class RequestPanelManager {
         const abortController = new AbortController();
         this.activeRequests.set(panel, { abortController });
 
-        const messageEnvironmentId = message.environmentId;
-        const globalSelectedEnvironmentId = await this.settingsService.getSelectedEnvironmentId();
-        const selectedEnvironmentId = messageEnvironmentId !== undefined ? messageEnvironmentId : globalSelectedEnvironmentId;
+        try {
+            const messageEnvironmentId = message.environmentId;
+            const globalSelectedEnvironmentId = await this.settingsService.getSelectedEnvironmentId();
+            const selectedEnvironmentId = messageEnvironmentId !== undefined ? messageEnvironmentId : globalSelectedEnvironmentId;
 
-        const globals = await this.environmentService.getEnvironmentById('globals');
-        const collection = ctx.collectionId ? await this.collectionService.getCollectionById(ctx.collectionId) : undefined;
-        let selectedEnvironment;
-        if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
-            selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
-        }
-
-        const envsToMerge = [globals, selectedEnvironment].filter(Boolean) as Environment[];
-        const mergedEnvs = this.currentValuesService.mergeIntoEnvironments(envsToMerge);
-        const mergedGlobals = mergedEnvs.find(e => e.id === 'globals');
-        const mergedSelectedEnv = mergedEnvs.find(e => e.id !== 'globals');
-
-        const environmentVariables = resolveVariables({
-            globals: mergedGlobals,
-            collectionVariables: collection?.variables || [],
-            environment: mergedSelectedEnv,
-        });
-
-        // Build separate variable maps for script context
-        const globalVariables: Record<string, string> = {};
-        if (mergedGlobals) {
-            for (const v of mergedGlobals.variables) {
-                if (v.enabled) {
-                    globalVariables[v.name] = v.currentValue ?? v.initialValue;
-                }
+            const globals = await this.environmentService.getEnvironmentById('globals');
+            const collection = ctx.collectionId ? await this.collectionService.getCollectionById(ctx.collectionId) : undefined;
+            let selectedEnvironment;
+            if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
+                selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
             }
-        }
 
-        const envOnlyVariables: Record<string, string> = {};
-        if (mergedSelectedEnv) {
-            for (const v of mergedSelectedEnv.variables) {
-                if (v.enabled) {
-                    envOnlyVariables[v.name] = v.currentValue ?? v.initialValue;
-                }
-            }
-        }
+            const envsToMerge = [globals, selectedEnvironment].filter(Boolean) as Environment[];
+            const mergedEnvs = this.currentValuesService.mergeIntoEnvironments(envsToMerge);
+            const mergedGlobals = mergedEnvs.find(e => e.id === 'globals');
+            const mergedSelectedEnv = mergedEnvs.find(e => e.id !== 'globals');
 
-        const collectionVariables: Record<string, string> = {};
-        for (const v of collection?.variables || []) {
-            if (v.enabled) {
-                collectionVariables[v.name] = v.initialValue;
-            }
-        }
-
-        const allTestResults: ScriptTestResult[] = [];
-        const allConsoleLogs: ScriptConsoleEntry[] = [];
-        let scriptError: string | undefined;
-        const allEnvUpdates: Record<string, string | null> = {};
-        const allCollectionUpdates: Record<string, string | null> = {};
-        const allGlobalUpdates: Record<string, string | null> = {};
-
-        // Run pre-request script
-        if (message.preRequestScript) {
-            const preResult = await this.scriptRunner.runPreRequestScript(message.preRequestScript, {
-                request: {
-                    method: message.method,
-                    url: message.url,
-                    headers: message.headers || {},
-                    body: message.body,
-                },
-                environmentVariables: envOnlyVariables,
-                collectionVariables,
-                globalVariables,
+            const environmentVariables = resolveVariables({
+                globals: mergedGlobals,
+                collectionVariables: collection?.variables || [],
+                environment: mergedSelectedEnv,
             });
 
-            allTestResults.push(...preResult.testResults);
-            allConsoleLogs.push(...preResult.consoleLogs);
-            if (preResult.error) {
-                scriptError = preResult.error;
-            }
-
-            if (preResult.variableUpdates) {
-                for (const [key, value] of Object.entries(preResult.variableUpdates.environment)) {
-                    allEnvUpdates[key] = value;
-                    if (value !== null) {
-                        envOnlyVariables[key] = value;
-                    } else {
-                        delete envOnlyVariables[key];
-                    }
-                    if (value !== null) {
-                        environmentVariables[key] = value;
-                    } else {
-                        delete environmentVariables[key];
-                    }
-                }
-                for (const [key, value] of Object.entries(preResult.variableUpdates.collection)) {
-                    allCollectionUpdates[key] = value;
-                    if (value !== null) {
-                        collectionVariables[key] = value;
-                    } else {
-                        delete collectionVariables[key];
-                    }
-                    if (value !== null) {
-                        environmentVariables[key] = value;
-                    } else {
-                        delete environmentVariables[key];
-                    }
-                }
-                for (const [key, value] of Object.entries(preResult.variableUpdates.globals)) {
-                    allGlobalUpdates[key] = value;
-                    if (value !== null) {
-                        globalVariables[key] = value;
-                    } else {
-                        delete globalVariables[key];
-                    }
-                    if (value !== null) {
-                        environmentVariables[key] = value;
-                    } else {
-                        delete environmentVariables[key];
+            // Build separate variable maps for script context
+            const globalVariables: Record<string, string> = {};
+            if (mergedGlobals) {
+                for (const v of mergedGlobals.variables) {
+                    if (v.enabled) {
+                        globalVariables[v.name] = v.currentValue ?? v.initialValue;
                     }
                 }
             }
-        }
 
-        // Get cookies from cookie jar for this request
-        const cookieString = await this.cookieJarService.getCookieString(message.url);
+            const envOnlyVariables: Record<string, string> = {};
+            if (mergedSelectedEnv) {
+                for (const v of mergedSelectedEnv.variables) {
+                    if (v.enabled) {
+                        envOnlyVariables[v.name] = v.currentValue ?? v.initialValue;
+                    }
+                }
+            }
 
-        // Resolve OAuth2 token if needed
-        let resolvedOAuth2Token: string | undefined;
-        if (message.auth?.type === 'oauth2' && message.auth.oauth2) {
+            const collectionVariables: Record<string, string> = {};
+            for (const v of collection?.variables || []) {
+                if (v.enabled) {
+                    collectionVariables[v.name] = v.initialValue;
+                }
+            }
+
+            const allTestResults: ScriptTestResult[] = [];
+            const allConsoleLogs: ScriptConsoleEntry[] = [];
+            let scriptError: string | undefined;
+            const allEnvUpdates: Record<string, string | null> = {};
+            const allCollectionUpdates: Record<string, string | null> = {};
+            const allGlobalUpdates: Record<string, string | null> = {};
+
+            // Run pre-request script
+            if (message.preRequestScript) {
+                const preResult = await this.scriptRunner.runPreRequestScript(message.preRequestScript, {
+                    request: {
+                        method: message.method,
+                        url: message.url,
+                        headers: message.headers || {},
+                        body: message.body,
+                    },
+                    environmentVariables: envOnlyVariables,
+                    collectionVariables,
+                    globalVariables,
+                });
+
+                allTestResults.push(...preResult.testResults);
+                allConsoleLogs.push(...preResult.consoleLogs);
+                if (preResult.error) {
+                    scriptError = preResult.error;
+                }
+
+                if (preResult.variableUpdates) {
+                    for (const [key, value] of Object.entries(preResult.variableUpdates.environment)) {
+                        allEnvUpdates[key] = value;
+                        if (value !== null) {
+                            envOnlyVariables[key] = value;
+                        } else {
+                            delete envOnlyVariables[key];
+                        }
+                        if (value !== null) {
+                            environmentVariables[key] = value;
+                        } else {
+                            delete environmentVariables[key];
+                        }
+                    }
+                    for (const [key, value] of Object.entries(preResult.variableUpdates.collection)) {
+                        allCollectionUpdates[key] = value;
+                        if (value !== null) {
+                            collectionVariables[key] = value;
+                        } else {
+                            delete collectionVariables[key];
+                        }
+                        if (value !== null) {
+                            environmentVariables[key] = value;
+                        } else {
+                            delete environmentVariables[key];
+                        }
+                    }
+                    for (const [key, value] of Object.entries(preResult.variableUpdates.globals)) {
+                        allGlobalUpdates[key] = value;
+                        if (value !== null) {
+                            globalVariables[key] = value;
+                        } else {
+                            delete globalVariables[key];
+                        }
+                        if (value !== null) {
+                            environmentVariables[key] = value;
+                        } else {
+                            delete environmentVariables[key];
+                        }
+                    }
+                }
+            }
+
+            // Get cookies from cookie jar for this request
+            const cookieString = await this.cookieJarService.getCookieString(message.url);
+
+            // Resolve OAuth2 token if needed
+            let resolvedOAuth2Token: string | undefined;
+            if (message.auth?.type === 'oauth2' && message.auth.oauth2) {
+                try {
+                    resolvedOAuth2Token = await this.oauth2TokenService.getValidAccessToken(message.auth.oauth2);
+                } catch (error) {
+                    const errorMessage = error instanceof Error ? error.message : 'Failed to get OAuth2 token';
+                    vscode.window.showErrorMessage(`OAuth2: ${errorMessage}. Please click "Get Token" in the Auth panel.`);
+                    panel.webview.postMessage({
+                        type: 'response',
+                        body: '',
+                        status: 'Auth Error',
+                        headers: {},
+                        cookies: [],
+                        time: 0,
+                        isError: true,
+                    });
+                    return;
+                }
+            }
+
+            const response = await HttpRequestService.sendRequest(message, environmentVariables, {
+                signal: abortController.signal,
+                cookieString,
+                resolvedOAuth2Token
+            });
+
+            // Parse and store cookies from Set-Cookie headers
+            const setCookieHeaders = response.setCookieHeaders || [];
+            const parsedCookies = this.cookieJarService.parseSetCookieHeaders(setCookieHeaders);
+            
+            if (setCookieHeaders.length > 0) {
+                await this.cookieJarService.setCookiesFromResponse(message.url, setCookieHeaders);
+            }
+
+            // Run post-response script
+            if (message.postResponseScript) {
+                const statusCode = parseInt(response.status, 10) || 0;
+
+                const postResult = await this.scriptRunner.runPostResponseScript(message.postResponseScript, {
+                    request: {
+                        method: message.method,
+                        url: message.url,
+                        headers: message.headers || {},
+                        body: message.body,
+                    },
+                    response: {
+                        code: statusCode,
+                        status: response.status,
+                        headers: response.headers,
+                        body: response.body,
+                    },
+                    environmentVariables: envOnlyVariables,
+                    collectionVariables,
+                    globalVariables,
+                });
+
+                allTestResults.push(...postResult.testResults);
+                allConsoleLogs.push(...postResult.consoleLogs);
+                if (postResult.error) {
+                    scriptError = scriptError ? `${scriptError}; ${postResult.error}` : postResult.error;
+                }
+
+                if (postResult.variableUpdates) {
+                    for (const [key, value] of Object.entries(postResult.variableUpdates.environment)) {
+                        allEnvUpdates[key] = value;
+                    }
+                    for (const [key, value] of Object.entries(postResult.variableUpdates.collection)) {
+                        allCollectionUpdates[key] = value;
+                    }
+                    for (const [key, value] of Object.entries(postResult.variableUpdates.globals)) {
+                        allGlobalUpdates[key] = value;
+                    }
+                }
+            }
+
+            // Persist variable updates from scripts (non-critical — don't lose the response if this fails)
             try {
-                resolvedOAuth2Token = await this.oauth2TokenService.getValidAccessToken(message.auth.oauth2);
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to get OAuth2 token';
-                vscode.window.showErrorMessage(`OAuth2: ${errorMessage}. Please click "Get Token" in the Auth panel.`);
+                await this._persistScriptVariableUpdates(allEnvUpdates, allCollectionUpdates, allGlobalUpdates, selectedEnvironmentId, ctx.collectionId);
+            } catch (persistError) {
+                console.error('[LiteClient] Failed to persist script variable updates:', persistError);
+            }
+
+            // Record in history (non-critical — don't lose the response if this fails)
+            if (response.errorType !== 'cancelled') {
+                try {
+                    let historyName = message.name;
+                    if (!historyName || historyName === 'New Request') {
+                        try {
+                            const url = new URL(message.url);
+                            historyName = url.hostname + (url.pathname !== '/' ? url.pathname : '');
+                        } catch {
+                            historyName = message.url || 'New Request';
+                        }
+                    }
+
+                    const executionSource = this._buildExecutionSource(ctx);
+
+                    const execution = this.historyService.createExecution(
+                        {
+                            name: historyName,
+                            method: message.method,
+                            url: message.url,
+                            headers: message.headers || {},
+                            body: message.body || { mode: 'none' },
+                            auth: message.auth,
+                            preRequestScript: message.preRequestScript,
+                            postResponseScript: message.postResponseScript,
+                        },
+                        executionSource,
+                        response.status,
+                        response.time
+                    );
+
+                    await this.historyService.add(execution);
+                    this.refreshHistory();
+                } catch (historyError) {
+                    console.error('[LiteClient] Failed to save history entry:', historyError);
+                }
+            }
+
+            panel.webview.postMessage({
+                type: 'response',
+                body: response.body,
+                status: response.status,
+                headers: response.headers,
+                cookies: parsedCookies,
+                time: response.time,
+                isError: response.isError,
+                testResults: allTestResults,
+                consoleLogs: allConsoleLogs,
+                scriptError,
+            });
+        } catch (error) {
+            if (abortController.signal.aborted) {
                 panel.webview.postMessage({
                     type: 'response',
-                    body: '',
-                    status: 'Auth Error',
+                    body: 'Request Cancelled\n\nThe request was cancelled by the user.',
+                    status: 'Cancelled',
                     headers: {},
+                    cookies: [],
                     time: 0,
                     isError: true,
                 });
-                this.activeRequests.delete(panel);
-                return;
+            } else {
+                const errorMessage = error instanceof Error ? error.message : String(error);
+                console.error('[LiteClient] Request failed:', error);
+                panel.webview.postMessage({
+                    type: 'response',
+                    body: `Request Failed\n\nAn unexpected error occurred.\n\nDetails: ${errorMessage}`,
+                    status: 'Error',
+                    headers: {},
+                    cookies: [],
+                    time: 0,
+                    isError: true,
+                });
             }
+        } finally {
+            this.activeRequests.delete(panel);
         }
-
-        const response = await HttpRequestService.sendRequest(message, environmentVariables, {
-            signal: abortController.signal,
-            cookieString,
-            resolvedOAuth2Token
-        });
-
-        this.activeRequests.delete(panel);
-
-        // Parse and store cookies from Set-Cookie headers
-        const setCookieHeaders = response.setCookieHeaders || [];
-        const parsedCookies = this.cookieJarService.parseSetCookieHeaders(setCookieHeaders);
-        
-        if (setCookieHeaders.length > 0) {
-            await this.cookieJarService.setCookiesFromResponse(message.url, setCookieHeaders);
-        }
-
-        // Run post-response script
-        if (message.postResponseScript) {
-            const statusCode = parseInt(response.status, 10) || 0;
-
-            const postResult = await this.scriptRunner.runPostResponseScript(message.postResponseScript, {
-                request: {
-                    method: message.method,
-                    url: message.url,
-                    headers: message.headers || {},
-                    body: message.body,
-                },
-                response: {
-                    code: statusCode,
-                    status: response.status,
-                    headers: response.headers,
-                    body: response.body,
-                },
-                environmentVariables: envOnlyVariables,
-                collectionVariables,
-                globalVariables,
-            });
-
-            allTestResults.push(...postResult.testResults);
-            allConsoleLogs.push(...postResult.consoleLogs);
-            if (postResult.error) {
-                scriptError = scriptError ? `${scriptError}; ${postResult.error}` : postResult.error;
-            }
-
-            if (postResult.variableUpdates) {
-                for (const [key, value] of Object.entries(postResult.variableUpdates.environment)) {
-                    allEnvUpdates[key] = value;
-                }
-                for (const [key, value] of Object.entries(postResult.variableUpdates.collection)) {
-                    allCollectionUpdates[key] = value;
-                }
-                for (const [key, value] of Object.entries(postResult.variableUpdates.globals)) {
-                    allGlobalUpdates[key] = value;
-                }
-            }
-        }
-
-        // Persist variable updates from scripts
-        await this._persistScriptVariableUpdates(allEnvUpdates, allCollectionUpdates, allGlobalUpdates, selectedEnvironmentId, ctx.collectionId);
-
-        if (response.errorType !== 'cancelled') {
-            let historyName = message.name;
-            if (!historyName || historyName === 'New Request') {
-                try {
-                    const url = new URL(message.url);
-                    historyName = url.hostname + (url.pathname !== '/' ? url.pathname : '');
-                } catch {
-                    historyName = message.url || 'New Request';
-                }
-            }
-
-            const executionSource = this._buildExecutionSource(ctx);
-
-            const execution = this.historyService.createExecution(
-                {
-                    name: historyName,
-                    method: message.method,
-                    url: message.url,
-                    headers: message.headers || {},
-                    body: message.body || { mode: 'none' },
-                    auth: message.auth,
-                    preRequestScript: message.preRequestScript,
-                    postResponseScript: message.postResponseScript,
-                },
-                executionSource,
-                response.status,
-                response.time
-            );
-
-            await this.historyService.add(execution);
-            this.refreshHistory();
-        }
-
-        panel.webview.postMessage({
-            type: 'response',
-            body: response.body,
-            status: response.status,
-            headers: response.headers,
-            cookies: parsedCookies,
-            time: response.time,
-            isError: response.isError,
-            testResults: allTestResults,
-            consoleLogs: allConsoleLogs,
-            scriptError,
-        });
     }
 
     private async _handleCancelRequest(panel: vscode.WebviewPanel): Promise<void> {

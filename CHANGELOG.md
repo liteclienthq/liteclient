@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.2] - 2026-04-02
+
+### Fixed
+- **Request Lifecycle Safety**: The entire request execution path (`_handleSendRequest`) is now wrapped in a top-level error boundary. Previously, any unexpected error during environment resolution, script execution, OAuth2 token retrieval, or other subsystem calls could leave the request panel stuck in a permanent loading state with the spinner frozen and no user feedback. The panel now always recovers to a terminal state.
+- **Active Request Cleanup**: The `activeRequests` tracking map is now cleaned up in a `finally` block, guaranteeing it is always cleared regardless of how the request completes (success, cancellation, or error). Previously, a thrown exception could leak the entry, preventing future cancel operations from working correctly.
+- **Non-Critical Failures Isolated**: History recording and script variable persistence failures no longer throw away a successful HTTP response. These downstream operations are individually guarded so the user always sees the response they were waiting for, even if a secondary write fails (e.g., disk full, storage corruption).
+
 ## [0.19.1] - 2026-04-01
 
 ### Fixed
