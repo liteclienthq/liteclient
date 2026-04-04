@@ -19,45 +19,32 @@ This document is the canonical release and maintenance guide for LiteClient.
 
 ## Release Checklist
 
+### Manual steps (you do these)
+
 1. Make sure the intended changes are already on `main`.
 2. Review and finalize the `Unreleased` section in `CHANGELOG.md`.
 3. Bump the version in `package.json`.
 4. Rename `Unreleased` in `CHANGELOG.md` to the new version and date, then add a fresh empty `Unreleased` section at the top.
-5. Run:
+
+### Automated steps (the script does these)
+
+5. Run the release:
 
 ```bash
-npm run check
-npm run lint
-npm test
+npm run release
 ```
 
-6. Commit the release:
+This single command runs `scripts/release.sh`, which:
+- Validates pre-flight conditions (clean tree, tag doesn't exist, CHANGELOG entry present)
+- Runs `check`, `lint`, and `test`
+- Commits `package.json` and `CHANGELOG.md`
+- Publishes to VS Code Marketplace (`vsce publish`)
+- Publishes to Open VSX (`ovsx publish`)
+- Tags and pushes
 
-```bash
-git add package.json CHANGELOG.md
-git commit -m "chore: release vX.Y.Z"
-```
+Use `npm run release:dry` to preview what would happen without publishing or pushing.
 
-7. Publish to the VS Code Marketplace:
-
-```bash
-npx vsce publish
-```
-
-8. Publish to Open VSX:
-
-```bash
-npx ovsx publish
-```
-
-9. Tag and push only after both publishes succeed:
-
-```bash
-git tag vX.Y.Z
-git push origin main --tags
-```
-
-10. Create the GitHub release using the matching changelog entry.
+6. Create the GitHub release using the matching changelog entry.
 
 ## Required Credentials
 

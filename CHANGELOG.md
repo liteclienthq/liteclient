@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.3] - 2026-04-05
+
+### Fixed
+- **Collection Runner Variable Persistence**: Script variable updates (`pm.environment.set()`, `pm.globals.set()`, `pm.collectionVariables.set()`) made during a collection run are now persisted to disk. Previously, these updates carried forward between requests in-memory during the run but were silently lost when the run completed.
+
+### Changed
+- **Unified Request Execution Pipeline**: Extracted a shared `RequestExecutor` service that both single-request sends and collection runner use. This eliminates ~230 lines of duplicated execution logic and ensures both paths behave identically for variable resolution, script execution, cookie handling, OAuth2, and variable persistence.
+- **Automated Release Script**: Added `npm run release` command that automates verification, publishing, and tagging with pre-flight safety checks. Use `npm run release:dry` to preview.
+
 ## [0.19.2] - 2026-04-02
 
 ### Fixed

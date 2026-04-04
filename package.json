@@ -1,6 +1,6 @@
 {
   "name": "liteclient",
-  "version": "0.19.2",
+  "version": "0.19.3",
   "publisher": "liteclienthq",
   "license": "MIT",
   "engines": {
@@ -311,7 +311,9 @@
     "check:webview": "tsc -p src/webview/tsconfig.json --noEmit",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "release": "bash scripts/release.sh",
+    "release:dry": "bash scripts/release.sh --dry"
   },
   "devDependencies": {
     "@types/form-data": "^2.2.1",

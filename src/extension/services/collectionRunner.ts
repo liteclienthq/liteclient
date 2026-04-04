@@ -1,14 +1,12 @@
-import { CollectionService, Collection, CollectionItem, RequestItem, FolderItem } from './collectionService';
+import { CollectionService, CollectionItem, RequestItem, FolderItem } from './collectionService';
 import { EnvironmentService } from './environmentService';
 import { SettingsService } from './settingsService';
 import { CookieJarService } from './cookieJarService';
 import { CurrentValuesService } from './currentValuesService';
 import { OAuth2TokenService } from './oauth2TokenService';
 import { HistoryService } from './historyService';
-import { HttpRequestService } from './httpRequestService';
-import { ScriptRunner } from './scriptRunner';
-import { resolveVariables } from '../utils/variableResolver';
-import type { Environment, EnvironmentVariable, ScriptTestResult, ScriptConsoleEntry } from '../../shared/models';
+import { RequestExecutor } from './requestExecutor';
+import type { ScriptTestResult, ScriptConsoleEntry } from '../../shared/models';
 
 export interface RunConfig {
     collectionId: string;
@@ -45,7 +43,7 @@ export type RunCompleteCallback = (results: RunRequestResult[], summary: RunSumm
 export type RunErrorCallback = (error: string) => void;
 
 export class CollectionRunner {
-    private scriptRunner = new ScriptRunner();
+    private requestExecutor: RequestExecutor;
     private abortController: AbortController | null = null;
 
     constructor(
@@ -56,7 +54,16 @@ export class CollectionRunner {
         private currentValuesService: CurrentValuesService,
         private oauth2TokenService: OAuth2TokenService,
         private historyService: HistoryService
-    ) {}
+    ) {
+        this.requestExecutor = new RequestExecutor(
+            environmentService,
+            collectionService,
+            settingsService,
+            cookieJarService,
+            currentValuesService,
+            oauth2TokenService,
+        );
+    }
 
     get isRunning(): boolean {
         return this.abortController !== null;
@@ -107,44 +114,12 @@ export class CollectionRunner {
                 return;
             }
 
-            const selectedEnvironmentId = config.environmentId
-                ?? await this.settingsService.getSelectedEnvironmentId();
-
-            const globals = await this.environmentService.getEnvironmentById('globals');
-            let selectedEnvironment: Environment | undefined;
-            if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
-                selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
-            }
-
-            const envsToMerge = [globals, selectedEnvironment].filter(Boolean) as Environment[];
-            const mergedEnvs = this.currentValuesService.mergeIntoEnvironments(envsToMerge);
-            const mergedGlobals = mergedEnvs.find(e => e.id === 'globals');
-            const mergedSelectedEnv = mergedEnvs.find(e => e.id !== 'globals');
-
-            const globalVariables: Record<string, string> = {};
-            if (mergedGlobals) {
-                for (const v of mergedGlobals.variables) {
-                    if (v.enabled) {
-                        globalVariables[v.name] = v.currentValue ?? v.initialValue;
-                    }
-                }
-            }
-
-            const envOnlyVariables: Record<string, string> = {};
-            if (mergedSelectedEnv) {
-                for (const v of mergedSelectedEnv.variables) {
-                    if (v.enabled) {
-                        envOnlyVariables[v.name] = v.currentValue ?? v.initialValue;
-                    }
-                }
-            }
-
-            const collectionVariables: Record<string, string> = {};
-            for (const v of collection.variables || []) {
-                if (v.enabled) {
-                    collectionVariables[v.name] = v.initialValue;
-                }
-            }
+            // Build initial variable state once for the entire run
+            const built = await this.requestExecutor.buildVariableState({
+                environmentId: config.environmentId,
+                collectionId: config.collectionId,
+            });
+            let { variableState } = built;
 
             const results: RunRequestResult[] = [];
             const runStartTime = Date.now();
@@ -154,22 +129,53 @@ export class CollectionRunner {
                     break;
                 }
 
-                const result = await this.executeRequest(
-                    requests[i],
-                    collection,
-                    globalVariables,
-                    collectionVariables,
-                    envOnlyVariables,
-                    mergedGlobals,
-                    mergedSelectedEnv,
-                    signal
-                );
+                const request = requests[i];
+
+                const execResult = await this.requestExecutor.execute({
+                    request: {
+                        method: request.method,
+                        url: request.url,
+                        headers: request.headers || {},
+                        body: request.body,
+                        auth: request.auth,
+                        name: request.name,
+                        preRequestScript: request.preRequestScript,
+                        postResponseScript: request.postResponseScript,
+                    },
+                    collectionId: config.collectionId,
+                    environmentId: config.environmentId,
+                    signal,
+                    variableState,
+                    mergedGlobals: built.mergedGlobals,
+                    mergedSelectedEnv: built.mergedSelectedEnv,
+                    collectionVariables: built.collectionVariables,
+                    // Persist after each request so variable updates survive the run
+                    persistVariableUpdates: true,
+                });
+
+                // Carry forward mutable variable state to next request
+                variableState = execResult.variableState;
+
+                const result: RunRequestResult = {
+                    requestName: request.name,
+                    method: request.method,
+                    url: request.url,
+                    status: execResult.status,
+                    durationMs: execResult.durationMs,
+                    responseBody: execResult.responseBody,
+                    responseHeaders: execResult.responseHeaders,
+                    responseContentType: execResult.responseContentType,
+                    testResults: execResult.testResults,
+                    consoleLogs: execResult.consoleLogs,
+                    passed: execResult.passed,
+                    error: execResult.error,
+                    scriptError: execResult.scriptError,
+                };
 
                 results.push(result);
                 onProgress(i + 1, requests.length, result);
 
                 // Save to history
-                const request = requests[i];
                 const execution = this.historyService.createExecution(
                     {
                         name: request.name,
@@ -210,199 +216,6 @@ export class CollectionRunner {
             }
         } finally {
             this.abortController = null;
-        }
-    }
-
-    private async executeRequest(
-        request: RequestItem,
-        collection: Collection,
-        globalVariables: Record<string, string>,
-        collectionVariables: Record<string, string>,
-        envOnlyVariables: Record<string, string>,
-        mergedGlobals: Environment | undefined,
-        mergedSelectedEnv: Environment | undefined,
-        signal: AbortSignal
-    ): Promise<RunRequestResult> {
-        const startTime = Date.now();
-        const allTestResults: ScriptTestResult[] = [];
-        const allConsoleLogs: ScriptConsoleEntry[] = [];
-        let scriptError: string | undefined;
-
-        const environmentVariables = resolveVariables({
-            globals: mergedGlobals,
-            collectionVariables: collection.variables || [],
-            environment: mergedSelectedEnv,
-        });
-
-        // Apply mutable variable state from previous requests
-        for (const [key, value] of Object.entries(globalVariables)) {
-            environmentVariables[key] = value;
-        }
-        for (const [key, value] of Object.entries(collectionVariables)) {
-            environmentVariables[key] = value;
-        }
-        for (const [key, value] of Object.entries(envOnlyVariables)) {
-            environmentVariables[key] = value;
-        }
-
-        // Run pre-request script
-        if (request.preRequestScript) {
-            const preResult = await this.scriptRunner.runPreRequestScript(request.preRequestScript, {
-                request: {
-                    method: request.method,
-                    url: request.url,
-                    headers: request.headers || {},
-                    body: request.body,
-                },
-                environmentVariables: envOnlyVariables,
-                collectionVariables,
-                globalVariables,
-            });
-
-            allTestResults.push(...preResult.testResults);
-            allConsoleLogs.push(...preResult.consoleLogs);
-            if (preResult.error) {
-                scriptError = preResult.error;
-            }
-
-            if (preResult.variableUpdates) {
-                this.applyVariableUpdates(preResult.variableUpdates, envOnlyVariables, collectionVariables, globalVariables, environmentVariables);
-            }
-        }
-
-        const cookieString = await this.cookieJarService.getCookieString(request.url);
-
-        // Resolve OAuth2 token if needed
-        let resolvedOAuth2Token: string | undefined;
-        if (request.auth?.type === 'oauth2' && request.auth.oauth2) {
-            try {
-                resolvedOAuth2Token = await this.oauth2TokenService.getValidAccessToken(request.auth.oauth2);
-            } catch {
-                return {
-                    requestName: request.name,
-                    method: request.method,
-                    url: request.url,
-                    status: 'Auth Error',
-                    durationMs: Date.now() - startTime,
-                    responseBody: '',
-                    responseHeaders: {},
-                    responseContentType: '',
-                    testResults: allTestResults,
-                    consoleLogs: allConsoleLogs,
-                    passed: false,
-                    error: 'Failed to get OAuth2 token',
-                    scriptError,
-                };
-            }
-        }
-
-        const response = await HttpRequestService.sendRequest(
-            {
-                method: request.method,
-                url: request.url,
-                headers: request.headers || {},
-                body: request.body,
-                auth: request.auth,
-            },
-            environmentVariables,
-            { signal, cookieString, resolvedOAuth2Token }
-        );
-
-        const setCookieHeaders = response.setCookieHeaders || [];
-        if (setCookieHeaders.length > 0) {
-            await this.cookieJarService.setCookiesFromResponse(request.url, setCookieHeaders);
-        }
-
-        // Run post-response script
-        if (request.postResponseScript) {
-            const statusCode = parseInt(response.status, 10) || 0;
-
-            const postResult = await this.scriptRunner.runPostResponseScript(request.postResponseScript, {
-                request: {
-                    method: request.method,
-                    url: request.url,
-                    headers: request.headers || {},
-                    body: request.body,
-                },
-                response: {
-                    code: statusCode,
-                    status: response.status,
-                    headers: response.headers,
-                    body: response.body,
-                },
-                environmentVariables: envOnlyVariables,
-                collectionVariables,
-                globalVariables,
-            });
-
-            allTestResults.push(...postResult.testResults);
-            allConsoleLogs.push(...postResult.consoleLogs);
-            if (postResult.error) {
-                scriptError = scriptError ? `${scriptError}; ${postResult.error}` : postResult.error;
-            }
-
-            if (postResult.variableUpdates) {
-                this.applyVariableUpdates(postResult.variableUpdates, envOnlyVariables, collectionVariables, globalVariables, environmentVariables);
-            }
-        }
-
-        const durationMs = response.time ?? (Date.now() - startTime);
-        const hasFailedTests = allTestResults.some(t => !t.passed);
-        const passed = !response.isError && !hasFailedTests && !scriptError;
-
-        const contentType = Object.entries(response.headers)
-            .find(([key]) => key.toLowerCase() === 'content-type')?.[1] || '';
-
-        return {
-            requestName: request.name,
-            method: request.method,
-            url: request.url,
-            status: response.status,
-            durationMs,
-            responseBody: response.body,
-            responseHeaders: response.headers,
-            responseContentType: contentType,
-            testResults: allTestResults,
-            consoleLogs: allConsoleLogs,
-            passed,
-            error: response.isError ? response.body : undefined,
-            scriptError,
-        };
-    }
-
-    private applyVariableUpdates(
-        updates: { environment: Record<string, string | null>; collection: Record<string, string | null>; globals: Record<string, string | null> },
-        envOnlyVariables: Record<string, string>,
-        collectionVariables: Record<string, string>,
-        globalVariables: Record<string, string>,
-        environmentVariables: Record<string, string>
-    ): void {
-        for (const [key, value] of Object.entries(updates.environment)) {
-            if (value !== null) {
-                envOnlyVariables[key] = value;
-                environmentVariables[key] = value;
-            } else {
-                delete envOnlyVariables[key];
-                delete environmentVariables[key];
-            }
-        }
-        for (const [key, value] of Object.entries(updates.collection)) {
-            if (value !== null) {
-                collectionVariables[key] = value;
-                environmentVariables[key] = value;
-            } else {
-                delete collectionVariables[key];
-                delete environmentVariables[key];
-            }
-        }
-        for (const [key, value] of Object.entries(updates.globals)) {
-            if (value !== null) {
-                globalVariables[key] = value;
-                environmentVariables[key] = value;
-            } else {
-                delete globalVariables[key];
-                delete environmentVariables[key];
-            }
         }
     }
 

@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { RequestWebView } from './requestWebView';
-import { HttpRequestService } from '../../services/httpRequestService';
 import { HistoryService } from '../../services/historyService';
 import { CollectionService, RequestItem } from '../../services/collectionService';
 import { EnvironmentService } from '../../services/environmentService';
@@ -8,11 +7,9 @@ import { SettingsService } from '../../services/settingsService';
 import { CookieJarService } from '../../services/cookieJarService';
 import { CurrentValuesService } from '../../services/currentValuesService';
 import { OAuth2TokenService } from '../../services/oauth2TokenService';
-import { ScriptRunner } from '../../services/scriptRunner';
-import type { RequestPanelToExtensionMessage, RequestExecutionSource, Environment } from '../../../shared/messages';
-import type { ScriptTestResult, ScriptConsoleEntry } from '../../../shared/models';
+import { RequestExecutor } from '../../services/requestExecutor';
+import type { RequestPanelToExtensionMessage, RequestExecutionSource } from '../../../shared/messages';
 import { generateId } from '../../utils/idUtils';
-import { resolveVariables } from '../../utils/variableResolver';
 
 type MessageHandler = (panel: vscode.WebviewPanel, message: any, context: RequestContext) => Promise<void>;
 
@@ -40,7 +37,7 @@ export class RequestPanelManager {
     private activeRequests = new Map<vscode.WebviewPanel, ActiveRequest>();
     private messageHandlers: Record<string, MessageHandler> = {};
     private oauth2TokenService: OAuth2TokenService;
-    private scriptRunner: ScriptRunner;
+    private requestExecutor: RequestExecutor;
 
     constructor(
         private context: vscode.ExtensionContext,
@@ -54,7 +51,14 @@ export class RequestPanelManager {
         private refreshCollections: () => void
     ) {
         this.oauth2TokenService = new OAuth2TokenService(context);
-        this.scriptRunner = new ScriptRunner();
+        this.requestExecutor = new RequestExecutor(
+            environmentService,
+            collectionService,
+            settingsService,
+            cookieJarService,
+            currentValuesService,
+            this.oauth2TokenService,
+        );
         this._initMessageHandlers();
     }
 
@@ -201,212 +205,38 @@ export class RequestPanelManager {
         this.activeRequests.set(panel, { abortController });
 
         try {
-            const messageEnvironmentId = message.environmentId;
-            const globalSelectedEnvironmentId = await this.settingsService.getSelectedEnvironmentId();
-            const selectedEnvironmentId = messageEnvironmentId !== undefined ? messageEnvironmentId : globalSelectedEnvironmentId;
-
-            const globals = await this.environmentService.getEnvironmentById('globals');
-            const collection = ctx.collectionId ? await this.collectionService.getCollectionById(ctx.collectionId) : undefined;
-            let selectedEnvironment;
-            if (selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
-                selectedEnvironment = await this.environmentService.getEnvironmentById(selectedEnvironmentId);
-            }
-
-            const envsToMerge = [globals, selectedEnvironment].filter(Boolean) as Environment[];
-            const mergedEnvs = this.currentValuesService.mergeIntoEnvironments(envsToMerge);
-            const mergedGlobals = mergedEnvs.find(e => e.id === 'globals');
-            const mergedSelectedEnv = mergedEnvs.find(e => e.id !== 'globals');
-
-            const environmentVariables = resolveVariables({
-                globals: mergedGlobals,
-                collectionVariables: collection?.variables || [],
-                environment: mergedSelectedEnv,
-            });
-
-            // Build separate variable maps for script context
-            const globalVariables: Record<string, string> = {};
-            if (mergedGlobals) {
-                for (const v of mergedGlobals.variables) {
-                    if (v.enabled) {
-                        globalVariables[v.name] = v.currentValue ?? v.initialValue;
-                    }
-                }
-            }
-
-            const envOnlyVariables: Record<string, string> = {};
-            if (mergedSelectedEnv) {
-                for (const v of mergedSelectedEnv.variables) {
-                    if (v.enabled) {
-                        envOnlyVariables[v.name] = v.currentValue ?? v.initialValue;
-                    }
-                }
-            }
-
-            const collectionVariables: Record<string, string> = {};
-            for (const v of collection?.variables || []) {
-                if (v.enabled) {
-                    collectionVariables[v.name] = v.initialValue;
-                }
-            }
-
-            const allTestResults: ScriptTestResult[] = [];
-            const allConsoleLogs: ScriptConsoleEntry[] = [];
-            let scriptError: string | undefined;
-            const allEnvUpdates: Record<string, string | null> = {};
-            const allCollectionUpdates: Record<string, string | null> = {};
-            const allGlobalUpdates: Record<string, string | null> = {};
-
-            // Run pre-request script
-            if (message.preRequestScript) {
-                const preResult = await this.scriptRunner.runPreRequestScript(message.preRequestScript, {
-                    request: {
-                        method: message.method,
-                        url: message.url,
-                        headers: message.headers || {},
-                        body: message.body,
-                    },
-                    environmentVariables: envOnlyVariables,
-                    collectionVariables,
-                    globalVariables,
-                });
-
-                allTestResults.push(...preResult.testResults);
-                allConsoleLogs.push(...preResult.consoleLogs);
-                if (preResult.error) {
-                    scriptError = preResult.error;
-                }
-
-                if (preResult.variableUpdates) {
-                    for (const [key, value] of Object.entries(preResult.variableUpdates.environment)) {
-                        allEnvUpdates[key] = value;
-                        if (value !== null) {
-                            envOnlyVariables[key] = value;
-                        } else {
-                            delete envOnlyVariables[key];
-                        }
-                        if (value !== null) {
-                            environmentVariables[key] = value;
-                        } else {
-                            delete environmentVariables[key];
-                        }
-                    }
-                    for (const [key, value] of Object.entries(preResult.variableUpdates.collection)) {
-                        allCollectionUpdates[key] = value;
-                        if (value !== null) {
-                            collectionVariables[key] = value;
-                        } else {
-                            delete collectionVariables[key];
-                        }
-                        if (value !== null) {
-                            environmentVariables[key] = value;
-                        } else {
-                            delete environmentVariables[key];
-                        }
-                    }
-                    for (const [key, value] of Object.entries(preResult.variableUpdates.globals)) {
-                        allGlobalUpdates[key] = value;
-                        if (value !== null) {
-                            globalVariables[key] = value;
-                        } else {
-                            delete globalVariables[key];
-                        }
-                        if (value !== null) {
-                            environmentVariables[key] = value;
-                        } else {
-                            delete environmentVariables[key];
-                        }
-                    }
-                }
-            }
-
-            // Get cookies from cookie jar for this request
-            const cookieString = await this.cookieJarService.getCookieString(message.url);
-
-            // Resolve OAuth2 token if needed
-            let resolvedOAuth2Token: string | undefined;
-            if (message.auth?.type === 'oauth2' && message.auth.oauth2) {
-                try {
-                    resolvedOAuth2Token = await this.oauth2TokenService.getValidAccessToken(message.auth.oauth2);
-                } catch (error) {
-                    const errorMessage = error instanceof Error ? error.message : 'Failed to get OAuth2 token';
-                    vscode.window.showErrorMessage(`OAuth2: ${errorMessage}. Please click "Get Token" in the Auth panel.`);
-                    panel.webview.postMessage({
-                        type: 'response',
-                        body: '',
-                        status: 'Auth Error',
-                        headers: {},
-                        cookies: [],
-                        time: 0,
-                        isError: true,
-                    });
-                    return;
-                }
-            }
-
-            const response = await HttpRequestService.sendRequest(message, environmentVariables, {
+            const result = await this.requestExecutor.execute({
+                request: {
+                    method: message.method,
+                    url: message.url,
+                    headers: message.headers || {},
+                    body: message.body || { mode: 'none' },
+                    auth: message.auth,
+                    name: message.name,
+                    preRequestScript: message.preRequestScript,
+                    postResponseScript: message.postResponseScript,
+                },
+                collectionId: ctx.collectionId,
+                environmentId: message.environmentId,
                 signal: abortController.signal,
-                cookieString,
-                resolvedOAuth2Token
+                persistVariableUpdates: true,
             });
 
-            // Parse and store cookies from Set-Cookie headers
-            const setCookieHeaders = response.setCookieHeaders || [];
-            const parsedCookies = this.cookieJarService.parseSetCookieHeaders(setCookieHeaders);
-            
-            if (setCookieHeaders.length > 0) {
-                await this.cookieJarService.setCookiesFromResponse(message.url, setCookieHeaders);
-            }
-
-            // Run post-response script
-            if (message.postResponseScript) {
-                const statusCode = parseInt(response.status, 10) || 0;
-
-                const postResult = await this.scriptRunner.runPostResponseScript(message.postResponseScript, {
-                    request: {
-                        method: message.method,
-                        url: message.url,
-                        headers: message.headers || {},
-                        body: message.body,
-                    },
-                    response: {
-                        code: statusCode,
-                        status: response.status,
-                        headers: response.headers,
-                        body: response.body,
-                    },
-                    environmentVariables: envOnlyVariables,
-                    collectionVariables,
-                    globalVariables,
-                });
-
-                allTestResults.push(...postResult.testResults);
-                allConsoleLogs.push(...postResult.consoleLogs);
-                if (postResult.error) {
-                    scriptError = scriptError ? `${scriptError}; ${postResult.error}` : postResult.error;
+            // Refresh sidebar if variable updates were persisted
+            if (result.variableState) {
+                try {
+                    await this.broadcastEnvironments();
+                    if (ctx.collectionId) {
+                        this.refreshCollections();
+                        await this.broadcastCollectionState(ctx.collectionId);
+                    }
+                } catch {
+                    // Non-critical
                 }
-
-                if (postResult.variableUpdates) {
-                    for (const [key, value] of Object.entries(postResult.variableUpdates.environment)) {
-                        allEnvUpdates[key] = value;
-                    }
-                    for (const [key, value] of Object.entries(postResult.variableUpdates.collection)) {
-                        allCollectionUpdates[key] = value;
-                    }
-                    for (const [key, value] of Object.entries(postResult.variableUpdates.globals)) {
-                        allGlobalUpdates[key] = value;
-                    }
-                }
-            }
-
-            // Persist variable updates from scripts (non-critical — don't lose the response if this fails)
-            try {
-                await this._persistScriptVariableUpdates(allEnvUpdates, allCollectionUpdates, allGlobalUpdates, selectedEnvironmentId, ctx.collectionId);
-            } catch (persistError) {
-                console.error('[LiteClient] Failed to persist script variable updates:', persistError);
             }
 
             // Record in history (non-critical — don't lose the response if this fails)
-            if (response.errorType !== 'cancelled') {
+            if (!result.cancelled) {
                 try {
                     let historyName = message.name;
                     if (!historyName || historyName === 'New Request') {
@@ -432,8 +262,8 @@ export class RequestPanelManager {
                             postResponseScript: message.postResponseScript,
                         },
                         executionSource,
-                        response.status,
-                        response.time
+                        result.status,
+                        result.durationMs
                     );
 
                     await this.historyService.add(execution);
@@ -445,15 +275,15 @@ export class RequestPanelManager {
 
             panel.webview.postMessage({
                 type: 'response',
-                body: response.body,
-                status: response.status,
-                headers: response.headers,
-                cookies: parsedCookies,
-                time: response.time,
-                isError: response.isError,
-                testResults: allTestResults,
-                consoleLogs: allConsoleLogs,
-                scriptError,
+                body: result.responseBody,
+                status: result.status,
+                headers: result.responseHeaders,
+                cookies: result.cookies,
+                time: result.durationMs,
+                isError: result.isError,
+                testResults: result.testResults,
+                consoleLogs: result.consoleLogs,
+                scriptError: result.scriptError,
             });
         } catch (error) {
             if (abortController.signal.aborted) {
@@ -568,64 +398,6 @@ export class RequestPanelManager {
                 this.refreshCollections();
                 await this.broadcastCollectionState(selected.collection.id);
                 vscode.window.showInformationMessage('Saved to collection!');
-            }
-        }
-    }
-
-    // --- Script Variable Persistence ---
-
-    private async _persistScriptVariableUpdates(
-        envUpdates: Record<string, string | null>,
-        collectionUpdates: Record<string, string | null>,
-        globalUpdates: Record<string, string | null>,
-        selectedEnvironmentId: string | undefined | null,
-        collectionId?: string
-    ): Promise<void> {
-        const hasEnvUpdates = Object.keys(envUpdates).length > 0;
-        const hasCollectionUpdates = Object.keys(collectionUpdates).length > 0;
-        const hasGlobalUpdates = Object.keys(globalUpdates).length > 0;
-        if (!hasEnvUpdates && !hasCollectionUpdates && !hasGlobalUpdates) {
-            return;
-        }
-
-        if (hasGlobalUpdates) {
-            await this._applyScriptVariableUpdates('globals', globalUpdates);
-        }
-
-        if (hasEnvUpdates && selectedEnvironmentId && selectedEnvironmentId !== 'globals') {
-            await this._applyScriptVariableUpdates(selectedEnvironmentId, envUpdates);
-        }
-
-        if (hasCollectionUpdates && collectionId) {
-            await this.collectionService.applyVariableUpdates(collectionId, collectionUpdates);
-            this.refreshCollections();
-            await this.broadcastCollectionState(collectionId);
-        }
-
-        await this.broadcastEnvironments();
-    }
-
-    /**
-     * Atomically persist script variable updates to an environment.
-     * Uses the service's atomic applyVariableUpdates, then syncs currentValues.
-     */
-    private async _applyScriptVariableUpdates(envId: string, updates: Record<string, string | null>): Promise<void> {
-        const removedVarIds = await this.environmentService.applyVariableUpdates(envId, updates);
-        for (const varId of removedVarIds) {
-            await this.currentValuesService.clearCurrentValue(envId, varId);
-        }
-
-        // Set current values for variables that were set (not unset)
-        const setUpdates = Object.entries(updates).filter(([, v]) => v !== null);
-        if (setUpdates.length > 0) {
-            const env = await this.environmentService.getEnvironmentById(envId);
-            if (env) {
-                for (const [name, value] of setUpdates) {
-                    const v = env.variables.find(v => v.name === name);
-                    if (v) {
-                        await this.currentValuesService.setCurrentValue(envId, v.id, value!);
-                    }
-                }
             }
         }
     }
