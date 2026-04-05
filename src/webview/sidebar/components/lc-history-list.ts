@@ -2,6 +2,7 @@ import { html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
 import './lc-history-item';
+import '../../shared/lc-empty-state.js';
 
 export interface RequestExecution {
   id: string;
@@ -38,16 +39,6 @@ export class LcHistoryList extends LcBaseElement {
         flex-direction: column;
         padding-top: 4px;
         padding-bottom: 8px;
-      }
-
-      .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100px;
-        opacity: 0.5;
-        font-size: 12px;
       }
 
       .day-group {
@@ -234,7 +225,14 @@ export class LcHistoryList extends LcBaseElement {
     });
 
     if (filteredItems.length === 0) {
-      return html`<div class="empty-state">No request history</div>`;
+      return html`
+        <lc-empty-state
+          compact
+          icon="history"
+          title="No history yet"
+          description="Your request history will appear here."
+        ></lc-empty-state>
+      `;
     }
 
     const dayGroups = this.groupByDay(filteredItems).filter(g => g.items.length > 0);

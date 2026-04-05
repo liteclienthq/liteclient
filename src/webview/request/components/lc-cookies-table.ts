@@ -6,6 +6,7 @@
 import { html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
+import '../../shared/lc-empty-state.js';
 import type { ParsedCookie } from '../../shared/messaging.js';
 
 @customElement('lc-cookies-table')
@@ -81,11 +82,6 @@ export class LcCookiesTable extends LcBaseElement {
       color: var(--vscode-editor-background);
     }
 
-    .empty-state {
-      color: var(--vscode-descriptionForeground);
-      font-style: italic;
-      padding: 12px;
-    }
   `;
 
   private formatExpires(expires?: string): string {
@@ -106,7 +102,7 @@ export class LcCookiesTable extends LcBaseElement {
 
   render() {
     if (this.cookies.length === 0) {
-      return html`<div class="empty-state">No cookies in this response</div>`;
+      return html`<lc-empty-state compact icon="cookie" title="No cookies" description="Response cookies will appear here."></lc-empty-state>`;
     }
 
     return html`

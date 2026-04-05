@@ -4,6 +4,7 @@ import { LcBaseElement } from '../../shared/base-element';
 import './lc-sidebar-item';
 import { SidebarItemAction } from './lc-sidebar-item';
 import { Environment } from './lc-env-switcher';
+import '../../shared/lc-empty-state.js';
 
 @customElement('lc-environment-list')
 export class LcEnvironmentList extends LcBaseElement {
@@ -18,19 +19,6 @@ export class LcEnvironmentList extends LcBaseElement {
       flex-direction: column;
       padding-top: 4px;
     }
-
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 16px 8px;
-      color: var(--vscode-descriptionForeground);
-      font-size: 11px;
-      text-align: center;
-      opacity: 0.6;
-    }
-
 
   `;
 
@@ -87,7 +75,12 @@ export class LcEnvironmentList extends LcBaseElement {
       <div class="environment-list" role="tree" aria-label="Environments">
         ${globals ? this.renderEnvironment(globals, 0) : ''}
         
-        ${filteredEnvironments.length === 0 && !globals ? html`<div class="empty-state">No environments</div>` :
+        ${filteredEnvironments.length === 0 && !globals ? html`<lc-empty-state
+            compact
+            icon="env"
+            title="No environments"
+            description="Create environments to manage variables."
+          ></lc-empty-state>` :
         filteredEnvironments.map(env => {
           const search = this.filterText.toLowerCase();
           if (this.filterText && !this.matchesFilter(env, search)) {

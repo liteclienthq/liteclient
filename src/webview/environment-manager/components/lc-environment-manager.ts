@@ -4,6 +4,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
 import { postMessage } from '../../shared/messaging.js';
 import type { Environment, EnvironmentVariable, VariableType } from '../../../shared/models.js';
+import '../../shared/lc-loading-state.js';
 
 function generateId(): string {
     return crypto.randomUUID();
@@ -164,11 +165,6 @@ export class LcEnvironmentManager extends LcBaseElement {
             color: var(--vscode-foreground);
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 48px 16px;
-            color: var(--vscode-descriptionForeground);
-        }
     `;
 
     private addVariable() {
@@ -228,7 +224,7 @@ export class LcEnvironmentManager extends LcBaseElement {
 
     render() {
         if (!this.environment) {
-            return html`<div class="empty-state">Loading...</div>`;
+            return html`<lc-loading-state label="Loading environment…"></lc-loading-state>`;
         }
         return html`
             ${this.renderVariableTable(this.environment)}

@@ -3,6 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element';
 import './lc-sidebar-item';
 import { SidebarItemAction } from './lc-sidebar-item';
+import '../../shared/lc-empty-state.js';
 
 export interface Collection {
   id: string;
@@ -39,15 +40,6 @@ export class LcCollectionTree extends LcBaseElement {
         display: flex;
         flex-direction: column;
         padding-top: 4px;
-      }
-
-      .empty-state {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100px;
-        opacity: 0.5;
-        font-size: 12px;
       }
 
       .tree-container {
@@ -250,7 +242,12 @@ export class LcCollectionTree extends LcBaseElement {
   override render() {
     return html`
       <div class="collection-list" role="tree" aria-label="Collections">
-        ${this.collections.length === 0 ? html`<div class="empty-state">No collections</div>` :
+        ${this.collections.length === 0 ? html`<lc-empty-state
+            compact
+            icon="folder"
+            title="No collections"
+            description="Organize your API requests into collections."
+          ></lc-empty-state>` :
         this.collections.map(collection => {
           const search = this.filterText.toLowerCase();
           if (this.filterText) {

@@ -3,6 +3,7 @@ import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
 import { postMessage } from '../../shared/messaging.js';
 import type { EnvironmentVariable, VariableType } from '../../../shared/models.js';
+import '../../shared/lc-loading-state.js';
 
 interface CollectionState {
     id: string;
@@ -166,11 +167,6 @@ export class LcCollectionManager extends LcBaseElement {
             color: var(--vscode-foreground);
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 48px 16px;
-            color: var(--vscode-descriptionForeground);
-        }
     `;
 
     private renameCollection(name: string) {
@@ -240,7 +236,7 @@ export class LcCollectionManager extends LcBaseElement {
 
     render() {
         if (!this.collection) {
-            return html`<div class="empty-state">Loading...</div>`;
+            return html`<lc-loading-state label="Loading collection…"></lc-loading-state>`;
         }
 
         return html`

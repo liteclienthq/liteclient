@@ -8,6 +8,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
 import { html_beautify } from 'js-beautify';
 import '../../shared/lc-code-editor.js';
+import '../../shared/lc-empty-state.js';
 
 @customElement('lc-response-view')
 export class LcResponseView extends LcBaseElement {
@@ -37,12 +38,6 @@ export class LcResponseView extends LcBaseElement {
       flex: 1;
     }
 
-    .placeholder {
-      color: var(--vscode-descriptionForeground);
-      font-style: italic;
-      padding: 12px;
-    }
-
     .loading-overlay {
       position: absolute;
       top: 0;
@@ -60,16 +55,22 @@ export class LcResponseView extends LcBaseElement {
     }
 
     .spinner {
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       border: 2px solid var(--vscode-foreground);
       border-top-color: transparent;
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 0.8s linear infinite;
+      opacity: 0.6;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    .loading-label {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
     }
 
     .cancel-btn {
@@ -195,7 +196,7 @@ export class LcResponseView extends LcBaseElement {
         ${this.loading ? html`
           <div class="loading-overlay">
             <div class="spinner"></div>
-            <div>Sending request...</div>
+            <div class="loading-label">Sending request…</div>
             <button class="cancel-btn" @click=${this.handleCancel}>Cancel</button>
           </div>
         ` : ''}
@@ -218,7 +219,11 @@ export class LcResponseView extends LcBaseElement {
             .minimap=${false}
           ></lc-code-editor>
         ` : html`
-          <div class="placeholder">Send a request to see the response here...</div>
+          <lc-empty-state
+            icon="send"
+            title="No response yet"
+            description="Hit Send or press Enter to execute your request."
+          ></lc-empty-state>
         `}
       </div>
     `;

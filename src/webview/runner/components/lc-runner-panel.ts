@@ -2,6 +2,7 @@ import { html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
 import { postMessage } from '../../shared/messaging.js';
+import '../../shared/lc-error-state.js';
 
 interface RunRequestResult {
     requestName: string;
@@ -142,17 +143,6 @@ export class LcRunnerPanel extends LcBaseElement {
             background: var(--vscode-progressBar-background, var(--vscode-button-background));
             border-radius: 2px;
             transition: width 0.2s ease;
-        }
-
-        .error-banner {
-            background: var(--vscode-inputValidation-errorBackground);
-            border: 1px solid var(--vscode-inputValidation-errorBorder, var(--vscode-editorError-foreground));
-            padding: 8px 12px;
-            margin-bottom: 16px;
-            border-radius: 2px;
-            font-size: 12px;
-            white-space: pre-wrap;
-            word-break: break-word;
         }
 
         .results-table {
@@ -456,7 +446,7 @@ export class LcRunnerPanel extends LcBaseElement {
     render() {
         return html`
             ${this.renderHeader()}
-            ${this.error ? html`<div class="error-banner">${this.error}</div>` : nothing}
+            ${this.error ? html`<lc-error-state .message=${this.error}></lc-error-state>` : nothing}
             ${this.running ? this.renderProgressBar() : nothing}
             ${this.results.length > 0 ? this.renderResultsTable() : nothing}
             ${this.summary ? this.renderSummary() : nothing}

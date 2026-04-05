@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.4] - 2026-04-06
+
+### Added
+- **Shared State Primitives**: Introduced `lc-empty-state`, `lc-loading-state`, and `lc-error-state` reusable Lit components that provide consistent, production-grade treatment of idle, loading, and error states across all webviews.
+
+### Changed
+- **Response Panel Idle State**: Replaced the plain italic placeholder text with a structured empty state showing a send icon, title, and guidance text — the first thing users see on every new request tab.
+- **Status Bar Semantic Coloring**: Response status codes are now color-coded by class — green for 2xx, yellow for 3xx, orange for 4xx, red for 5xx — instead of a binary success/error treatment. The status bar hides when idle and fades in with a brief success flash on 2xx responses.
+- **Empty States Across All Views**: Replaced 7 bare-text empty states (history list, collection tree, environment list, response headers, response cookies, test results, and runner errors) with the shared `lc-empty-state` component providing icons, titles, and descriptive guidance text.
+- **Loading States in Manager Panels**: Environment Manager and Collection Manager now show a proper spinner with label instead of plain "Loading..." text.
+- **Error Display Standardization**: Test results script errors and collection runner errors now use the shared `lc-error-state` component with consistent icon, background, and border styling instead of ad-hoc error banner CSS.
+
 ## [0.19.3] - 2026-04-05
 
 ### Fixed

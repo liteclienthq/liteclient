@@ -180,6 +180,7 @@ export class LcRequestPanel extends LcBaseElement {
   @state() responseContentType = '';
   @state() activeTab = 'response';
   @state() loading = false;
+  @state() responseState: 'idle' | 'loading' | 'success' | 'error' = 'idle';
   @state() layout: 'vertical' | 'horizontal' = 'horizontal';
   @state() private splitPosition = 50;
   @state() private isResizing = false;
@@ -461,6 +462,7 @@ export class LcRequestPanel extends LcBaseElement {
 
   private handleResponse(message: { body: string; status: string; headers: Record<string, string>; cookies: ParsedCookie[]; time?: number; isError: boolean; testResults?: ScriptTestResult[]; consoleLogs?: ScriptConsoleEntry[]; scriptError?: string }) {
     this.loading = false;
+    this.responseState = message.isError ? 'error' : 'success';
     this.responseBody = message.body;
     this.status = message.status;
     this.responseHeaders = message.headers;
@@ -509,6 +511,7 @@ export class LcRequestPanel extends LcBaseElement {
 
   private handleSendRequest() {
     this.loading = true;
+    this.responseState = 'loading';
     this.status = '-';
     this.size = '-';
     this.time = '-- ms';
@@ -674,6 +677,7 @@ export class LcRequestPanel extends LcBaseElement {
                 size=${this.size}
                 time=${this.time}
                 ?isError=${this.isError}
+                responseState=${this.responseState}
               ></lc-status-bar>
             </div>
 

@@ -1,6 +1,8 @@
 import { html, css, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
+import '../../shared/lc-empty-state.js';
+import '../../shared/lc-error-state.js';
 import type { ScriptTestResult, ScriptConsoleEntry } from '../../shared/messaging.js';
 
 @customElement('lc-test-results')
@@ -17,17 +19,6 @@ export class LcTestResults extends LcBaseElement {
       height: 100%;
       font-size: 12px;
       color: var(--vscode-foreground);
-    }
-
-    .error-banner {
-      background: var(--vscode-inputValidation-errorBackground);
-      border: 1px solid var(--vscode-inputValidation-errorBorder, var(--vscode-editorError-foreground));
-      padding: 8px 12px;
-      margin: 8px 0;
-      border-radius: 2px;
-      font-family: var(--vscode-editor-font-family);
-      white-space: pre-wrap;
-      word-break: break-word;
     }
 
     .section {
@@ -106,22 +97,17 @@ export class LcTestResults extends LcBaseElement {
       color: var(--vscode-editorError-foreground);
     }
 
-    .empty-state {
-      color: var(--vscode-descriptionForeground);
-      font-style: italic;
-      padding: 12px;
-    }
   `;
 
   render() {
     const hasContent = this.scriptError || this.testResults.length > 0 || this.consoleLogs.length > 0;
 
     if (!hasContent) {
-      return html`<div class="empty-state">No test results yet. Add scripts to your request to see results here.</div>`;
+      return html`<lc-empty-state compact icon="test" title="No test results" description="Add scripts to your request to see results here."></lc-empty-state>`;
     }
 
     return html`
-      ${this.scriptError ? html`<div class="error-banner">${this.scriptError}</div>` : nothing}
+      ${this.scriptError ? html`<lc-error-state .message=${this.scriptError}></lc-error-state>` : nothing}
       ${this.renderTestResults()}
       ${this.renderConsoleLogs()}
     `;

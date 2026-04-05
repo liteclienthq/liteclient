@@ -6,6 +6,7 @@
 import { html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { LcBaseElement } from '../../shared/base-element.js';
+import '../../shared/lc-empty-state.js';
 
 @customElement('lc-headers-table')
 export class LcHeadersTable extends LcBaseElement {
@@ -53,11 +54,6 @@ export class LcHeadersTable extends LcBaseElement {
       word-break: break-all;
     }
 
-    .empty-state {
-      color: var(--vscode-descriptionForeground);
-      font-style: italic;
-      padding: 12px;
-    }
   `;
 
   private get sortedHeaders(): Array<[string, string]> {
@@ -68,7 +64,7 @@ export class LcHeadersTable extends LcBaseElement {
 
   render() {
     if (Object.keys(this.headers).length === 0) {
-      return html`<div class="empty-state">No headers to display</div>`;
+      return html`<lc-empty-state compact icon="headers" title="No headers" description="Response headers will appear here."></lc-empty-state>`;
     }
 
     return html`
