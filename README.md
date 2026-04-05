@@ -2,10 +2,9 @@
 
 <div align="center">
 
-[![VS Code Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/liteclienthq.liteclient?style=flat-square&color=E11D48&label=VS%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
-[![VS Code Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/liteclienthq.liteclient?style=flat-square&color=blue&label=installs)](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
-[![Open VSX Version](https://img.shields.io/open-vsx/v/liteclienthq/liteclient?style=flat-square&color=orange&label=Open%20VSX)](https://open-vsx.org/extension/liteclienthq/liteclient)
-[![Open VSX Installs](https://img.shields.io/open-vsx/dt/liteclienthq/liteclient?style=flat-square&color=orange&label=installs)](https://open-vsx.org/extension/liteclienthq/liteclient)
+[![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-E11D48?style=flat-square&logo=visual-studio-code&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=liteclienthq.liteclient)
+[![Open VSX](https://img.shields.io/badge/Open%20VSX-Install-orange?style=flat-square&logo=eclipse-ide&logoColor=white)](https://open-vsx.org/extension/liteclienthq/liteclient)
+[![Documentation](https://img.shields.io/badge/Docs-docs.liteclient.com-blue?style=flat-square&logo=readthedocs&logoColor=white)](https://docs.liteclient.com)
 [![License](https://img.shields.io/github/license/liteclienthq/liteclient?style=flat-square&color=green)](https://github.com/liteclienthq/liteclient)
 
 **The fast, local-first REST API client for VS Code.**
@@ -15,6 +14,18 @@
 LiteClient is a native VS Code extension for sending HTTP requests, managing environments, organizing collections, and inspecting responses without leaving your editor.
 
 ![LiteClient Screenshot](media/screenshot.png)
+
+## Table of Contents
+
+- [Why LiteClient](#why-liteclient)
+- [Core Features](#core-features)
+- [Install](#install)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [Privacy](#privacy)
+- [Development](#development)
+- [Support](#support)
+- [License](#license)
 
 ## Why LiteClient
 
@@ -61,11 +72,15 @@ Install from [Open VSX](https://open-vsx.org/extension/liteclienthq/liteclient) 
 4. Choose an HTTP method and click **Send**.
 5. Inspect the response body, headers, timing, and cookies.
 
-For a guided walkthrough, see the docs site:
+## Documentation
+
+Full guides and references are available at [docs.liteclient.com](https://docs.liteclient.com):
+
 - [Introduction](https://docs.liteclient.com/introduction)
 - [Quickstart](https://docs.liteclient.com/quickstart)
-- [Variables guide](https://docs.liteclient.com/guides/variables)
-- [OAuth guide](https://docs.liteclient.com/guides/oauth)
+- [Variables](https://docs.liteclient.com/guides/variables)
+- [OAuth](https://docs.liteclient.com/guides/oauth)
+- [Scripting](https://docs.liteclient.com/guides/scripting)
 - [Troubleshooting](https://docs.liteclient.com/guides/troubleshooting)
 
 ## Privacy
