@@ -162,7 +162,7 @@ if [[ "$MODE" != "release" ]]; then
     run_or_print git tag "$TAG"
     run_or_print git push origin main
     run_or_print git push origin "$TAG"
-    run_or_print gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" --assets "liteclient-${VERSION}.vsix"
+    run_or_print gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" "liteclient-${VERSION}.vsix"
     echo ""
     echo "Release notes preview:"
     sed -n '1,120p' "$NOTES_FILE"
@@ -196,7 +196,7 @@ VSIX_FILE="liteclient-${VERSION}.vsix"
 if [[ ! -f "$VSIX_FILE" ]]; then
     fail "Extension package not found: $VSIX_FILE"
 fi
-gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" --assets "$VSIX_FILE"
+gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" "$VSIX_FILE"
 
 step "Cleaning up"
 rm -f "$VSIX_FILE"
