@@ -1,24 +1,28 @@
 # LiteClient Agent Guide
 
-This file is for AI coding assistants working in the LiteClient repository. It is intentionally narrow: use it for repo-specific implementation context and constraints, not as a full product manual.
+AI coding agents must follow `CONTRIBUTING.md`. This file adds only agent-specific rules and repo context.
 
-## What This File Owns
+## Agent Workflow Rules
 
-- High-signal architecture context for agents
-- Repo-specific implementation constraints
-- Pointers to source-of-truth files
+- Do not make implementation changes on `main`.
+- Before editing files, create or switch to a task branch from `main`.
+- Use the same branch prefixes as human contributors: `feature/`, `fix/`, `docs/`, `chore/`, or `refactor/`.
+- Keep changes focused. Do not mix unrelated UI, release, docs, and refactor work in one branch.
+- Run relevant checks when practical:
 
-It does not replace:
+```bash
+npm run check
+npm run lint
+npm test
+```
 
-- `README.md` for product overview
-- `CONTRIBUTING.md` for contributor workflow
-- `MAINTAINING.md` for release operations
-- `docs/` for end-user documentation
+- Do not run release, publish, tag, or GitHub release commands unless the user explicitly asks for a release.
 
-## Source of Truth
+## Source Of Truth
 
 Read these before making assumptions:
 
+- `CONTRIBUTING.md`: development and release workflow
 - `package.json`: commands, extension contributions, settings
 - `src/extension/extension.ts`: service/provider wiring
 - `src/shared/models.ts`: shared data model
@@ -89,15 +93,3 @@ Key services:
 1. Check `storageService.ts`.
 2. Verify both global and workspace scope behavior.
 3. Consider migration or external file change handling.
-
-## Verification
-
-Before finishing, run the relevant checks when possible:
-
-```bash
-npm run check
-npm run lint
-npm test
-```
-
-Also sanity-check the user-visible flow in the Extension Development Host when the change affects UI, persistence, or request execution.

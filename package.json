@@ -313,7 +313,8 @@
     "lint": "eslint src",
     "test": "vscode-test",
     "release": "bash scripts/release.sh",
-    "release:dry": "bash scripts/release.sh --dry"
+    "release:dry": "bash scripts/release.sh --dry",
+    "release:check": "bash scripts/release.sh --check"
   },
   "devDependencies": {
     "@types/form-data": "^2.2.1",

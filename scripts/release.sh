@@ -1,129 +1,190 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ============================================================================
-# LiteClient Release Script
+# Local-first LiteClient release script.
 #
-# Automates MAINTAINING.md steps 5–9:
-#   1. Pre-flight checks (clean tree, changelog, version)
-#   2. Run check + lint + test
-#   3. Commit the release
-#   4. Build & publish to VS Code Marketplace
-#   5. Build & publish to Open VSX
-#   6. Tag and push
+# Canonical release path:
+#   1. Prepare package.json and CHANGELOG.md on main.
+#   2. Run npm run release:dry or npm run release:check.
+#   3. Run npm run release.
 #
-# Usage:
-#   npm run release          # interactive — reads version from package.json
-#   npm run release -- --dry # dry run — skips publish/push
-# ============================================================================
+# The script publishes from the local machine, then tags, pushes, and creates
+# the GitHub release from the matching CHANGELOG.md section.
 
-DRY_RUN=false
-if [[ "${1:-}" == "--dry" ]]; then
-    DRY_RUN=true
-    echo "🧪 DRY RUN — will skip publish and push"
-    echo ""
-fi
+MODE="release"
+case "${1:-}" in
+    --dry)
+        MODE="dry"
+        ;;
+    --check)
+        MODE="check"
+        ;;
+    "")
+        ;;
+    *)
+        echo "Unknown option: $1"
+        echo "Usage: $0 [--dry|--check]"
+        exit 1
+        ;;
+esac
 
-# --- Colors ---
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 
-step() { echo -e "\n${GREEN}▸ $1${NC}"; }
-warn() { echo -e "${YELLOW}⚠ $1${NC}"; }
-fail() { echo -e "${RED}✖ $1${NC}"; exit 1; }
+step() { echo -e "\n${GREEN}> $1${NC}"; }
+warn() { echo -e "${YELLOW}! $1${NC}"; }
+fail() { echo -e "${RED}x $1${NC}"; exit 1; }
 
-# --- Pre-flight checks ---
-step "Pre-flight checks"
+run_or_print() {
+    if [[ "$MODE" == "release" ]]; then
+        "$@"
+    else
+        printf '  [would run]'
+        printf ' %q' "$@"
+        printf '\n'
+    fi
+}
 
-# 1. Read version from package.json
+require_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        fail "Required command not found: $1"
+    fi
+}
+
+trim_blank_edges() {
+    awk '
+        NF { started=1 }
+        started { lines[++count]=$0 }
+        END {
+            while (count > 0 && lines[count] == "") {
+                count--
+            }
+            for (i = 1; i <= count; i++) {
+                print lines[i]
+            }
+        }
+    '
+}
+
+extract_changelog_section() {
+    local version="$1"
+    awk -v version="$version" '
+        $0 ~ "^## \\[" version "\\]" {
+            found=1
+            next
+        }
+        found && /^## / {
+            exit
+        }
+        found {
+            print
+        }
+    ' CHANGELOG.md | trim_blank_edges
+}
+
+step "Reading release metadata"
 VERSION=$(node -p "require('./package.json').version")
 TAG="v${VERSION}"
+BRANCH=$(git branch --show-current)
+NOTES_FILE=$(mktemp)
+trap 'rm -f "$NOTES_FILE"' EXIT
+
 echo "  Version: ${VERSION}"
 echo "  Tag:     ${TAG}"
+echo "  Branch:  ${BRANCH}"
 
-# 2. Ensure working tree is clean (allow untracked files)
-if ! git diff --quiet HEAD; then
-    fail "Working tree has uncommitted changes. Commit or stash them first."
+step "Pre-flight checks"
+
+[[ "$BRANCH" == "main" ]] || fail "Release must run from main. Current branch: ${BRANCH}"
+
+if [[ -n "$(git status --porcelain)" ]]; then
+    fail "Working tree is not clean. Commit or stash changes before releasing."
 fi
 
-# 3. Ensure we're on main
-BRANCH=$(git branch --show-current)
-if [[ "$BRANCH" != "main" ]]; then
-    warn "You're on branch '${BRANCH}', not 'main'. Continue? (y/N)"
-    read -r CONFIRM
-    [[ "$CONFIRM" == "y" || "$CONFIRM" == "Y" ]] || exit 0
-fi
-
-# 4. Ensure tag doesn't already exist
 if git rev-parse "$TAG" >/dev/null 2>&1; then
-    fail "Tag ${TAG} already exists. Did you forget to bump the version in package.json?"
+    fail "Local tag ${TAG} already exists."
 fi
 
-# 5. Check CHANGELOG has this version
-if ! grep -q "\[${VERSION}\]" CHANGELOG.md; then
-    fail "CHANGELOG.md does not contain an entry for [${VERSION}]. Update it first."
+set +e
+git ls-remote --exit-code --tags origin "refs/tags/${TAG}" >/dev/null 2>&1
+REMOTE_TAG_STATUS=$?
+set -e
+if [[ "$REMOTE_TAG_STATUS" -eq 0 ]]; then
+    fail "Remote tag ${TAG} already exists."
+elif [[ "$REMOTE_TAG_STATUS" -ne 2 ]]; then
+    fail "Could not check remote tag ${TAG}. Verify network access and origin permissions."
 fi
 
-# 6. Check no 'Unreleased' heading with content (optional — just a warning)
-UNRELEASED_LINE=$(grep -n "## \[Unreleased\]" CHANGELOG.md 2>/dev/null | head -1 || true)
-if [[ -n "$UNRELEASED_LINE" ]]; then
-    warn "CHANGELOG.md still has an [Unreleased] section — make sure it's empty or intentional."
+if gh release view "$TAG" >/dev/null 2>&1; then
+    fail "GitHub release ${TAG} already exists."
 fi
 
-echo -e "  ${GREEN}All pre-flight checks passed${NC}"
+if ! grep -q "^## \\[${VERSION}\\]" CHANGELOG.md; then
+    fail "CHANGELOG.md does not contain a release section for [${VERSION}]."
+fi
 
-# --- Verification ---
-step "Running verification suite"
+extract_changelog_section "$VERSION" > "$NOTES_FILE"
+if [[ ! -s "$NOTES_FILE" ]]; then
+    fail "CHANGELOG.md section for [${VERSION}] is empty."
+fi
+
+require_command node
+require_command npm
+require_command git
+require_command npx
+require_command gh
+
+if ! gh auth status >/dev/null 2>&1; then
+    fail "GitHub CLI is not authenticated. Run: gh auth login"
+fi
+
+if [[ -z "${VSCE_PAT:-}" ]]; then
+    fail "VSCE_PAT is not set. Export a VS Code Marketplace token before releasing."
+fi
+
+if [[ -z "${OVSX_PAT:-}" ]]; then
+    fail "OVSX_PAT is not set. Export an Open VSX token before releasing."
+fi
+
+echo "  Pre-flight checks passed."
+
+if [[ "$MODE" != "release" ]]; then
+    step "Planned release commands"
+    run_or_print npm run check
+    run_or_print npm run lint
+    run_or_print npm test
+    run_or_print npx vsce publish
+    run_or_print npx ovsx publish
+    run_or_print git tag "$TAG"
+    run_or_print git push origin main
+    run_or_print git push origin "$TAG"
+    run_or_print gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
+    echo ""
+    echo "Release notes preview:"
+    sed -n '1,120p' "$NOTES_FILE"
+    exit 0
+fi
+
+step "Running verification"
 npm run check
 npm run lint
 npm test
 
-echo -e "  ${GREEN}All checks passed${NC}"
-
-# --- Commit ---
-step "Committing release"
-if $DRY_RUN; then
-    echo "  [dry run] Would commit: chore: release ${TAG}"
-else
-    git add package.json CHANGELOG.md
-    # Only commit if there are staged changes
-    if git diff --cached --quiet; then
-        echo "  Nothing to commit — package.json and CHANGELOG.md are already committed."
-    else
-        git commit -m "chore: release ${TAG}"
-    fi
-fi
-
-# --- Publish to VS Code Marketplace ---
 step "Publishing to VS Code Marketplace"
-if $DRY_RUN; then
-    echo "  [dry run] Would run: npx vsce publish"
-else
-    npx vsce publish
-fi
+npx vsce publish
 
-# --- Publish to Open VSX ---
 step "Publishing to Open VSX"
-if $DRY_RUN; then
-    echo "  [dry run] Would run: npx ovsx publish"
-else
-    npx ovsx publish
-fi
+npx ovsx publish
 
-# --- Tag and push ---
 step "Tagging and pushing"
-if $DRY_RUN; then
-    echo "  [dry run] Would run: git tag ${TAG} && git push origin ${BRANCH} --tags"
-else
-    git tag "$TAG"
-    git push origin "$BRANCH" --tags
-fi
+git tag "$TAG"
+git push origin main
+git push origin "$TAG"
 
-# --- Done ---
+step "Creating GitHub release"
+gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
+
 echo ""
-echo -e "${GREEN}✔ Release ${TAG} complete!${NC}"
-echo ""
-echo "Remaining manual step:"
-echo "  → Create the GitHub release at https://github.com/liteclienthq/liteclient/releases/new?tag=${TAG}"
+echo -e "${GREEN}Release ${TAG} complete.${NC}"

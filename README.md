@@ -94,8 +94,7 @@ LiteClient is designed to keep request data on your machine:
 
 ## Development
 
-- Contributor workflow: [CONTRIBUTING.md](CONTRIBUTING.md)
-- Maintainer release process: [MAINTAINING.md](MAINTAINING.md)
+- Contributor and release workflow: [CONTRIBUTING.md](CONTRIBUTING.md)
 - AI assistant guidance: [AGENTS.md](AGENTS.md)
 - Full documentation source: [`docs/`](docs)
 
