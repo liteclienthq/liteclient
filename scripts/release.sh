@@ -155,12 +155,14 @@ if [[ "$MODE" != "release" ]]; then
     run_or_print npm run check
     run_or_print npm run lint
     run_or_print npm test
+    run_or_print npm run build
+    run_or_print npx vsce package
     run_or_print npx vsce publish
     run_or_print npx ovsx publish
     run_or_print git tag "$TAG"
     run_or_print git push origin main
     run_or_print git push origin "$TAG"
-    run_or_print gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
+    run_or_print gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" --assets "liteclient-${VERSION}.vsix"
     echo ""
     echo "Release notes preview:"
     sed -n '1,120p' "$NOTES_FILE"
@@ -171,6 +173,12 @@ step "Running verification"
 npm run check
 npm run lint
 npm test
+
+step "Building extension"
+npm run build
+
+step "Packaging extension"
+npx vsce package
 
 step "Publishing to VS Code Marketplace"
 npx vsce publish
@@ -184,7 +192,14 @@ git push origin main
 git push origin "$TAG"
 
 step "Creating GitHub release"
-gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE"
+VSIX_FILE="liteclient-${VERSION}.vsix"
+if [[ ! -f "$VSIX_FILE" ]]; then
+    fail "Extension package not found: $VSIX_FILE"
+fi
+gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" --assets "$VSIX_FILE"
+
+step "Cleaning up"
+rm -f "$VSIX_FILE"
 
 echo ""
 echo -e "${GREEN}Release ${TAG} complete.${NC}"
