@@ -180,8 +180,8 @@ This guide covers common issues you may encounter while using LiteClient and how
     3. Browser blocking the callback
 
     **Solutions:**
-    - Ensure your OAuth application's redirect URI includes:
-      - `vscode://liteclienthq.liteclient/oauth-callback`
+    - Ensure your OAuth application's allowed callback URL matches the redirect URI LiteClient sends. Its base form is `vscode://liteclienthq.liteclient/oauth-callback`, but VS Code may append an encoded `windowId` for the active window.
+    - If your provider reports a callback URL mismatch, use the `redirect_uri` shown in its error details, decoded once, as the allowed callback URL. The generated URI may differ between VS Code windows.
     - Check that VS Code is the default handler for `vscode://` URIs on your system
     - Try a different browser if your current browser blocks custom protocols
     - Verify the Authorization URL and Token URL are correct
