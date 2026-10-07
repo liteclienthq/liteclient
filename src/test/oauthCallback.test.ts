@@ -1,3 +1,5 @@
+/// <reference types="mocha" />
+
 import * as assert from 'assert';
 import { isOAuthCallbackPath } from '../extension/utils/oauthCallback';
 
