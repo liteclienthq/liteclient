@@ -14,6 +14,7 @@ import { CollectionManagerProvider } from './providers/webviews/collectionManage
 import { RunnerProvider } from './providers/webviews/runnerProvider';
 import { CollectionRunner } from './services/collectionRunner';
 import { registerAllCommands } from './commands';
+import { isOAuthCallbackPath } from './utils/oauthCallback';
 
 export async function activate(context: vscode.ExtensionContext) {
 	const storage = new StorageService(context);
@@ -96,7 +97,7 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.window.registerUriHandler({
 			handleUri(uri: vscode.Uri) {
-				if (uri.path === '/oauth-callback') {
+				if (isOAuthCallbackPath(uri.path)) {
 					oauth2TokenService.handleAuthCallback(uri);
 				}
 			}

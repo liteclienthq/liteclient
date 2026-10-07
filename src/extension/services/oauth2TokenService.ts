@@ -351,7 +351,7 @@ export class OAuth2TokenService {
 
     private async getRedirectUri(): Promise<string> {
         const uri = await vscode.env.asExternalUri(
-            vscode.Uri.parse(`${vscode.env.uriScheme}://liteclient.liteclient/oauth-callback`)
+            vscode.Uri.parse(`${vscode.env.uriScheme}://liteclienthq.liteclient/oauth-callback`)
         );
         return uri.toString();
     }
