@@ -1,3 +1,5 @@
+import type { OAuth2AuthConfig } from '../../shared/models';
+
 /**
  * Utility for substituting environment variables in strings using {{variableName}} syntax
  */
@@ -22,6 +24,27 @@ export function substituteVariables(input: string, variables: Record<string, str
     // Return the original placeholder if variable not found
     return match;
   });
+}
+
+export function substituteVariablesInOAuth2Config(
+  config: OAuth2AuthConfig,
+  variables: Record<string, string>
+): OAuth2AuthConfig {
+  return {
+    ...config,
+    authorizationUrl: config.authorizationUrl
+      ? substituteVariables(config.authorizationUrl, variables)
+      : config.authorizationUrl,
+    tokenUrl: substituteVariables(config.tokenUrl, variables),
+    clientId: substituteVariables(config.clientId, variables),
+    clientSecret: config.clientSecret === undefined
+      ? undefined
+      : substituteVariables(config.clientSecret, variables),
+    scopes: config.scopes?.map(scope => substituteVariables(scope, variables)),
+    audience: config.audience === undefined
+      ? undefined
+      : substituteVariables(config.audience, variables),
+  };
 }
 
 /**

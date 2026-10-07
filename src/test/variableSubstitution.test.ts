@@ -1,5 +1,10 @@
 import * as assert from 'assert';
-import { substituteVariables, substituteVariablesInRequest } from '../extension/utils/variableSubstitution';
+import type { OAuth2AuthConfig } from '../shared/models';
+import {
+	substituteVariables,
+	substituteVariablesInOAuth2Config,
+	substituteVariablesInRequest
+} from '../extension/utils/variableSubstitution';
 
 suite('Variable Substitution Test Suite', () => {
 
@@ -17,6 +22,40 @@ suite('Variable Substitution Test Suite', () => {
 		test('leaves unmatched placeholders as-is', () => {
 			const result = substituteVariables('Hello {{name}}!', {});
 			assert.strictEqual(result, 'Hello {{name}}!');
+		});
+	});
+
+	suite('substituteVariablesInOAuth2Config', () => {
+		test('resolves placeholders across OAuth 2.0 configuration fields without mutating the source', () => {
+			const config: OAuth2AuthConfig = {
+				grantType: 'authorization_code',
+				authorizationUrl: '{{authUrl}}',
+				tokenUrl: '{{tokenUrl}}',
+				clientId: '{{clientId}}',
+				clientSecret: '{{clientSecret}}',
+				scopes: ['{{scope}}', 'read:profile'],
+				audience: '{{audience}}',
+			};
+
+			const resolved = substituteVariablesInOAuth2Config(config, {
+				authUrl: 'https://auth.example.com/authorize',
+				tokenUrl: 'https://auth.example.com/token',
+				clientId: 'client-123',
+				clientSecret: 'secret-456',
+				scope: 'openid',
+				audience: 'https://api.example.com',
+			});
+
+			assert.deepStrictEqual(resolved, {
+				...config,
+				authorizationUrl: 'https://auth.example.com/authorize',
+				tokenUrl: 'https://auth.example.com/token',
+				clientId: 'client-123',
+				clientSecret: 'secret-456',
+				scopes: ['openid', 'read:profile'],
+				audience: 'https://api.example.com',
+			});
+			assert.strictEqual(config.clientId, '{{clientId}}');
 		});
 	});
 
