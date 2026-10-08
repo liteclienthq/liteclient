@@ -134,7 +134,7 @@ npm run release:dry
 npm run release
 ```
 
-The release command validates the prepared version, runs checks, publishes to both marketplaces, pushes tag `v<package.json version>`, and creates the GitHub release from the matching `CHANGELOG.md` section.
+The release command validates the prepared version, runs checks, packages and verifies one VSIX before publishing, then publishes that same VSIX to both marketplaces. After both publishes succeed, it pushes tag `v<package.json version>` and creates the GitHub release from the matching `CHANGELOG.md` section with that VSIX attached.
 
 ## AI Assistants
 

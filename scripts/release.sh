@@ -87,6 +87,7 @@ extract_changelog_section() {
 step "Reading release metadata"
 VERSION=$(node -p "require('./package.json').version")
 TAG="v${VERSION}"
+VSIX_FILE="liteclient-${VERSION}.vsix"
 BRANCH=$(git branch --show-current)
 NOTES_FILE=$(mktemp)
 trap 'rm -f "$NOTES_FILE"' EXIT
@@ -135,6 +136,7 @@ require_command npm
 require_command git
 require_command npx
 require_command gh
+require_command unzip
 
 if ! gh auth status >/dev/null 2>&1; then
     fail "GitHub CLI is not authenticated. Run: gh auth login"
@@ -155,14 +157,15 @@ if [[ "$MODE" != "release" ]]; then
     run_or_print npm run check
     run_or_print npm run lint
     run_or_print npm test
-    run_or_print npm run build
-    run_or_print npx vsce package
-    run_or_print npx vsce publish
-    run_or_print npx ovsx publish
+    run_or_print npx vsce package --out "$VSIX_FILE"
+    run_or_print test -s "$VSIX_FILE"
+    run_or_print unzip -t "$VSIX_FILE"
+    run_or_print npx vsce publish --packagePath "$VSIX_FILE"
+    run_or_print npx ovsx publish "$VSIX_FILE"
     run_or_print git tag "$TAG"
     run_or_print git push origin main
     run_or_print git push origin "$TAG"
-    run_or_print gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" "liteclient-${VERSION}.vsix"
+    run_or_print gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" "$VSIX_FILE"
     echo ""
     echo "Release notes preview:"
     sed -n '1,120p' "$NOTES_FILE"
@@ -174,17 +177,20 @@ npm run check
 npm run lint
 npm test
 
-step "Building extension"
-npm run build
-
 step "Packaging extension"
-npx vsce package
+npx vsce package --out "$VSIX_FILE"
+if [[ ! -s "$VSIX_FILE" ]]; then
+    fail "Extension package was not created or is empty: $VSIX_FILE"
+fi
+if ! unzip -t "$VSIX_FILE" >/dev/null; then
+    fail "Extension package is not a valid VSIX archive: $VSIX_FILE"
+fi
 
 step "Publishing to VS Code Marketplace"
-npx vsce publish
+npx vsce publish --packagePath "$VSIX_FILE"
 
 step "Publishing to Open VSX"
-npx ovsx publish
+npx ovsx publish "$VSIX_FILE"
 
 step "Tagging and pushing"
 git tag "$TAG"
@@ -192,10 +198,6 @@ git push origin main
 git push origin "$TAG"
 
 step "Creating GitHub release"
-VSIX_FILE="liteclient-${VERSION}.vsix"
-if [[ ! -f "$VSIX_FILE" ]]; then
-    fail "Extension package not found: $VSIX_FILE"
-fi
 gh release create "$TAG" --title "$TAG" --notes-file "$NOTES_FILE" "$VSIX_FILE"
 
 step "Cleaning up"
