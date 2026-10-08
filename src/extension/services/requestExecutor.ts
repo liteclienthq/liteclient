@@ -7,6 +7,7 @@ import { CurrentValuesService } from './currentValuesService';
 import { OAuth2TokenService } from './oauth2TokenService';
 import { ScriptRunner } from './scriptRunner';
 import { resolveVariables } from '../utils/variableResolver';
+import { substituteVariablesInOAuth2Config } from '../utils/variableSubstitution';
 import type { Environment, EnvironmentVariable, ScriptTestResult, ScriptConsoleEntry, AuthConfig, RequestBody } from '../../shared/models';
 
 // ============================================================================
@@ -272,7 +273,11 @@ export class RequestExecutor {
         let resolvedOAuth2Token: string | undefined;
         if (request.auth?.type === 'oauth2' && request.auth.oauth2) {
             try {
-                resolvedOAuth2Token = await this.oauth2TokenService.getValidAccessToken(request.auth.oauth2);
+                const oauth2Config = substituteVariablesInOAuth2Config(
+                    request.auth.oauth2,
+                    environmentVariables
+                );
+                resolvedOAuth2Token = await this.oauth2TokenService.getValidAccessToken(oauth2Config);
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'Failed to get OAuth2 token';
                 return {

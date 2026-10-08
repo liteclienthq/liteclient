@@ -7,6 +7,8 @@ description: "Configure OAuth 2.0 authentication with LiteClient for Authorizati
 
 LiteClient supports OAuth 2.0 authentication with three grant types. Tokens are automatically acquired, cached in VS Code's SecretStorage, and injected into requests.
 
+OAuth endpoints, client credentials, scopes, and audience support `{{variableName}}` substitution with the standard precedence: Globals → Collection → selected Environment.
+
 ## Supported Grant Types
 
 LiteClient supports three OAuth 2.0 flows:

@@ -9,7 +9,10 @@ import { CurrentValuesService } from '../../services/currentValuesService';
 import { OAuth2TokenService } from '../../services/oauth2TokenService';
 import { RequestExecutor } from '../../services/requestExecutor';
 import type { RequestPanelToExtensionMessage, RequestExecutionSource } from '../../../shared/messages';
+import type { OAuth2AuthConfig } from '../../../shared/models';
 import { generateId } from '../../utils/idUtils';
+import { resolveVariables } from '../../utils/variableResolver';
+import { substituteVariablesInOAuth2Config } from '../../utils/variableSubstitution';
 
 type MessageHandler = (panel: vscode.WebviewPanel, message: any, context: RequestContext) => Promise<void>;
 
@@ -70,8 +73,8 @@ export class RequestPanelManager {
             'set-environment': (_panel, message) => this._handleSetEnvironment(message.environmentId),
             'save-request': (panel, message, ctx) => this._handleSaveRequest(panel, message, ctx),
             'dirty-state': (panel, message) => this._handleDirtyState(panel, message.isDirty),
-            'oauth2-get-token': (panel, message) => this._handleOAuth2GetToken(panel, message),
-            'oauth2-clear-token': (panel, message) => this._handleOAuth2ClearToken(panel, message),
+            'oauth2-get-token': (panel, message, ctx) => this._handleOAuth2GetToken(panel, message, ctx),
+            'oauth2-clear-token': (panel, message, ctx) => this._handleOAuth2ClearToken(panel, message, ctx),
         };
     }
 
@@ -448,7 +451,27 @@ export class RequestPanelManager {
 
     // --- OAuth2 Handlers ---
 
-    private async _handleOAuth2GetToken(panel: vscode.WebviewPanel, message: any): Promise<void> {
+    private async _resolveOAuth2Config(
+        config: OAuth2AuthConfig,
+        ctx: RequestContext
+    ): Promise<OAuth2AuthConfig> {
+        const variableState = await this.requestExecutor.buildVariableState({
+            collectionId: ctx.collectionId,
+        });
+        const variables = resolveVariables({
+            globals: variableState.mergedGlobals,
+            collectionVariables: variableState.collectionVariables,
+            environment: variableState.mergedSelectedEnv,
+        });
+
+        return substituteVariablesInOAuth2Config(config, variables);
+    }
+
+    private async _handleOAuth2GetToken(
+        panel: vscode.WebviewPanel,
+        message: any,
+        ctx: RequestContext
+    ): Promise<void> {
         const config = message.config;
         if (!config) {
             vscode.window.showErrorMessage('OAuth2: No configuration provided');
@@ -461,8 +484,9 @@ export class RequestPanelManager {
         }
 
         try {
-            if (config.grantType === 'authorization_code') {
-                const tokenRecord = await this.oauth2TokenService.startAuthorizationCodeFlow(config);
+            const resolvedConfig = await this._resolveOAuth2Config(config, ctx);
+            if (resolvedConfig.grantType === 'authorization_code') {
+                const tokenRecord = await this.oauth2TokenService.startAuthorizationCodeFlow(resolvedConfig);
                 vscode.window.showInformationMessage('OAuth2: Token acquired successfully');
                 panel.webview.postMessage({
                     type: 'oauth2-token-result',
@@ -470,8 +494,8 @@ export class RequestPanelManager {
                     expiresAt: tokenRecord.expiresAt
                 });
             } else {
-                await this.oauth2TokenService.requestClientCredentialsToken(config);
-                const status = await this.oauth2TokenService.getTokenStatus(config);
+                await this.oauth2TokenService.requestClientCredentialsToken(resolvedConfig);
+                const status = await this.oauth2TokenService.getTokenStatus(resolvedConfig);
                 vscode.window.showInformationMessage('OAuth2: Token acquired successfully');
                 panel.webview.postMessage({
                     type: 'oauth2-token-result',
@@ -490,10 +514,14 @@ export class RequestPanelManager {
         }
     }
 
-    private async _handleOAuth2ClearToken(panel: vscode.WebviewPanel, message: any): Promise<void> {
+    private async _handleOAuth2ClearToken(
+        panel: vscode.WebviewPanel,
+        message: any,
+        ctx: RequestContext
+    ): Promise<void> {
         const config = message.config;
         if (config) {
-            await this.oauth2TokenService.clearToken(config);
+            await this.oauth2TokenService.clearToken(await this._resolveOAuth2Config(config, ctx));
             vscode.window.showInformationMessage('OAuth2: Token cleared');
         }
         panel.webview.postMessage({
