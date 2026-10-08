@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Dollar-Prefixed Query Parameters**: Preserve literal `$` characters in query parameter keys, supporting OData system options such as `$filter` and `$expand`.
 - **OAuth 2.0 Variables**: Resolve variables in OAuth endpoints, client credentials, scopes, and audience when generating tokens and sending authenticated requests.
 - **OAuth 2.0 Authorization Code Callback**: Use the correct LiteClient extension identifier in the redirect URI and accept VS Code's window ID suffix so the authorization callback completes successfully.
 

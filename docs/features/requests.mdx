@@ -58,6 +58,8 @@ Key: sort    Value: created_at
 
 This generates: `?page=1&limit=50&sort=created_at`
 
+Dollar-prefixed query keys are kept literal for APIs such as OData, so a key like `$filter` is sent as `$filter` rather than `%24filter`. Query values continue to use standard URL encoding.
+
 ## Headers
 
 Customize request headers with full control over keys and values.
