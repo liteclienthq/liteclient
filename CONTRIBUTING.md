@@ -2,7 +2,7 @@
 
 ## Before You Start
 
-- Node.js 18+
+- Node.js 22+
 - VS Code
 - Git
 
