@@ -8,6 +8,7 @@ import { customElement, state } from 'lit/decorators.js';
 import { LcBaseElement } from '../shared/base-element.js';
 import { onMessage, postMessage, type ExtensionMessage, type RequestBody, type AuthConfig, type ScriptTestResult, type ScriptConsoleEntry } from '../shared/messaging.js';
 import type { EnvironmentVariable } from '../../shared/models.js';
+import { serializeQueryParams } from '../../shared/queryParams.js';
 
 interface OriginalRequestState {
   method: string;
@@ -541,15 +542,7 @@ export class LcRequestPanel extends LcBaseElement {
     try {
       const urlStr = this.requestUrl.startsWith('http') ? this.requestUrl : `http://${this.requestUrl}`;
       const url = new URL(urlStr);
-      const params = new URLSearchParams();
-
-      this.requestParams.forEach(p => {
-        if (p.key && p.active) {
-          params.append(p.key, p.value);
-        }
-      });
-
-      const queryString = params.toString();
+      const queryString = serializeQueryParams(this.requestParams);
       const baseUrl = this.requestUrl.split('?')[0];
       this.requestUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
     } catch (err) {
